@@ -1,10 +1,13 @@
+import { useNavigate } from "react-router-dom";
+
 interface MainMenuProps {
   onNavigate?: (menu: string) => void;
 }
 
 export default function MainMenu({ onNavigate }: MainMenuProps) {
+  const navigate = useNavigate();
   const menus = [
-    { id: "profile_report", label: "Profil & Report Hasil Belajar" },
+    { id: "profile-report", label: "Profil & Report Hasil Belajar" },
     { id: "materi", label: "Materi" },
     { id: "simulasi", label: "Simulasi" },
     { id: "kuis", label: "Kuis" },
@@ -14,7 +17,7 @@ export default function MainMenu({ onNavigate }: MainMenuProps) {
     if (onNavigate) {
       onNavigate(menuId);
     } else {
-      console.log(`Navigating to: ${menuId}`);
+      navigate(`/${menuId}`);
     }
   };
 
