@@ -1,0 +1,126 @@
+# ==========================================
+# 1. SENSITIVE DATA & ENVIRONMENT VARIABLES (PRIVACY)
+# ==========================================
+# Personal and secret environment variables must never be committed
+.env
+.env.local
+.env.development
+.env.development.local
+.env.production
+.env.production.local
+.env.test
+.env.test.local
+.env.*
+!.env.example
+
+# Credentials, keys, and certificates
+*.pem
+*.key
+*.pub
+*.cert
+*.crt
+*.pfx
+*.p12
+*.jks
+*.keystore
+*secret*
+*credential*
+
+# ==========================================
+# 2. DEPENDENCIES & PACKAGES
+# ==========================================
+node_modules/
+jspm_packages/
+web_modules/
+.npm
+.yarn
+.pnpm-store
+
+# ==========================================
+# 3. BUILD & DISTRIBUTION OUTPUTS
+# ==========================================
+dist/
+dist-ssr/
+build/
+out/
+.next/
+.nuxt/
+.cache/
+.parcel-cache/
+.turbo/
+.vercel/
+coverage/
+*.gemini
+
+# Monorepo specific paths
+frontend/dist/
+frontend/dist-ssr/
+
+# ==========================================
+# 4. CAPACITOR & MOBILE SENSITIVE/BUILD FILES
+# ==========================================
+# Capacitor Android / iOS local configs and keys
+android/app/build/
+android/.gradle/
+android/local.properties
+android/captures/
+ios/App/App/public/
+ios/App/build/
+capacitor.config.json
+capacitor.config.js
+
+# Services config (often contain API keys/secrets)
+google-services.json
+GoogleService-Info.plist
+
+# ==========================================
+# 5. DATABASE & STORAGE (LOCAL BACKUPS)
+# ==========================================
+*.db
+*.sqlite
+*.sqlite3
+*.sql
+*.dump
+# Ignore local SQLite/Postgres data directories if stored locally
+postgres-data/
+mysql-data/
+db-backup/
+
+# ==========================================
+# 6. LOGS & TEMPORARY FILES
+# ==========================================
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+.eslintcache
+.stylelintcache
+
+# ==========================================
+# 7. IDE, EDITORS & SYSTEM FILES
+# ==========================================
+# Windows system files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# macOS system files
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# IDEs
+.vscode/
+!.vscode/extensions.json
+!.vscode/launch.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.bak
+*.tmp
