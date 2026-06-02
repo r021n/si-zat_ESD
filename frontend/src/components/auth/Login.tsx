@@ -9,11 +9,36 @@ export default function Login({ onSuccess, onSwitchToRegister }: LoginProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    console.log("Login submit:", { email, password });
-    if (onSuccess) onSuccess();
+    
+    setLoading(true);
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8787";
+      const response = await fetch(`${apiUrl}/api/auth/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Login gagal");
+      }
+
+      localStorage.setItem("user", JSON.stringify(data.user));
+      
+      if (onSuccess) onSuccess();
+    } catch (err: any) {
+      alert(err.message || "Terjadi kesalahan koneksi ke server.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -63,9 +88,10 @@ export default function Login({ onSuccess, onSwitchToRegister }: LoginProps) {
         {/* Submit Button */}
         <button
           type="submit"
-          className="w-full mt-4 py-3 border border-black bg-white text-black font-bold uppercase tracking-wider text-sm active:bg-black active:text-white transition-colors duration-100"
+          disabled={loading}
+          className="w-full mt-4 py-3 border border-black bg-white text-black font-bold uppercase tracking-wider text-sm active:bg-black active:text-white transition-colors duration-100 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Masuk
+          {loading ? "Masuk..." : "Masuk"}
         </button>
       </form>
 

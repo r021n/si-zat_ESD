@@ -13,15 +13,41 @@ export default function Register({ onSuccess, onSwitchToLogin }: RegisterProps) 
   
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (password !== confirmPassword) {
       alert("Password dan konfirmasi password tidak cocok!");
       return;
     }
-    console.log("Register submit:", { email, kelas, password });
-    if (onSuccess) onSuccess();
+    
+    setLoading(true);
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8787";
+      const response = await fetch(`${apiUrl}/api/auth/register`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, kelas, password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Registrasi gagal");
+      }
+
+      localStorage.setItem("user", JSON.stringify(data.user));
+      alert(data.message || "Registrasi berhasil!");
+      
+      if (onSuccess) onSuccess();
+    } catch (err: any) {
+      alert(err.message || "Terjadi kesalahan koneksi ke server.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -108,9 +134,10 @@ export default function Register({ onSuccess, onSwitchToLogin }: RegisterProps) 
         {/* Submit Button */}
         <button
           type="submit"
-          className="w-full mt-4 py-3 border border-black bg-white text-black font-bold uppercase tracking-wider text-sm active:bg-black active:text-white transition-colors duration-100"
+          disabled={loading}
+          className="w-full mt-4 py-3 border border-black bg-white text-black font-bold uppercase tracking-wider text-sm active:bg-black active:text-white transition-colors duration-100 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Daftar
+          {loading ? "Mendaftar..." : "Daftar"}
         </button>
       </form>
 
