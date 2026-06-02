@@ -3,7 +3,6 @@ import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { serve } from '@hono/node-server'
 import authRoute from './routes/auth.js'
-import usersRoute from './routes/users.js'
 
 const app = new Hono()
 
@@ -17,7 +16,6 @@ app.get('/api/health', (c) => c.json({ status: 'ok', version: 'hono-4.12.23' }))
 
 // Mount separate routing modules
 app.route('/api/auth', authRoute)
-app.route('/api/users', usersRoute)
 
 const port = Number(process.env.PORT) || 8787
 console.log(`API running on http://localhost:${port}`)

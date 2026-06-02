@@ -2,9 +2,12 @@ import { Hono } from 'hono'
 import { db } from '../db/index.js'
 import { users } from '../db/schema.js'
 import { eq } from 'drizzle-orm'
+import { sign, verify } from 'hono/jwt'
 import bcrypt from 'bcryptjs'
 
 const auth = new Hono()
+
+const getJwtSecret = () => process.env.JWT_SECRET || 'sizatesdsecret'
 
 auth.post('/register', async (c) => {
   try {
@@ -30,9 +33,20 @@ auth.post('/register', async (c) => {
       password: hashedPassword
     }).returning()
 
+    // Generate JWT token
+    const token = await sign(
+      {
+        id: newUser.id,
+        email: newUser.email,
+        exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7 // 7 Days
+      },
+      getJwtSecret()
+    )
+
     return c.json({
       status: 'success',
       message: 'Registrasi berhasil!',
+      token,
       user: {
         id: newUser.id,
         email: newUser.email,
@@ -67,9 +81,20 @@ auth.post('/login', async (c) => {
       return c.json({ error: 'Email atau password salah.' }, 401)
     }
 
+    // Generate JWT token
+    const token = await sign(
+      {
+        id: user.id,
+        email: user.email,
+        exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7 // 7 Days
+      },
+      getJwtSecret()
+    )
+
     return c.json({
       status: 'success',
       message: 'Login berhasil!',
+      token,
       user: {
         id: user.id,
         email: user.email,
@@ -81,6 +106,40 @@ auth.post('/login', async (c) => {
   } catch (error: any) {
     console.error('Error during login:', error)
     return c.json({ error: 'Terjadi kesalahan pada server saat login.' }, 500)
+  }
+})
+
+// Endpoint to verify token and return current logged in user details
+auth.get('/me', async (c) => {
+  try {
+    const authHeader = c.req.header('Authorization')
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return c.json({ error: 'Tidak terautentikasi' }, 401)
+    }
+
+    const token = authHeader.split(' ')[1]
+    const payload = await verify(token, getJwtSecret(), 'HS256')
+
+    // Fetch user details from DB to make sure they still exist
+    const [user] = await db.select({
+      id: users.id,
+      email: users.email,
+      kelas: users.kelas,
+      nama: users.nama,
+      status: users.status
+    }).from(users).where(eq(users.id, payload.id as number)).limit(1)
+
+    if (!user) {
+      return c.json({ error: 'Pengguna tidak ditemukan' }, 401)
+    }
+
+    return c.json({
+      status: 'success',
+      user
+    })
+  } catch (error) {
+    console.error('Token verification failed:', error)
+    return c.json({ error: 'Sesi kedaluwarsa atau token tidak valid. Silakan login kembali.' }, 401)
   }
 })
 

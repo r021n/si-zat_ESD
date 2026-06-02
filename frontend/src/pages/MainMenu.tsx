@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuthStore } from "../store/authStore";
 
 interface MainMenuProps {
   onNavigate?: (menu: string) => void;
@@ -7,16 +8,13 @@ interface MainMenuProps {
 
 export default function MainMenu({ onNavigate }: MainMenuProps) {
   const navigate = useNavigate();
-  const [user, setUser] = useState<{ email: string; kelas: string } | null>(null);
+  const { user, logout } = useAuthStore();
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    if (!storedUser) {
+    if (!user) {
       navigate("/auth");
-    } else {
-      setUser(JSON.parse(storedUser));
     }
-  }, [navigate]);
+  }, [user, navigate]);
 
   const menus = [
     { id: "profile-report", label: "Profil & Report Hasil Belajar" },
@@ -34,11 +32,15 @@ export default function MainMenu({ onNavigate }: MainMenuProps) {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("user");
+    logout();
     navigate("/auth");
   };
 
   if (!user) return null;
+
+  // Formatting display texts
+  const displayName = user.nama || user.email.split("@")[0];
+  const displayStatus = user.status.toUpperCase();
 
   return (
     <div className="w-full min-h-screen bg-white flex justify-center items-center text-black font-sans">
@@ -48,10 +50,17 @@ export default function MainMenu({ onNavigate }: MainMenuProps) {
         {/* Header Section */}
         <div className="w-full flex flex-col gap-1 mt-6 mb-6">
           <p className="text-[10px] uppercase tracking-widest text-neutral-500 font-bold">Selamat datang,</p>
-          <h1 className="text-lg font-bold truncate">{user.email}</h1>
-          <span className="inline-block self-start text-[10px] font-mono uppercase border border-black px-2 py-0.5 mt-1 bg-black text-white">
-            Kelas: {user.kelas}
-          </span>
+          <h1 className="text-xl font-bold truncate leading-tight uppercase tracking-wide">{displayName}</h1>
+          <p className="text-xs text-neutral-600 truncate mb-1">{user.email}</p>
+          
+          <div className="flex gap-2 mt-1">
+            <span className="inline-block text-[9px] font-mono uppercase border border-black px-2 py-0.5 bg-black text-white font-bold">
+              {displayStatus}
+            </span>
+            <span className="inline-block text-[9px] font-mono uppercase border border-black px-2 py-0.5 bg-white text-black font-bold">
+              Kelas: {user.kelas}
+            </span>
+          </div>
         </div>
 
         {/* Menu Buttons Stack */}

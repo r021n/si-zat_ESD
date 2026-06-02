@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import { useAuthStore } from "../../store/authStore";
 
 interface LoginProps {
   onSuccess?: () => void;
@@ -9,35 +10,16 @@ export default function Login({ onSuccess, onSwitchToRegister }: LoginProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const { login, loading } = useAuthStore();
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     
-    setLoading(true);
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8787";
-      const response = await fetch(`${apiUrl}/api/auth/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Login gagal");
-      }
-
-      localStorage.setItem("user", JSON.stringify(data.user));
-      
+      await login(email, password);
       if (onSuccess) onSuccess();
     } catch (err: any) {
-      alert(err.message || "Terjadi kesalahan koneksi ke server.");
-    } finally {
-      setLoading(false);
+      alert(err.message || "Email atau password salah.");
     }
   };
 
@@ -78,7 +60,7 @@ export default function Login({ onSuccess, onSwitchToRegister }: LoginProps) {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-2 px-2 py-1 text-xs font-mono border border-black bg-white text-black active:bg-black active:text-white hover:bg-neutral-100 transition-colors"
+              className="absolute right-2 px-2 py-1 text-xs font-mono border border-black bg-white text-black active:bg-black active:text-white hover:bg-neutral-100 transition-colors cursor-pointer"
             >
               {showPassword ? "HIDE" : "SHOW"}
             </button>
@@ -89,7 +71,7 @@ export default function Login({ onSuccess, onSwitchToRegister }: LoginProps) {
         <button
           type="submit"
           disabled={loading}
-          className="w-full mt-4 py-3 border border-black bg-white text-black font-bold uppercase tracking-wider text-sm active:bg-black active:text-white transition-colors duration-100 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full mt-4 py-3 border border-black bg-white text-black font-bold uppercase tracking-wider text-sm active:bg-black active:text-white transition-colors duration-100 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
         >
           {loading ? "Masuk..." : "Masuk"}
         </button>
@@ -100,7 +82,7 @@ export default function Login({ onSuccess, onSwitchToRegister }: LoginProps) {
         <button
           type="button"
           onClick={onSwitchToRegister}
-          className="text-xs uppercase tracking-wider border-b border-black font-bold pb-0.5 hover:opacity-75 transition-opacity"
+          className="text-xs uppercase tracking-wider border-b border-black font-bold pb-0.5 hover:opacity-75 transition-opacity cursor-pointer"
         >
           Belum punya akun? Daftar
         </button>

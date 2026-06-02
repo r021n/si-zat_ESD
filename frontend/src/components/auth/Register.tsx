@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import { useAuthStore } from "../../store/authStore";
 
 interface RegisterProps {
   onSuccess?: () => void;
@@ -13,7 +14,7 @@ export default function Register({ onSuccess, onSwitchToLogin }: RegisterProps) 
   
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const { register, loading } = useAuthStore();
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -22,31 +23,12 @@ export default function Register({ onSuccess, onSwitchToLogin }: RegisterProps) 
       return;
     }
     
-    setLoading(true);
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8787";
-      const response = await fetch(`${apiUrl}/api/auth/register`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, kelas, password }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Registrasi gagal");
-      }
-
-      localStorage.setItem("user", JSON.stringify(data.user));
-      alert(data.message || "Registrasi berhasil!");
-      
+      await register(email, kelas, password);
+      alert("Registrasi berhasil!");
       if (onSuccess) onSuccess();
     } catch (err: any) {
       alert(err.message || "Terjadi kesalahan koneksi ke server.");
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -101,7 +83,7 @@ export default function Register({ onSuccess, onSwitchToLogin }: RegisterProps) 
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-2 px-2 py-1 text-xs font-mono border border-black bg-white text-black active:bg-black active:text-white hover:bg-neutral-100 transition-colors"
+              className="absolute right-2 px-2 py-1 text-xs font-mono border border-black bg-white text-black active:bg-black active:text-white hover:bg-neutral-100 transition-colors cursor-pointer"
             >
               {showPassword ? "HIDE" : "SHOW"}
             </button>
@@ -124,7 +106,7 @@ export default function Register({ onSuccess, onSwitchToLogin }: RegisterProps) 
             <button
               type="button"
               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              className="absolute right-2 px-2 py-1 text-xs font-mono border border-black bg-white text-black active:bg-black active:text-white hover:bg-neutral-100 transition-colors"
+              className="absolute right-2 px-2 py-1 text-xs font-mono border border-black bg-white text-black active:bg-black active:text-white hover:bg-neutral-100 transition-colors cursor-pointer"
             >
               {showConfirmPassword ? "HIDE" : "SHOW"}
             </button>
@@ -135,7 +117,7 @@ export default function Register({ onSuccess, onSwitchToLogin }: RegisterProps) 
         <button
           type="submit"
           disabled={loading}
-          className="w-full mt-4 py-3 border border-black bg-white text-black font-bold uppercase tracking-wider text-sm active:bg-black active:text-white transition-colors duration-100 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full mt-4 py-3 border border-black bg-white text-black font-bold uppercase tracking-wider text-sm active:bg-black active:text-white transition-colors duration-100 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
         >
           {loading ? "Mendaftar..." : "Daftar"}
         </button>
@@ -146,7 +128,7 @@ export default function Register({ onSuccess, onSwitchToLogin }: RegisterProps) 
         <button
           type="button"
           onClick={onSwitchToLogin}
-          className="text-xs uppercase tracking-wider border-b border-black font-bold pb-0.5 hover:opacity-75 transition-opacity"
+          className="text-xs uppercase tracking-wider border-b border-black font-bold pb-0.5 hover:opacity-75 transition-opacity cursor-pointer"
         >
           Sudah punya akun? Login
         </button>
