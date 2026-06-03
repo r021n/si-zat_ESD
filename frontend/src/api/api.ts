@@ -46,3 +46,24 @@ export async function getMeApi(token: string) {
   }
   return data;
 }
+
+export async function updateProfileApi(
+  token: string,
+  profileData: { kelas: string; nama: string }
+) {
+  const response = await fetch(`${API_URL}/api/auth/me`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`,
+    },
+    body: JSON.stringify(profileData),
+  });
+
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || "Gagal memperbarui profil");
+  }
+  return data;
+}
+

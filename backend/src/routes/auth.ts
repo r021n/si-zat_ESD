@@ -52,7 +52,8 @@ auth.post('/register', async (c) => {
         email: newUser.email,
         kelas: newUser.kelas,
         nama: newUser.nama,
-        status: newUser.status
+        status: newUser.status,
+        createdAt: newUser.createdAt
       }
     }, 201)
   } catch (error: any) {
@@ -100,7 +101,8 @@ auth.post('/login', async (c) => {
         email: user.email,
         kelas: user.kelas,
         nama: user.nama,
-        status: user.status
+        status: user.status,
+        createdAt: user.createdAt
       }
     })
   } catch (error: any) {
@@ -126,7 +128,8 @@ auth.get('/me', async (c) => {
       email: users.email,
       kelas: users.kelas,
       nama: users.nama,
-      status: users.status
+      status: users.status,
+      createdAt: users.createdAt
     }).from(users).where(eq(users.id, payload.id as number)).limit(1)
 
     if (!user) {
@@ -143,4 +146,64 @@ auth.get('/me', async (c) => {
   }
 })
 
+auth.put('/me', async (c) => {
+  try {
+    const authHeader = c.req.header('Authorization')
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return c.json({ error: 'Tidak terautentikasi' }, 401)
+    }
+
+    const token = authHeader.split(' ')[1]
+    const payload = await verify(token, getJwtSecret(), 'HS256')
+    const userId = payload.id as number
+
+    const { kelas, nama } = await c.req.json()
+
+    if (!kelas) {
+      return c.json({ error: 'Kelas tidak boleh kosong.' }, 400)
+    }
+
+    // Update user in DB (only nama and kelas)
+    const [updatedUser] = await db.update(users)
+      .set({
+        kelas,
+        nama: nama || ''
+      })
+      .where(eq(users.id, userId))
+      .returning()
+
+    if (!updatedUser) {
+      return c.json({ error: 'Pengguna tidak ditemukan' }, 404)
+    }
+
+    // Generate new JWT token in case email is needed in token
+    const newToken = await sign(
+      {
+        id: updatedUser.id,
+        email: updatedUser.email,
+        exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7 // 7 Days
+      },
+      getJwtSecret()
+    )
+
+    return c.json({
+      status: 'success',
+      message: 'Profil berhasil diperbarui!',
+      token: newToken,
+      user: {
+        id: updatedUser.id,
+        email: updatedUser.email,
+        kelas: updatedUser.kelas,
+        nama: updatedUser.nama,
+        status: updatedUser.status,
+        createdAt: updatedUser.createdAt
+      }
+    })
+  } catch (error: any) {
+    console.error('Error during profile update:', error)
+    return c.json({ error: 'Sesi kedaluwarsa atau terjadi kesalahan pada server.' }, 401)
+  }
+})
+
 export default auth
+

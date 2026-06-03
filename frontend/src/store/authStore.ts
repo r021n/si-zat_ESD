@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { loginApi, registerApi, getMeApi } from "../api/api";
+import { loginApi, registerApi, getMeApi, updateProfileApi } from "../api/api";
 
 export interface User {
   id: number;
@@ -7,6 +7,7 @@ export interface User {
   kelas: string;
   nama: string;
   status: string;
+  createdAt?: string;
 }
 
 interface AuthState {
@@ -19,6 +20,7 @@ interface AuthState {
   register: (email: string, kelas: string, password: string) => Promise<void>;
   logout: () => void;
   checkAuth: () => Promise<void>;
+  updateProfile: (kelas: string, nama: string) => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -71,6 +73,21 @@ export const useAuthStore = create<AuthState>((set) => ({
       // Clear token if invalid or expired
       localStorage.removeItem("token");
       set({ user: null, token: null, initialized: true });
+    }
+  },
+
+  updateProfile: async (kelas, nama) => {
+    const token = localStorage.getItem("token");
+    if (!token) throw new Error("Tidak terautentikasi");
+
+    set({ loading: true, error: null });
+    try {
+      const data = await updateProfileApi(token, { kelas, nama });
+      localStorage.setItem("token", data.token);
+      set({ user: data.user, token: data.token, loading: false });
+    } catch (err: any) {
+      set({ error: err.message, loading: false });
+      throw err;
     }
   },
 }));

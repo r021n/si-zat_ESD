@@ -1,7 +1,15 @@
 import { useEffect } from "react";
-import { HashRouter as Router, Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import {
+  HashRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+  useNavigate,
+} from "react-router-dom";
 import Auth from "./pages/Auth";
 import MainMenu from "./pages/MainMenu";
+import Simulasi from "./pages/Simulasi";
+import ProfileReport from "./pages/ProfileReport";
 import { useAuthStore } from "./store/authStore";
 
 // Reusable minimal subpage to demonstrate working navigation
@@ -28,7 +36,9 @@ function LoadingScreen() {
       <div className="w-full max-w-[430px] min-h-screen flex flex-col justify-center items-center px-6 py-8 gap-4 text-center">
         {/* Retro minimalist spinner */}
         <div className="w-8 h-8 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
-        <p className="text-[10px] uppercase font-bold tracking-widest text-neutral-500 animate-pulse">Memuat Sesi...</p>
+        <p className="text-[10px] uppercase font-bold tracking-widest text-neutral-500 animate-pulse">
+          Memuat Sesi...
+        </p>
       </div>
     </div>
   );
@@ -50,19 +60,41 @@ function AppContent() {
       <Routes>
         {/* Default route redirects to Auth */}
         <Route path="/" element={<Navigate to="/auth" replace />} />
-        
+
         {/* Auth Route (Login & Register switcher) */}
         <Route path="/auth" element={<Auth />} />
-        
+
         {/* Main Menu Route */}
         <Route path="/menu" element={<MainMenu />} />
-        
+
         {/* Subpages routes */}
-        <Route path="/profile-report" element={<SubPage title="Profil & Report Hasil Belajar" />} />
+        <Route
+          path="/profile-report"
+          element={<ProfileReport />}
+        />
         <Route path="/materi" element={<SubPage title="Materi" />} />
-        <Route path="/simulasi" element={<SubPage title="Simulasi" />} />
+
+        {/* Simulasi routes */}
+        <Route path="/simulasi" element={<Simulasi />} />
+        <Route
+          path="/simulasi/air"
+          element={<SubPage title="Simulasi Pencemaran Air" />}
+        />
+        <Route
+          path="/simulasi/eutrofikasi"
+          element={<SubPage title="Simulasi Eutrofikasi" />}
+        />
+        <Route
+          path="/simulasi/tanah"
+          element={<SubPage title="Simulasi Pencemaran Tanah" />}
+        />
+        <Route
+          path="/simulasi/udara"
+          element={<SubPage title="Simulasi Pencemaran Udara" />}
+        />
+
         <Route path="/kuis" element={<SubPage title="Kuis" />} />
-        
+
         {/* Fallback route */}
         <Route path="*" element={<Navigate to="/auth" replace />} />
       </Routes>
