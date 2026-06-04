@@ -59,7 +59,10 @@ export default function SimulasiPencemaranAir() {
           try {
             await ScreenOrientation.unlock();
           } catch (unlockErr) {
-            console.warn("ScreenOrientation unlock/portrait lock failed:", unlockErr);
+            console.warn(
+              "ScreenOrientation unlock/portrait lock failed:",
+              unlockErr,
+            );
           }
         }
       };
@@ -1208,15 +1211,28 @@ export default function SimulasiPencemaranAir() {
       </main>
 
       {/* Fallback Overlay for Mobile Portrait Orientation */}
-      <div className="hidden max-lg:portrait:flex fixed inset-0 z-[9999] bg-black flex-col items-center justify-center text-center p-6 text-white select-none">
+      <div className="hidden max-lg:portrait:flex fixed inset-0 z-9999 bg-black flex-col items-center justify-center text-center p-6 text-white select-none">
         <div className="w-16 h-16 mb-4 flex items-center justify-center border border-white rounded-lg">
-          <svg className="w-8 h-8 rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+          <svg
+            className="w-8 h-8 rotate-90"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"
+            />
           </svg>
         </div>
-        <h2 className="text-sm font-bold mb-2 uppercase tracking-wider">Mode Lanskap Diperlukan</h2>
+        <h2 className="text-sm font-bold mb-2 uppercase tracking-wider">
+          Mode Lanskap Diperlukan
+        </h2>
         <p className="text-xs text-neutral-400 max-w-[280px] leading-relaxed">
-          Silakan putar perangkat Anda ke arah lanskap (menyamping) untuk mengakses eko-simulasi kualitas air.
+          Silakan putar perangkat Anda ke arah lanskap (menyamping) untuk
+          mengakses eko-simulasi kualitas air.
         </p>
         <button
           onClick={() => navigate("/simulasi")}

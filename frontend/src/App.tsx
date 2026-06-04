@@ -11,6 +11,9 @@ import MainMenu from "./pages/MainMenu";
 import Simulasi from "./pages/Simulasi";
 import ProfileReport from "./pages/ProfileReport";
 import SimulasiPencemaranAir from "./components/simulations/water_pollution";
+import SimulasiEutrofikasi from "./components/simulations/eutrophication";
+import SimulasiPencemaranTanah from "./components/simulations/land_pollution";
+import SimulasiPencemaranUdara from "./components/simulations/air_pollution";
 import { useAuthStore } from "./store/authStore";
 
 // Reusable minimal subpage to demonstrate working navigation
@@ -83,15 +86,15 @@ function AppContent() {
         />
         <Route
           path="/simulasi/eutrofikasi"
-          element={<SubPage title="Simulasi Eutrofikasi" />}
+          element={<SimulasiEutrofikasi />}
         />
         <Route
           path="/simulasi/tanah"
-          element={<SubPage title="Simulasi Pencemaran Tanah" />}
+          element={<SimulasiPencemaranTanah />}
         />
         <Route
           path="/simulasi/udara"
-          element={<SubPage title="Simulasi Pencemaran Udara" />}
+          element={<SimulasiPencemaranUdara />}
         />
 
         <Route path="/kuis" element={<SubPage title="Kuis" />} />
