@@ -8,6 +8,7 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
+  base: process.env.NODE_ENV === 'production' ? '/si-zat_ESD/' : '/',
   server: {
     host: true,
     port: 5173,

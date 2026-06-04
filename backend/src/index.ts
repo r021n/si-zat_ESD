@@ -18,5 +18,14 @@ app.get('/api/health', (c) => c.json({ status: 'ok', version: 'hono-4.12.23' }))
 app.route('/api/auth', authRoute)
 
 const port = Number(process.env.PORT) || 8787
-console.log(`API running on http://localhost:${port}`)
-serve({ fetch: app.fetch, port })
+
+if (!process.env.VERCEL) {
+  import('@hono/node-server').then(({ serve }) => {
+    console.log(`API running on http://localhost:${port}`)
+    serve({ fetch: app.fetch, port })
+  }).catch(err => {
+    console.error('Failed to start local server:', err)
+  })
+}
+
+export default app
