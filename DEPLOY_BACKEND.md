@@ -40,9 +40,36 @@ export default app // Ekspor default wajib untuk Vercel
 > [!NOTE]
 > Modul `@hono/node-server/vercel` yang lama kini sudah tidak digunakan lagi (deprecated). Pendekatan modern menggunakan `export default app` secara langsung jauh lebih stabil, efisien, dan otomatis terintegrasi dengan infrastruktur **Vercel Fluid Compute**.
 
+## 3. Konfigurasi `vercel.json` (Solusi Error Output Directory "public")
+
+Secara default, Vercel terkadang mengidentifikasi proyek backend murni sebagai static-site frontend dan mencari direktori output statis seperti `public` atau `dist` yang menyebabkan error:
+`Error: No Output Directory named "public" found...`
+
+Untuk mengatasi hal ini, kami telah membuat file [backend/vercel.json](file:///d:/coding/order/si-zat_ESD/backend/vercel.json) di folder backend dengan konfigurasi berikut:
+
+```json
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "src/index.ts",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "src/index.ts"
+    }
+  ]
+}
+```
+
+Konfigurasi ini memberitahukan Vercel untuk membangun file `src/index.ts` menggunakan engine `@vercel/node` sebagai Serverless Function dan merutekan semua path request ke entrypoint tersebut, sehingga Vercel tidak lagi mencari folder `public` statis.
+
 ---
 
-## 3. Langkah Deployment via Vercel Dashboard (Rekomendasi)
+## 4. Langkah Deployment via Vercel Dashboard (Rekomendasi)
 
 Metode ini paling direkomendasikan karena otomatis melakukan re-deploy setiap kali Anda melakukan push ke branch `main`.
 
@@ -54,7 +81,7 @@ Metode ini paling direkomendasikan karena otomatis melakukan re-deploy setiap ka
    - **Framework Preset**: Pilih **Other** (atau biarkan default).
    - **Root Directory**: Klik **Edit** dan pilih folder **`backend`** (karena ini adalah proyek monorepo).
 5. Pada bagian **Build and Development Settings**:
-   - Biarkan kosong (Default). Vercel akan membaca file `src/index.ts` secara otomatis menggunakan engine Node.js builder bawaan.
+   - Biarkan kosong (Default). Vercel akan otomatis menggunakan konfigurasi dari file `vercel.json` yang ada di root folder `backend` Anda.
 6. Pada bagian **Environment Variables**, tambahkan variabel berikut:
    - `TURSO_DATABASE_URL` = (URL database Turso Anda)
    - `TURSO_AUTH_TOKEN` = (Auth token database Turso Anda)
@@ -63,7 +90,7 @@ Metode ini paling direkomendasikan karena otomatis melakukan re-deploy setiap ka
 
 ---
 
-## 4. Langkah Deployment via Vercel CLI (Alternatif Cepat)
+## 5. Langkah Deployment via Vercel CLI (Alternatif Cepat)
 
 Jika Anda ingin melakukan deploy langsung dari terminal komputer lokal Anda:
 
@@ -97,7 +124,7 @@ Jika Anda ingin melakukan deploy langsung dari terminal komputer lokal Anda:
 
 ---
 
-## 5. Konfigurasi Keamanan CORS (Opsional)
+## 6. Konfigurasi Keamanan CORS (Opsional)
 
 Secara default, CORS pada [backend/src/index.ts](file:///d:/coding/order/si-zat_ESD/backend/src/index.ts) telah diset ke `*` untuk memudahkan proses pengembangan:
 
