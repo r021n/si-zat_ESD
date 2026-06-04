@@ -10,6 +10,7 @@ import Auth from "./pages/Auth";
 import MainMenu from "./pages/MainMenu";
 import Simulasi from "./pages/Simulasi";
 import ProfileReport from "./pages/ProfileReport";
+import SimulasiPencemaranAir from "./components/simulations/water_pollution";
 import { useAuthStore } from "./store/authStore";
 
 // Reusable minimal subpage to demonstrate working navigation
@@ -78,7 +79,7 @@ function AppContent() {
         <Route path="/simulasi" element={<Simulasi />} />
         <Route
           path="/simulasi/air"
-          element={<SubPage title="Simulasi Pencemaran Air" />}
+          element={<SimulasiPencemaranAir />}
         />
         <Route
           path="/simulasi/eutrofikasi"
