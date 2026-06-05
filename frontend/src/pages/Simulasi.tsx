@@ -7,6 +7,16 @@ export default function Simulasi() {
   const { user } = useAuthStore();
 
   useEffect(() => {
+    // Clear all simulation reload flags when entering the menu
+    for (let i = sessionStorage.length - 1; i >= 0; i--) {
+      const key = sessionStorage.key(i);
+      if (key && key.startsWith("refreshed-")) {
+        sessionStorage.removeItem(key);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
     if (!user) {
       navigate("/auth");
     }

@@ -41,15 +41,23 @@ export default function SimulasiPencemaranAir() {
 
   // Dynamically lock orientation to landscape on mount and restore to portrait on unmount
   useEffect(() => {
-    const lockOrientation = async () => {
+    const lockOrientationAndReload = async () => {
       try {
         await ScreenOrientation.lock({ orientation: "landscape" });
       } catch (err) {
         console.warn("ScreenOrientation lock failed or not supported:", err);
       }
+
+      const sessionKey = `refreshed-${window.location.hash}`;
+      if (!sessionStorage.getItem(sessionKey)) {
+        sessionStorage.setItem(sessionKey, "true");
+        setTimeout(() => {
+          window.location.reload();
+        }, 150);
+      }
     };
 
-    lockOrientation();
+    lockOrientationAndReload();
 
     return () => {
       const unlockOrientation = async () => {
@@ -804,7 +812,7 @@ export default function SimulasiPencemaranAir() {
       </header>
 
       {/* DASHBOARD KONTEN UTAMA */}
-      <main className="flex-1 grid grid-cols-12 gap-2.5 p-2.5 overflow-hidden h-[calc(100vh-3rem)]">
+      <main className="flex-1 grid grid-cols-12 gap-2.5 p-2.5 overflow-hidden min-h-0">
         {/* KOLOM 1: INPUT CONTROLS */}
         <section className="col-span-3 bg-white border border-slate-200 rounded-xl p-3 flex flex-col justify-between h-full overflow-y-auto overflow-x-hidden">
           <div className="space-y-2.5">
@@ -1088,7 +1096,7 @@ export default function SimulasiPencemaranAir() {
             <div className="flex-1 flex justify-around items-end pl-6 pb-7 h-full relative z-10">
               {/* DO */}
               <div className="flex flex-col items-center h-full justify-end w-1/5 relative">
-                <div className="relative w-7 sm:w-9 h-full bg-slate-100/60 rounded-md flex flex-col justify-end overflow-visible border border-slate-200/40">
+                <div className="relative w-7 sm:w-9 flex-1 bg-slate-100/60 rounded-md flex flex-col justify-end overflow-visible border border-slate-200/40">
                   <span
                     ref={barDoValRef}
                     className="absolute left-1/2 -translate-x-1/2 text-[9px] font-extrabold font-mono text-emerald-700 whitespace-nowrap bg-emerald-50 border border-emerald-200 px-1 py-0.2 rounded shadow-sm transition-all duration-300 ease-out"
@@ -1112,7 +1120,7 @@ export default function SimulasiPencemaranAir() {
 
               {/* pH */}
               <div className="flex flex-col items-center h-full justify-end w-1/5 relative">
-                <div className="relative w-7 sm:w-9 h-full bg-slate-100/60 rounded-md flex flex-col justify-end overflow-visible border border-slate-200/40">
+                <div className="relative w-7 sm:w-9 flex-1 bg-slate-100/60 rounded-md flex flex-col justify-end overflow-visible border border-slate-200/40">
                   <span
                     ref={barPhValRef}
                     className="absolute left-1/2 -translate-x-1/2 text-[9px] font-extrabold font-mono text-blue-700 whitespace-nowrap bg-blue-50 border border-blue-200 px-1 py-0.2 rounded shadow-sm transition-all duration-300 ease-out"
@@ -1136,7 +1144,7 @@ export default function SimulasiPencemaranAir() {
 
               {/* BOD */}
               <div className="flex flex-col items-center h-full justify-end w-1/5 relative">
-                <div className="relative w-7 sm:w-9 h-full bg-slate-100/60 rounded-md flex flex-col justify-end overflow-visible border border-slate-200/40">
+                <div className="relative w-7 sm:w-9 flex-1 bg-slate-100/60 rounded-md flex flex-col justify-end overflow-visible border border-slate-200/40">
                   <span
                     ref={barBodValRef}
                     className="absolute left-1/2 -translate-x-1/2 text-[9px] font-extrabold font-mono text-amber-700 whitespace-nowrap bg-amber-50 border border-amber-200 px-1 py-0.2 rounded shadow-sm transition-all duration-300 ease-out"
@@ -1160,7 +1168,7 @@ export default function SimulasiPencemaranAir() {
 
               {/* COD */}
               <div className="flex flex-col items-center h-full justify-end w-1/5 relative">
-                <div className="relative w-7 sm:w-9 h-full bg-slate-100/60 rounded-md flex flex-col justify-end overflow-visible border border-slate-200/40">
+                <div className="relative w-7 sm:w-9 flex-1 bg-slate-100/60 rounded-md flex flex-col justify-end overflow-visible border border-slate-200/40">
                   <span
                     ref={barCodValRef}
                     className="absolute left-1/2 -translate-x-1/2 text-[9px] font-extrabold font-mono text-orange-700 whitespace-nowrap bg-orange-50 border border-orange-200 px-1 py-0.2 rounded shadow-sm transition-all duration-300 ease-out"
@@ -1184,7 +1192,7 @@ export default function SimulasiPencemaranAir() {
 
               {/* POLUTAN */}
               <div className="flex flex-col items-center h-full justify-end w-1/5 relative">
-                <div className="relative w-7 sm:w-9 h-full bg-slate-100/60 rounded-md flex flex-col justify-end overflow-visible border border-slate-200/40">
+                <div className="relative w-7 sm:w-9 flex-1 bg-slate-100/60 rounded-md flex flex-col justify-end overflow-visible border border-slate-200/40">
                   <span
                     ref={barPolValRef}
                     className="absolute left-1/2 -translate-x-1/2 text-[9px] font-extrabold font-mono text-rose-700 whitespace-nowrap bg-rose-50 border border-rose-200 px-1 py-0.2 rounded shadow-sm transition-all duration-300 ease-out"

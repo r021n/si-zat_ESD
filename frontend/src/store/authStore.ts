@@ -35,6 +35,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       const data = await loginApi(email, password);
       localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
       set({ user: data.user, token: data.token, loading: false });
     } catch (err: any) {
       set({ error: err.message, loading: false });
@@ -47,6 +48,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       const data = await registerApi(email, kelas, password);
       localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
       set({ user: data.user, token: data.token, loading: false });
     } catch (err: any) {
       set({ error: err.message, loading: false });
@@ -56,23 +58,55 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   logout: () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("user");
     set({ user: null, token: null, error: null });
   },
 
   checkAuth: async () => {
     const token = localStorage.getItem("token");
+    const cachedUserStr = localStorage.getItem("user");
+    let cachedUser = null;
+
+    if (cachedUserStr) {
+      try {
+        cachedUser = JSON.parse(cachedUserStr);
+      } catch (e) {
+        // ignore
+      }
+    }
+
     if (!token) {
       set({ initialized: true });
       return;
     }
 
+    // Optimistically set user from cache so the interface loads immediately
+    if (cachedUser) {
+      set({ user: cachedUser, token });
+    }
+
     try {
       const data = await getMeApi(token);
+      localStorage.setItem("user", JSON.stringify(data.user));
       set({ user: data.user, token, initialized: true });
-    } catch (err) {
-      // Clear token if invalid or expired
-      localStorage.removeItem("token");
-      set({ user: null, token: null, initialized: true });
+    } catch (err: any) {
+      // Check if it's a network/offline error
+      const isNetworkError = err instanceof TypeError || (err.message && (
+        err.message.includes("Failed to fetch") || 
+        err.message.includes("network") || 
+        err.message.includes("NetworkError") ||
+        err.message.includes("Load failed")
+      ));
+
+      if (!isNetworkError) {
+        // Clear token and user ONLY if the token is invalid or expired
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        set({ user: null, token: null, initialized: true });
+      } else {
+        // If it's a network error, keep using the cached user data but finish loading
+        set({ initialized: true });
+      }
     }
   },
 
@@ -84,6 +118,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       const data = await updateProfileApi(token, { kelas, nama });
       localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
       set({ user: data.user, token: data.token, loading: false });
     } catch (err: any) {
       set({ error: err.message, loading: false });

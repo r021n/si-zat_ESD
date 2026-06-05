@@ -1,15 +1,25 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuthStore } from "../store/authStore";
 import Login from "../components/auth/Login";
 import Register from "../components/auth/Register";
 
 export default function Auth() {
   const [mode, setMode] = useState<"login" | "register">("login");
   const navigate = useNavigate();
+  const { user } = useAuthStore();
+
+  useEffect(() => {
+    if (user) {
+      navigate("/menu", { replace: true });
+    }
+  }, [user, navigate]);
 
   const handleAuthSuccess = () => {
     navigate("/menu");
   };
+
+  if (user) return null; // Avoid rendering login/register briefly before redirecting
 
   return (
     <div className="w-full min-h-screen bg-white flex justify-center items-center text-black font-sans">

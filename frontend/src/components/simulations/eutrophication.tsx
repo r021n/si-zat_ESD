@@ -38,15 +38,23 @@ export default function SimulasiEutrofikasi() {
 
   // Dynamically lock orientation to landscape on mount and restore to portrait on unmount
   useEffect(() => {
-    const lockOrientation = async () => {
+    const lockOrientationAndReload = async () => {
       try {
         await ScreenOrientation.lock({ orientation: "landscape" });
       } catch (err) {
         console.warn("ScreenOrientation lock failed or not supported:", err);
       }
+
+      const sessionKey = `refreshed-${window.location.hash}`;
+      if (!sessionStorage.getItem(sessionKey)) {
+        sessionStorage.setItem(sessionKey, "true");
+        setTimeout(() => {
+          window.location.reload();
+        }, 150);
+      }
     };
 
-    lockOrientation();
+    lockOrientationAndReload();
 
     return () => {
       const unlockOrientation = async () => {
@@ -756,7 +764,7 @@ export default function SimulasiEutrofikasi() {
   };
 
   return (
-    <div className="bg-slate-50 text-slate-800 flex flex-col h-screen select-none font-sans overflow-hidden w-full">
+    <div className="bg-slate-50 text-slate-800 flex flex-col select-none font-sans overflow-hidden w-full h-screen">
       {/* HEADER RINGKAS */}
       <header className="bg-white border-b border-slate-200 px-5 py-2 flex justify-between items-center h-12 shrink-0">
         <div className="flex items-center gap-2">
@@ -800,7 +808,7 @@ export default function SimulasiEutrofikasi() {
       </header>
 
       {/* AREA UTAMA LANDSCAPE */}
-      <main className="flex-1 grid grid-cols-12 gap-3 p-3 overflow-hidden h-[calc(100vh-3rem)]">
+      <main className="flex-1 grid grid-cols-12 gap-3 p-3 overflow-hidden min-h-0">
         {/* KOLOM 1: PANEL KONTROL */}
         <section className="col-span-3 bg-white border border-slate-200 rounded-2xl p-4 flex flex-col justify-between h-full overflow-y-auto shadow-sm">
           <div className="space-y-4">
@@ -1039,7 +1047,7 @@ export default function SimulasiEutrofikasi() {
             <div className="flex-1 flex justify-around items-end pl-7 pb-8 h-full relative z-10">
               {/* Nutrien */}
               <div className="flex flex-col items-center h-full justify-end w-1/4 relative">
-                <div className="relative w-8 h-full bg-slate-100/50 rounded-lg flex flex-col justify-end overflow-visible border border-slate-100">
+                <div className="relative w-8 flex-1 bg-slate-100/50 rounded-lg flex flex-col justify-end overflow-visible border border-slate-100">
                   <span
                     ref={barNutValRef}
                     className="absolute left-1/2 -translate-x-1/2 text-[9px] font-extrabold font-mono text-amber-700 whitespace-nowrap bg-amber-50 border border-amber-200 px-1 py-0.2 rounded shadow-sm transition-all duration-300"
@@ -1063,7 +1071,7 @@ export default function SimulasiEutrofikasi() {
 
               {/* Alga */}
               <div className="flex flex-col items-center h-full justify-end w-1/4 relative">
-                <div className="relative w-8 h-full bg-slate-100/50 rounded-lg flex flex-col justify-end overflow-visible border border-slate-100">
+                <div className="relative w-8 flex-1 bg-slate-100/50 rounded-lg flex flex-col justify-end overflow-visible border border-slate-100">
                   <span
                     ref={barAlgValRef}
                     className="absolute left-1/2 -translate-x-1/2 text-[9px] font-extrabold font-mono text-emerald-700 whitespace-nowrap bg-emerald-50 border border-emerald-200 px-1 py-0.2 rounded shadow-sm transition-all duration-300"
@@ -1087,7 +1095,7 @@ export default function SimulasiEutrofikasi() {
 
               {/* DO */}
               <div className="flex flex-col items-center h-full justify-end w-1/4 relative">
-                <div className="relative w-8 h-full bg-slate-100/50 rounded-lg flex flex-col justify-end overflow-visible border border-slate-100">
+                <div className="relative w-8 flex-1 bg-slate-100/50 rounded-lg flex flex-col justify-end overflow-visible border border-slate-100">
                   <span
                     ref={barDoValRef}
                     className="absolute left-1/2 -translate-x-1/2 text-[9px] font-extrabold font-mono text-sky-700 whitespace-nowrap bg-sky-50 border border-sky-200 px-1 py-0.2 rounded shadow-sm transition-all duration-300"
@@ -1111,7 +1119,7 @@ export default function SimulasiEutrofikasi() {
 
               {/* BOD */}
               <div className="flex flex-col items-center h-full justify-end w-1/4 relative">
-                <div className="relative w-8 h-full bg-slate-100/50 rounded-lg flex flex-col justify-end overflow-visible border border-slate-100">
+                <div className="relative w-8 flex-1 bg-slate-100/50 rounded-lg flex flex-col justify-end overflow-visible border border-slate-100">
                   <span
                     ref={barBodValRef}
                     className="absolute left-1/2 -translate-x-1/2 text-[9px] font-extrabold font-mono text-rose-700 whitespace-nowrap bg-rose-50 border border-rose-200 px-1 py-0.2 rounded shadow-sm transition-all duration-300"

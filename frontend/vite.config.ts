@@ -3,14 +3,18 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
 // https://vite.dev/config/
-export default defineConfig({
-  plugins: [
-    react(),
-    tailwindcss(),
-  ],
-  base: process.env.NODE_ENV === 'production' ? '/si-zat_ESD/' : '/',
-  server: {
-    host: true,
-    port: 5173,
-  },
+export default defineConfig(({ mode }) => {
+  const isCapacitor = mode === 'capacitor';
+
+  return {
+    plugins: [
+      react(),
+      tailwindcss(),
+    ],
+    base: isCapacitor ? '/' : (process.env.NODE_ENV === 'production' ? '/si-zat_ESD/' : '/'),
+    server: {
+      host: true,
+      port: 5173,
+    },
+  }
 })
