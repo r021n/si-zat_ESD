@@ -8,6 +8,7 @@ import {
 } from "react-router-dom";
 import Auth from "./pages/Auth";
 import MainMenu from "./pages/MainMenu";
+import Onboarding from "./pages/Onboarding";
 import Simulasi from "./pages/Simulasi";
 import ProfileReport from "./pages/ProfileReport";
 import SimulasiPencemaranAir from "./components/simulations/water_pollution";
@@ -62,8 +63,8 @@ function AppContent() {
   return (
     <Router>
       <Routes>
-        {/* Default route redirects to Auth */}
-        <Route path="/" element={<Navigate to="/auth" replace />} />
+        {/* Default route renders Onboarding page */}
+        <Route path="/" element={<Onboarding />} />
 
         {/* Auth Route (Login & Register switcher) */}
         <Route path="/auth" element={<Auth />} />
