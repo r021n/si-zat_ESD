@@ -95,6 +95,28 @@ export default function SimulasiPencemaranTanah() {
   const [trashType, setTrashType] = useState<TrashType>("organik");
   const [jumlahSampah, setJumlahSampah] = useState<number>(20);
   const [hujan, setHujan] = useState<number>(4);
+  const [isHudExpanded, setIsHudExpanded] = useState<boolean>(false);
+  const hudTimerRef = useRef<any>(null);
+
+  const openHud = () => {
+    setIsHudExpanded(true);
+    if (hudTimerRef.current) clearTimeout(hudTimerRef.current);
+    hudTimerRef.current = setTimeout(() => {
+      setIsHudExpanded(false);
+    }, 5000);
+  };
+
+  const closeHud = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsHudExpanded(false);
+    if (hudTimerRef.current) clearTimeout(hudTimerRef.current);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (hudTimerRef.current) clearTimeout(hudTimerRef.current);
+    };
+  }, []);
 
   // --- REFS UNTUK ELEMENT DOM (Akses Cepat 60 FPS Tanpa Hambatan Siklus React) ---
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -562,133 +584,134 @@ export default function SimulasiPencemaranTanah() {
           state.toxicity = Math.max(0, state.toxicity - 0.05);
         }
 
-        // --- MANIPULASI ELEMENT DOM DIREK (60 FPS STABLE OVERPASS) ---
-        const pctPH = Math.min(100, Math.max(0, (state.pH / 14) * 100));
-        if (barPhRef.current) barPhRef.current.style.height = `${pctPH}%`;
-        if (barSuburRef.current)
-          barSuburRef.current.style.height = `${Math.min(100, state.fertility)}%`;
-        if (barAkarRef.current)
-          barAkarRef.current.style.height = `${Math.min(100, state.rootHealth)}%`;
-        if (barRacunRef.current)
-          barRacunRef.current.style.height = `${Math.min(100, state.toxicity)}%`;
-        if (barPanenRef.current)
-          barPanenRef.current.style.height = `${Math.min(100, state.yield)}%`;
+      }
 
-        if (barPhValRef.current) {
-          barPhValRef.current.style.bottom = `calc(${pctPH}% + 4px)`;
-          barPhValRef.current.innerText = state.pH.toFixed(1);
-        }
-        if (barSuburValRef.current) {
-          barSuburValRef.current.style.bottom = `calc(${Math.min(100, state.fertility)}% + 4px)`;
-          barSuburValRef.current.innerText = `${state.fertility.toFixed(0)}%`;
-        }
-        if (barAkarValRef.current) {
-          barAkarValRef.current.style.bottom = `calc(${Math.min(100, state.rootHealth)}% + 4px)`;
-          barAkarValRef.current.innerText = `${state.rootHealth.toFixed(0)}%`;
-        }
-        if (barRacunValRef.current) {
-          barRacunValRef.current.style.bottom = `calc(${Math.min(100, state.toxicity)}% + 4px)`;
-          barRacunValRef.current.innerText = `${state.toxicity.toFixed(0)}%`;
-        }
-        if (barPanenValRef.current) {
-          barPanenValRef.current.style.bottom = `calc(${Math.min(100, state.yield)}% + 4px)`;
-          barPanenValRef.current.innerText = `${state.yield.toFixed(0)}%`;
-        }
+      // --- MANIPULASI ELEMENT DOM DIREK (60 FPS STABLE OVERPASS) ---
+      const pctPH = Math.min(100, Math.max(0, (state.pH / 14) * 100));
+      if (barPhRef.current) barPhRef.current.style.height = `${pctPH}%`;
+      if (barSuburRef.current)
+        barSuburRef.current.style.height = `${Math.min(100, state.fertility)}%`;
+      if (barAkarRef.current)
+        barAkarRef.current.style.height = `${Math.min(100, state.rootHealth)}%`;
+      if (barRacunRef.current)
+        barRacunRef.current.style.height = `${Math.min(100, state.toxicity)}%`;
+      if (barPanenRef.current)
+        barPanenRef.current.style.height = `${Math.min(100, state.yield)}%`;
 
-        const alive = fishArrayRef.current.filter(
-          (f) => f.state !== "dead",
-        ).length;
-        const dead = fishArrayRef.current.length - alive;
-        if (hudFishAliveRef.current)
-          hudFishAliveRef.current.innerText = String(alive);
-        if (hudFishDeadRef.current)
-          hudFishDeadRef.current.innerText = String(dead);
+      if (barPhValRef.current) {
+        barPhValRef.current.style.bottom = `calc(${pctPH}% + 4px)`;
+        barPhValRef.current.innerText = state.pH.toFixed(1);
+      }
+      if (barSuburValRef.current) {
+        barSuburValRef.current.style.bottom = `calc(${Math.min(100, state.fertility)}% + 4px)`;
+        barSuburValRef.current.innerText = `${state.fertility.toFixed(0)}%`;
+      }
+      if (barAkarValRef.current) {
+        barAkarValRef.current.style.bottom = `calc(${Math.min(100, state.rootHealth)}% + 4px)`;
+        barAkarValRef.current.innerText = `${state.rootHealth.toFixed(0)}%`;
+      }
+      if (barRacunValRef.current) {
+        barRacunValRef.current.style.bottom = `calc(${Math.min(100, state.toxicity)}% + 4px)`;
+        barRacunValRef.current.innerText = `${state.toxicity.toFixed(0)}%`;
+      }
+      if (barPanenValRef.current) {
+        barPanenValRef.current.style.bottom = `calc(${Math.min(100, state.yield)}% + 4px)`;
+        barPanenValRef.current.innerText = `${state.yield.toFixed(0)}%`;
+      }
 
-        if (hudRootStatusRef.current && hudLeafStatusRef.current) {
-          if (state.rootHealth > 75) {
-            hudRootStatusRef.current.innerText = "Normal Sehat";
-            hudLeafStatusRef.current.innerText = "Segar Hijau";
-            hudLeafStatusRef.current.className =
-              "font-mono font-bold text-emerald-600";
-          } else if (state.rootHealth > 35) {
-            hudRootStatusRef.current.innerText = "Terganggu";
-            hudLeafStatusRef.current.innerText = "Mulai Layu";
-            hudLeafStatusRef.current.className =
-              "font-mono font-bold text-amber-500 animate-pulse";
-          } else {
-            hudRootStatusRef.current.innerText = "Membusuk";
-            hudLeafStatusRef.current.innerText = "Kering Mati";
-            hudLeafStatusRef.current.className =
-              "font-mono font-bold text-rose-500";
-          }
+      const alive = fishArrayRef.current.filter(
+        (f) => f.state !== "dead",
+      ).length;
+      const dead = fishArrayRef.current.length - alive;
+      if (hudFishAliveRef.current)
+        hudFishAliveRef.current.innerText = String(alive);
+      if (hudFishDeadRef.current)
+        hudFishDeadRef.current.innerText = String(dead);
+
+      if (hudRootStatusRef.current && hudLeafStatusRef.current) {
+        if (state.rootHealth > 75) {
+          hudRootStatusRef.current.innerText = "Normal Sehat";
+          hudLeafStatusRef.current.innerText = "Segar Hijau";
+          hudLeafStatusRef.current.className =
+            "font-mono font-bold text-emerald-600";
+        } else if (state.rootHealth > 35) {
+          hudRootStatusRef.current.innerText = "Terganggu";
+          hudLeafStatusRef.current.innerText = "Mulai Layu";
+          hudLeafStatusRef.current.className =
+            "font-mono font-bold text-amber-500 animate-pulse";
+        } else {
+          hudRootStatusRef.current.innerText = "Membusuk";
+          hudLeafStatusRef.current.innerText = "Kering Mati";
+          hudLeafStatusRef.current.className =
+            "font-mono font-bold text-rose-500";
         }
+      }
 
-        if (txtWarnaRef.current) {
-          if (state.toxicity < 15) {
-            txtWarnaRef.current.innerText = "Biru Jernih";
-            txtWarnaRef.current.className =
-              "text-[10px] font-bold text-sky-600";
-          } else if (state.toxicity < 50) {
-            txtWarnaRef.current.innerText = "Mulai Keruh";
-            txtWarnaRef.current.className =
-              "text-[10px] font-bold text-slate-500";
-          } else {
-            txtWarnaRef.current.innerText = "Limbah Pekat";
-            txtWarnaRef.current.className =
-              "text-[10px] font-bold text-amber-800 animate-pulse";
-          }
+      if (txtWarnaRef.current) {
+        if (state.toxicity < 15) {
+          txtWarnaRef.current.innerText = "Biru Jernih";
+          txtWarnaRef.current.className =
+            "text-[10px] font-bold text-sky-600";
+        } else if (state.toxicity < 50) {
+          txtWarnaRef.current.innerText = "Mulai Keruh";
+          txtWarnaRef.current.className =
+            "text-[10px] font-bold text-slate-500";
+        } else {
+          txtWarnaRef.current.innerText = "Limbah Pekat";
+          txtWarnaRef.current.className =
+            "text-[10px] font-bold text-amber-800 animate-pulse";
         }
+      }
 
-        if (txtPerilakuRef.current) {
-          if (state.rootHealth > 75) {
-            txtPerilakuRef.current.innerText = "Tumbuh Normal";
-            txtPerilakuRef.current.className =
-              "text-[10px] font-bold text-emerald-500";
-          } else if (state.rootHealth > 35) {
-            txtPerilakuRef.current.innerText = "Pertumbuhan Terhenti";
-            txtPerilakuRef.current.className =
-              "text-[10px] font-bold text-amber-500";
-          } else {
-            txtPerilakuRef.current.innerText = "Akar Mati";
-            txtPerilakuRef.current.className =
-              "text-[10px] font-bold text-red-600 font-extrabold";
-          }
+      if (txtPerilakuRef.current) {
+        if (state.rootHealth > 75) {
+          txtPerilakuRef.current.innerText = "Tumbuh Normal";
+          txtPerilakuRef.current.className =
+            "text-[10px] font-bold text-emerald-500";
+        } else if (state.rootHealth > 35) {
+          txtPerilakuRef.current.innerText = "Pertumbuhan Terhenti";
+          txtPerilakuRef.current.className =
+            "text-[10px] font-bold text-amber-500";
+        } else {
+          txtPerilakuRef.current.innerText = "Akar Mati";
+          txtPerilakuRef.current.className =
+            "text-[10px] font-bold text-red-600 font-extrabold";
         }
+      }
 
-        if (txtPanenRef.current) {
-          if (state.yield > 75) {
-            txtPanenRef.current.innerText = "Sangat Banyak";
-            txtPanenRef.current.className =
-              "text-[10px] font-bold text-emerald-600";
-          } else if (state.yield > 35) {
-            txtPanenRef.current.innerText = "Sedikit";
-            txtPanenRef.current.className =
-              "text-[10px] font-bold text-amber-500";
-          } else if (state.yield > 2) {
-            txtPanenRef.current.innerText = "Hampir Gagal";
-            txtPanenRef.current.className =
-              "text-[10px] font-bold text-rose-400";
-          } else {
-            txtPanenRef.current.innerText = "Gagal Panen";
-            txtPanenRef.current.className =
-              "text-[10px] font-bold text-red-600 font-extrabold";
-          }
+      if (txtPanenRef.current) {
+        if (state.yield > 75) {
+          txtPanenRef.current.innerText = "Sangat Banyak";
+          txtPanenRef.current.className =
+            "text-[10px] font-bold text-emerald-600";
+        } else if (state.yield > 35) {
+          txtPanenRef.current.innerText = "Sedikit";
+          txtPanenRef.current.className =
+            "text-[10px] font-bold text-amber-500";
+        } else if (state.yield > 2) {
+          txtPanenRef.current.innerText = "Hampir Gagal";
+          txtPanenRef.current.className =
+            "text-[10px] font-bold text-rose-400";
+        } else {
+          txtPanenRef.current.innerText = "Gagal Panen";
+          txtPanenRef.current.className =
+            "text-[10px] font-bold text-red-600 font-extrabold";
         }
+      }
 
-        if (tanahStatusBadgeRef.current) {
-          if (state.rootHealth > 70 && state.toxicity < 25) {
-            tanahStatusBadgeRef.current.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Sehat Subur`;
-            tanahStatusBadgeRef.current.className =
-              "px-2 py-0.5 rounded-full text-[9px] font-bold border flex items-center gap-1 bg-emerald-100 text-emerald-700 border-emerald-200";
-          } else if (state.rootHealth > 35 && state.toxicity < 60) {
-            tanahStatusBadgeRef.current.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span> Degradasi`;
-            tanahStatusBadgeRef.current.className =
-              "px-2 py-0.5 rounded-full text-[9px] font-bold border flex items-center gap-1 bg-amber-100 text-amber-700 border-amber-200";
-          } else {
-            tanahStatusBadgeRef.current.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span> Krisis Rusak`;
-            tanahStatusBadgeRef.current.className =
-              "px-2 py-0.5 rounded-full text-[9px] font-bold border flex items-center gap-1 bg-red-100 text-red-700 border-red-200";
-          }
+      if (tanahStatusBadgeRef.current) {
+        if (state.rootHealth > 70 && state.toxicity < 25) {
+          tanahStatusBadgeRef.current.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Sehat Subur`;
+          tanahStatusBadgeRef.current.className =
+            "px-2 py-0.5 rounded-full text-[9px] font-bold border flex items-center gap-1 bg-emerald-100 text-emerald-700 border-emerald-200";
+        } else if (state.rootHealth > 35 && state.toxicity < 60) {
+          tanahStatusBadgeRef.current.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span> Degradasi`;
+          tanahStatusBadgeRef.current.className =
+            "px-2 py-0.5 rounded-full text-[9px] font-bold border flex items-center gap-1 bg-amber-100 text-amber-700 border-amber-200";
+        } else {
+          tanahStatusBadgeRef.current.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span> Krisis Rusak`;
+          tanahStatusBadgeRef.current.className =
+            "px-2 py-0.5 rounded-full text-[9px] font-bold border flex items-center gap-1 bg-red-100 text-red-700 border-red-200";
         }
       }
 
@@ -1030,8 +1053,46 @@ export default function SimulasiPencemaranTanah() {
             <div className="relative flex-1 bg-sky-50/20 rounded-lg overflow-hidden border border-slate-100 shadow-inner">
               <canvas ref={canvasRef} className="w-full h-full block"></canvas>
 
+              {/* Tombol Info HUD */}
+              <button
+                onClick={openHud}
+                className={`absolute bottom-2 left-2 w-5 h-5 bg-white/95 text-slate-700 hover:text-slate-900 border border-slate-200/80 rounded-full flex items-center justify-center font-serif font-bold italic text-[10px] shadow-md hover:scale-105 active:scale-95 cursor-pointer z-20 select-none backdrop-blur-sm transition-all duration-300 ${
+                  isHudExpanded ? "scale-0 opacity-0 pointer-events-none" : "scale-100 opacity-100"
+                }`}
+                title="Tampilkan Info"
+              >
+                i
+              </button>
+
               {/* Overlay HUD Mini */}
-              <div className="absolute bottom-2 left-2 bg-white/90 border border-slate-200/80 p-1.5 rounded shadow-sm text-[9px] space-y-0.5 pointer-events-none backdrop-blur-sm">
+              <div
+                className={`absolute bottom-2 left-2 bg-white/95 border border-slate-200/80 p-1.5 pr-6 rounded shadow-lg text-[9px] space-y-0.5 backdrop-blur-sm z-20 transition-all duration-300 origin-bottom-left ${
+                  isHudExpanded
+                    ? "scale-100 opacity-100 pointer-events-auto"
+                    : "scale-75 opacity-0 pointer-events-none"
+                }`}
+              >
+                {/* Tombol Silang */}
+                <button
+                  onClick={closeHud}
+                  className="absolute top-1 right-1 w-3.5 h-3.5 flex items-center justify-center rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 cursor-pointer transition-all"
+                  title="Tutup"
+                >
+                  <svg
+                    className="w-2 h-2"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="3"
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+
                 <div className="flex justify-between gap-3 text-slate-600">
                   <span>Akar Tanaman:</span>
                   <span
@@ -1074,38 +1135,44 @@ export default function SimulasiPencemaranTanah() {
           </div>
 
           <div className="grid grid-cols-3 gap-1.5 mt-2 text-center shrink-0">
-            <div className="p-1 bg-slate-50 rounded border border-slate-100">
-              <span className="block text-[8px] text-slate-400 uppercase font-bold">
+            <div className="p-1 bg-slate-50 rounded border border-slate-100 flex flex-col justify-center items-center min-h-[42px]">
+              <span className="block text-[8px] text-slate-400 uppercase font-bold leading-none mb-0.5">
                 Kondisi Air
               </span>
-              <span
-                ref={txtWarnaRef}
-                className="text-[10px] font-bold text-sky-600"
-              >
-                Biru Jernih
-              </span>
+              <div className="leading-[1.15] text-center w-full">
+                <span
+                  ref={txtWarnaRef}
+                  className="text-[10px] font-bold text-sky-600"
+                >
+                  Biru Jernih
+                </span>
+              </div>
             </div>
-            <div className="p-1 bg-slate-50 rounded border border-slate-100">
-              <span className="block text-[8px] text-slate-400 uppercase font-bold">
+            <div className="p-1 bg-slate-50 rounded border border-slate-100 flex flex-col justify-center items-center min-h-[42px]">
+              <span className="block text-[8px] text-slate-400 uppercase font-bold leading-none mb-0.5">
                 Biota Akar
               </span>
-              <span
-                ref={txtPerilakuRef}
-                className="text-[10px] font-bold text-emerald-500"
-              >
-                Tumbuh Normal
-              </span>
+              <div className="leading-[1.15] text-center w-full">
+                <span
+                  ref={txtPerilakuRef}
+                  className="text-[10px] font-bold text-emerald-500"
+                >
+                  Tumbuh Normal
+                </span>
+              </div>
             </div>
-            <div className="p-1 bg-slate-50 rounded border border-slate-100">
-              <span className="block text-[8px] text-slate-400 uppercase font-bold">
+            <div className="p-1 bg-slate-50 rounded border border-slate-100 flex flex-col justify-center items-center min-h-[42px]">
+              <span className="block text-[8px] text-slate-400 uppercase font-bold leading-none mb-0.5">
                 Hasil Panen
               </span>
-              <span
-                ref={txtPanenRef}
-                className="text-[10px] font-bold text-slate-500"
-              >
-                Menunggu
-              </span>
+              <div className="leading-[1.15] text-center w-full">
+                <span
+                  ref={txtPanenRef}
+                  className="text-[10px] font-bold text-slate-500"
+                >
+                  Menunggu
+                </span>
+              </div>
             </div>
           </div>
         </section>
@@ -1123,49 +1190,29 @@ export default function SimulasiPencemaranTanah() {
 
           <div className="flex-1 flex flex-col min-h-0 relative mt-2 select-none">
             {/* Grid Line Skala */}
-            <div className="absolute inset-0 flex flex-col justify-between pointer-events-none border-l border-b border-slate-200 pb-7 pl-6">
-              <div className="w-full border-t border-slate-100 relative">
-                <span className="absolute -left-6 -top-2 text-[8px] text-slate-400 font-bold font-mono">
-                  100%
-                </span>
-              </div>
-              <div className="w-full border-t border-slate-100 relative">
-                <span className="absolute -left-6 -top-2 text-[8px] text-slate-400 font-bold font-mono">
-                  75%
-                </span>
-              </div>
-              <div className="w-full border-t border-slate-100 relative">
-                <span className="absolute -left-6 -top-2 text-[8px] text-slate-400 font-bold font-mono">
-                  50%
-                </span>
-              </div>
-              <div className="w-full border-t border-slate-100 relative">
-                <span className="absolute -left-6 -top-2 text-[8px] text-slate-400 font-bold font-mono">
-                  25%
-                </span>
-              </div>
-              <div className="w-full relative">
-                <span className="absolute -left-6 -top-2 text-[8px] text-slate-400 font-bold font-mono">
-                  0%
-                </span>
-              </div>
+            <div className="absolute inset-0 flex flex-col justify-between pointer-events-none border-l border-b border-slate-200 pb-7 pl-2">
+              <div className="w-full border-t border-slate-100"></div>
+              <div className="w-full border-t border-slate-100"></div>
+              <div className="w-full border-t border-slate-100"></div>
+              <div className="w-full border-t border-slate-100"></div>
+              <div className="w-full"></div>
             </div>
 
             {/* Container Batang Grafik */}
-            <div className="flex-1 flex justify-around items-end pl-6 pb-7 h-full relative z-10">
+            <div className="flex-1 flex justify-around items-end pl-2 pb-7 h-full relative z-10">
               {/* pH */}
               <div className="flex flex-col items-center h-full justify-end w-1/5 relative">
                 <div className="relative w-7 sm:w-9 flex-1 bg-slate-100/60 rounded-md flex flex-col justify-end overflow-visible border border-slate-200/40">
                   <span
                     ref={barPhValRef}
-                    className="absolute left-1/2 -translate-x-1/2 text-[9px] font-extrabold font-mono text-emerald-700 whitespace-nowrap bg-emerald-50 border border-emerald-200 px-1 py-0.2 rounded shadow-sm transition-all duration-300 ease-out"
+                    className="absolute left-1/2 -translate-x-1/2 text-[9px] font-extrabold font-mono text-emerald-700 whitespace-nowrap bg-emerald-50 border border-emerald-200 px-1 py-0.2 rounded shadow-sm"
                     style={{ bottom: "50%" }}
                   >
                     7.0
                   </span>
                   <div
                     ref={barPhRef}
-                    className="w-full bg-linear-to-t from-emerald-400 to-emerald-500 rounded-b-md rounded-t-sm transition-all duration-300 ease-out shadow-sm"
+                    className="w-full bg-linear-to-t from-emerald-400 to-emerald-500 rounded-b-md rounded-t-sm shadow-sm"
                     style={{ height: "50%" }}
                   ></div>
                 </div>
@@ -1182,14 +1229,14 @@ export default function SimulasiPencemaranTanah() {
                 <div className="relative w-7 sm:w-9 flex-1 bg-slate-100/60 rounded-md flex flex-col justify-end overflow-visible border border-slate-200/40">
                   <span
                     ref={barSuburValRef}
-                    className="absolute left-1/2 -translate-x-1/2 text-[9px] font-extrabold font-mono text-lime-700 whitespace-nowrap bg-lime-50 border border-lime-200 px-1 py-0.2 rounded shadow-sm transition-all duration-300 ease-out"
+                    className="absolute left-1/2 -translate-x-1/2 text-[9px] font-extrabold font-mono text-lime-700 whitespace-nowrap bg-lime-50 border border-lime-200 px-1 py-0.2 rounded shadow-sm"
                     style={{ bottom: "80%" }}
                   >
                     80%
                   </span>
                   <div
                     ref={barSuburRef}
-                    className="w-full bg-linear-to-t from-lime-400 to-lime-500 rounded-b-md rounded-t-sm transition-all duration-300 ease-out shadow-sm"
+                    className="w-full bg-linear-to-t from-lime-400 to-lime-500 rounded-b-md rounded-t-sm shadow-sm"
                     style={{ height: "80%" }}
                   ></div>
                 </div>
@@ -1206,14 +1253,14 @@ export default function SimulasiPencemaranTanah() {
                 <div className="relative w-7 sm:w-9 flex-1 bg-slate-100/60 rounded-md flex flex-col justify-end overflow-visible border border-slate-200/40">
                   <span
                     ref={barAkarValRef}
-                    className="absolute left-1/2 -translate-x-1/2 text-[9px] font-extrabold font-mono text-amber-700 whitespace-nowrap bg-amber-50 border border-amber-200 px-1 py-0.2 rounded shadow-sm transition-all duration-300 ease-out"
+                    className="absolute left-1/2 -translate-x-1/2 text-[9px] font-extrabold font-mono text-amber-700 whitespace-nowrap bg-amber-50 border border-amber-200 px-1 py-0.2 rounded shadow-sm"
                     style={{ bottom: "100%" }}
                   >
                     100%
                   </span>
                   <div
                     ref={barAkarRef}
-                    className="w-full bg-linear-to-t from-amber-400 to-amber-500 rounded-b-md rounded-t-sm transition-all duration-300 ease-out shadow-sm"
+                    className="w-full bg-linear-to-t from-amber-400 to-amber-500 rounded-b-md rounded-t-sm shadow-sm"
                     style={{ height: "100%" }}
                   ></div>
                 </div>
@@ -1230,14 +1277,14 @@ export default function SimulasiPencemaranTanah() {
                 <div className="relative w-7 sm:w-9 flex-1 bg-slate-100/60 rounded-md flex flex-col justify-end overflow-visible border border-slate-200/40">
                   <span
                     ref={barRacunValRef}
-                    className="absolute left-1/2 -translate-x-1/2 text-[9px] font-extrabold font-mono text-rose-700 whitespace-nowrap bg-rose-50 border border-rose-200 px-1 py-0.2 rounded shadow-sm transition-all duration-300 ease-out"
+                    className="absolute left-1/2 -translate-x-1/2 text-[9px] font-extrabold font-mono text-rose-700 whitespace-nowrap bg-rose-50 border border-rose-200 px-1 py-0.2 rounded shadow-sm"
                     style={{ bottom: "0%" }}
                   >
                     0%
                   </span>
                   <div
                     ref={barRacunRef}
-                    className="w-full bg-linear-to-t from-rose-400 to-rose-500 rounded-b-md rounded-t-sm transition-all duration-300 ease-out shadow-sm"
+                    className="w-full bg-linear-to-t from-rose-400 to-rose-500 rounded-b-md rounded-t-sm shadow-sm"
                     style={{ height: "0%" }}
                   ></div>
                 </div>
@@ -1254,14 +1301,14 @@ export default function SimulasiPencemaranTanah() {
                 <div className="relative w-7 sm:w-9 flex-1 bg-slate-100/60 rounded-md flex flex-col justify-end overflow-visible border border-slate-200/40">
                   <span
                     ref={barPanenValRef}
-                    className="absolute left-1/2 -translate-x-1/2 text-[9px] font-extrabold font-mono text-sky-700 whitespace-nowrap bg-sky-50 border border-sky-200 px-1 py-0.2 rounded shadow-sm transition-all duration-300 ease-out"
+                    className="absolute left-1/2 -translate-x-1/2 text-[9px] font-extrabold font-mono text-sky-700 whitespace-nowrap bg-sky-50 border border-sky-200 px-1 py-0.2 rounded shadow-sm"
                     style={{ bottom: "10%" }}
                   >
                     10%
                   </span>
                   <div
                     ref={barPanenRef}
-                    className="w-full bg-linear-to-t from-sky-400 to-sky-500 rounded-b-md rounded-t-sm transition-all duration-300 ease-out shadow-sm"
+                    className="w-full bg-linear-to-t from-sky-400 to-sky-500 rounded-b-md rounded-t-sm shadow-sm"
                     style={{ height: "10%" }}
                   ></div>
                 </div>

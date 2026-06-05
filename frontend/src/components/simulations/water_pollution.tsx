@@ -85,6 +85,28 @@ export default function SimulasiPencemaranAir() {
   const [checkDomestik, setCheckDomestik] = useState<boolean>(false);
   const [slideDomestik, setSlideDomestik] = useState<number>(50);
   const [slideAliran, setSlideAliran] = useState<number>(5);
+  const [isHudExpanded, setIsHudExpanded] = useState<boolean>(false);
+  const hudTimerRef = useRef<any>(null);
+
+  const openHud = () => {
+    setIsHudExpanded(true);
+    if (hudTimerRef.current) clearTimeout(hudTimerRef.current);
+    hudTimerRef.current = setTimeout(() => {
+      setIsHudExpanded(false);
+    }, 5000);
+  };
+
+  const closeHud = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsHudExpanded(false);
+    if (hudTimerRef.current) clearTimeout(hudTimerRef.current);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (hudTimerRef.current) clearTimeout(hudTimerRef.current);
+    };
+  }, []);
 
   // --- REFS UNTUK ELEMENT DOM (Akses Cepat di Dalam Loop Animasi) ---
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -537,125 +559,126 @@ export default function SimulasiPencemaranAir() {
           );
         }
 
-        // --- UPDATE ELEMEN DOM SECARA LANGSUNG (60FPS PERFORMANCE BOOST) ---
-        const pctDO = Math.min(100, Math.max(0, (state.DO / 10) * 100));
-        const pctPH = Math.min(100, Math.max(0, (state.pH / 14) * 100));
-        const pctBOD = Math.min(100, Math.max(0, (state.BOD / 150) * 100));
-        const pctCOD = Math.min(100, Math.max(0, (state.COD / 150) * 100));
-        const pctPol = Math.min(
-          100,
-          Math.max(0, (state.pollutant / 100) * 100),
-        );
+      }
 
-        if (barDoRef.current) barDoRef.current.style.height = `${pctDO}%`;
-        if (barPhRef.current) barPhRef.current.style.height = `${pctPH}%`;
-        if (barBodRef.current) barBodRef.current.style.height = `${pctBOD}%`;
-        if (barCodRef.current) barCodRef.current.style.height = `${pctCOD}%`;
-        if (barPolRef.current) barPolRef.current.style.height = `${pctPol}%`;
+      // --- UPDATE ELEMEN DOM SECARA LANGSUNG (60FPS PERFORMANCE BOOST) ---
+      const pctDO = Math.min(100, Math.max(0, (state.DO / 10) * 100));
+      const pctPH = Math.min(100, Math.max(0, (state.pH / 14) * 100));
+      const pctBOD = Math.min(100, Math.max(0, (state.BOD / 150) * 100));
+      const pctCOD = Math.min(100, Math.max(0, (state.COD / 150) * 100));
+      const pctPol = Math.min(
+        100,
+        Math.max(0, (state.pollutant / 100) * 100),
+      );
 
-        if (barDoValRef.current) {
-          barDoValRef.current.style.bottom = `calc(${pctDO}% + 4px)`;
-          barDoValRef.current.innerText = state.DO.toFixed(2);
-        }
-        if (barPhValRef.current) {
-          barPhValRef.current.style.bottom = `calc(${pctPH}% + 4px)`;
-          barPhValRef.current.innerText = state.pH.toFixed(1);
-        }
-        if (barBodValRef.current) {
-          barBodValRef.current.style.bottom = `calc(${pctBOD}% + 4px)`;
-          barBodValRef.current.innerText = state.BOD.toFixed(2);
-        }
-        if (barCodValRef.current) {
-          barCodValRef.current.style.bottom = `calc(${pctCOD}% + 4px)`;
-          barCodValRef.current.innerText = state.COD.toFixed(2);
-        }
-        if (barPolValRef.current) {
-          barPolValRef.current.style.bottom = `calc(${pctPol}% + 4px)`;
-          barPolValRef.current.innerText = state.pollutant.toFixed(2);
-        }
+      if (barDoRef.current) barDoRef.current.style.height = `${pctDO}%`;
+      if (barPhRef.current) barPhRef.current.style.height = `${pctPH}%`;
+      if (barBodRef.current) barBodRef.current.style.height = `${pctBOD}%`;
+      if (barCodRef.current) barCodRef.current.style.height = `${pctCOD}%`;
+      if (barPolRef.current) barPolRef.current.style.height = `${pctPol}%`;
 
-        const aliveFish = fishArrayRef.current.filter(
-          (f) => f.state !== "dead",
-        ).length;
-        const deadFish = fishArrayRef.current.length - aliveFish;
-        if (hudFishRef.current)
-          hudFishRef.current.innerText = String(aliveFish);
-        if (hudDeadFishRef.current)
-          hudDeadFishRef.current.innerText = String(deadFish);
+      if (barDoValRef.current) {
+        barDoValRef.current.style.bottom = `calc(${pctDO}% + 4px)`;
+        barDoValRef.current.innerText = state.DO.toFixed(2);
+      }
+      if (barPhValRef.current) {
+        barPhValRef.current.style.bottom = `calc(${pctPH}% + 4px)`;
+        barPhValRef.current.innerText = state.pH.toFixed(1);
+      }
+      if (barBodValRef.current) {
+        barBodValRef.current.style.bottom = `calc(${pctBOD}% + 4px)`;
+        barBodValRef.current.innerText = state.BOD.toFixed(2);
+      }
+      if (barCodValRef.current) {
+        barCodValRef.current.style.bottom = `calc(${pctCOD}% + 4px)`;
+        barCodValRef.current.innerText = state.COD.toFixed(2);
+      }
+      if (barPolValRef.current) {
+        barPolValRef.current.style.bottom = `calc(${pctPol}% + 4px)`;
+        barPolValRef.current.innerText = state.pollutant.toFixed(2);
+      }
 
-        const transparency = Math.max(0, 100 - state.pollutant * 1.3).toFixed(
-          0,
-        );
-        if (hudTransparencyRef.current)
-          hudTransparencyRef.current.innerText = `${transparency}%`;
+      const aliveFish = fishArrayRef.current.filter(
+        (f) => f.state !== "dead",
+      ).length;
+      const deadFish = fishArrayRef.current.length - aliveFish;
+      if (hudFishRef.current)
+        hudFishRef.current.innerText = String(aliveFish);
+      if (hudDeadFishRef.current)
+        hudDeadFishRef.current.innerText = String(deadFish);
 
-        // Update teks kualitatif ringkas
-        if (txtWarnaRef.current) {
-          if (state.pollutant < 10) {
-            txtWarnaRef.current.innerText = "Jernih";
-            txtWarnaRef.current.className =
-              "text-[10px] font-bold text-sky-600";
-          } else if (state.pollutant < 40) {
-            txtWarnaRef.current.innerText = "Mulai Keruh";
-            txtWarnaRef.current.className =
-              "text-[10px] font-bold text-slate-500";
-          } else {
-            txtWarnaRef.current.innerText = "Sangat Keruh";
-            txtWarnaRef.current.className =
-              "text-[10px] font-bold text-amber-700";
-          }
+      const transparency = Math.max(0, 100 - state.pollutant * 1.3).toFixed(
+        0,
+      );
+      if (hudTransparencyRef.current)
+        hudTransparencyRef.current.innerText = `${transparency}%`;
+
+      // Update teks kualitatif ringkas
+      if (txtWarnaRef.current) {
+        if (state.pollutant < 10) {
+          txtWarnaRef.current.innerText = "Jernih";
+          txtWarnaRef.current.className =
+            "text-[10px] font-bold text-sky-600";
+        } else if (state.pollutant < 40) {
+          txtWarnaRef.current.innerText = "Mulai Keruh";
+          txtWarnaRef.current.className =
+            "text-[10px] font-bold text-slate-500";
+        } else {
+          txtWarnaRef.current.innerText = "Sangat Keruh";
+          txtWarnaRef.current.className =
+            "text-[10px] font-bold text-amber-700";
         }
+      }
 
-        if (txtPerilakuRef.current) {
-          if (aliveFish === 0) {
-            txtPerilakuRef.current.innerText = "Punah";
-            txtPerilakuRef.current.className =
-              "text-[10px] font-bold text-red-600";
-          } else if (state.DO >= 5.5 && state.pH >= 6.5) {
-            txtPerilakuRef.current.innerText = "Sehat Aktif";
-            txtPerilakuRef.current.className =
-              "text-[10px] font-bold text-emerald-600";
-          } else if (state.DO < 3.5 || state.pH < 5.5) {
-            txtPerilakuRef.current.innerText = "Lemas/Sekarat";
-            txtPerilakuRef.current.className =
-              "text-[10px] font-bold text-red-400 animate-pulse";
-          } else {
-            txtPerilakuRef.current.innerText = "Stres Ringan";
-            txtPerilakuRef.current.className =
-              "text-[10px] font-bold text-amber-500";
-          }
+      if (txtPerilakuRef.current) {
+        if (aliveFish === 0) {
+          txtPerilakuRef.current.innerText = "Punah";
+          txtPerilakuRef.current.className =
+            "text-[10px] font-bold text-red-600";
+        } else if (state.DO >= 5.5 && state.pH >= 6.5) {
+          txtPerilakuRef.current.innerText = "Sehat Aktif";
+          txtPerilakuRef.current.className =
+            "text-[10px] font-bold text-emerald-600";
+        } else if (state.DO < 3.5 || state.pH < 5.5) {
+          txtPerilakuRef.current.innerText = "Lemas/Sekarat";
+          txtPerilakuRef.current.className =
+            "text-[10px] font-bold text-red-400 animate-pulse";
+        } else {
+          txtPerilakuRef.current.innerText = "Stres Ringan";
+          txtPerilakuRef.current.className =
+            "text-[10px] font-bold text-amber-500";
         }
+      }
 
-        if (txtToksikRef.current) {
-          if (state.pollutant < 10) {
-            txtToksikRef.current.innerText = "Aman";
-            txtToksikRef.current.className =
-              "text-[10px] font-bold text-emerald-600";
-          } else if (state.pollutant < 45) {
-            txtToksikRef.current.innerText = "Sedang";
-            txtToksikRef.current.className =
-              "text-[10px] font-bold text-amber-500";
-          } else {
-            txtToksikRef.current.innerText = "Berbahaya";
-            txtToksikRef.current.className =
-              "text-[10px] font-bold text-red-500 font-extrabold";
-          }
+      if (txtToksikRef.current) {
+        if (state.pollutant < 10) {
+          txtToksikRef.current.innerText = "Aman";
+          txtToksikRef.current.className =
+            "text-[10px] font-bold text-emerald-600";
+        } else if (state.pollutant < 45) {
+          txtToksikRef.current.innerText = "Sedang";
+          txtToksikRef.current.className =
+            "text-[10px] font-bold text-amber-500";
+        } else {
+          txtToksikRef.current.innerText = "Berbahaya";
+          txtToksikRef.current.className =
+            "text-[10px] font-bold text-red-500 font-extrabold";
         }
+      }
 
-        if (airStatusBadgeRef.current) {
-          if (state.pollutant < 15 && state.DO > 6.0) {
-            airStatusBadgeRef.current.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Bersih`;
-            airStatusBadgeRef.current.className =
-              "px-2 py-0.5 rounded-full text-[9px] font-bold border flex items-center gap-1 bg-emerald-100 text-emerald-700 border-emerald-200";
-          } else if (state.pollutant < 50 && state.DO > 4.0) {
-            airStatusBadgeRef.current.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span> Tercemar`;
-            airStatusBadgeRef.current.className =
-              "px-2 py-0.5 rounded-full text-[9px] font-bold border flex items-center gap-1 bg-amber-100 text-amber-700 border-amber-200";
-          } else {
-            airStatusBadgeRef.current.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span> Kritis`;
-            airStatusBadgeRef.current.className =
-              "px-2 py-0.5 rounded-full text-[9px] font-bold border flex items-center gap-1 bg-red-100 text-red-700 border-red-200";
-          }
+      if (airStatusBadgeRef.current) {
+        if (state.pollutant < 15 && state.DO > 6.0) {
+          airStatusBadgeRef.current.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Bersih`;
+          airStatusBadgeRef.current.className =
+            "px-2 py-0.5 rounded-full text-[9px] font-bold border flex items-center gap-1 bg-emerald-100 text-emerald-700 border-emerald-200";
+        } else if (state.pollutant < 50 && state.DO > 4.0) {
+          airStatusBadgeRef.current.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span> Tercemar`;
+          airStatusBadgeRef.current.className =
+            "px-2 py-0.5 rounded-full text-[9px] font-bold border flex items-center gap-1 bg-amber-100 text-amber-700 border-amber-200";
+        } else {
+          airStatusBadgeRef.current.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span> Kritis`;
+          airStatusBadgeRef.current.className =
+            "px-2 py-0.5 rounded-full text-[9px] font-bold border flex items-center gap-1 bg-red-100 text-red-700 border-red-200";
         }
       }
 
@@ -981,8 +1004,46 @@ export default function SimulasiPencemaranAir() {
             <div className="relative flex-1 bg-sky-50/40 rounded-lg overflow-hidden border border-slate-100 shadow-inner">
               <canvas ref={canvasRef} className="w-full h-full block"></canvas>
 
+              {/* Tombol Info HUD */}
+              <button
+                onClick={openHud}
+                className={`absolute bottom-2 left-2 w-5 h-5 bg-white/95 text-slate-700 hover:text-slate-900 border border-slate-200/80 rounded-full flex items-center justify-center font-serif font-bold italic text-[10px] shadow-md hover:scale-105 active:scale-95 cursor-pointer z-20 select-none backdrop-blur-sm transition-all duration-300 ${
+                  isHudExpanded ? "scale-0 opacity-0 pointer-events-none" : "scale-100 opacity-100"
+                }`}
+                title="Tampilkan Info"
+              >
+                i
+              </button>
+
               {/* Overlay HUD Mini */}
-              <div className="absolute bottom-2 left-2 bg-white/90 border border-slate-200/80 p-1.5 rounded shadow-sm text-[9px] space-y-0.5 pointer-events-none backdrop-blur-sm">
+              <div
+                className={`absolute bottom-2 left-2 bg-white/95 border border-slate-200/80 p-1.5 pr-6 rounded shadow-lg text-[9px] space-y-0.5 backdrop-blur-sm z-20 transition-all duration-300 origin-bottom-left ${
+                  isHudExpanded
+                    ? "scale-100 opacity-100 pointer-events-auto"
+                    : "scale-75 opacity-0 pointer-events-none"
+                }`}
+              >
+                {/* Tombol Silang */}
+                <button
+                  onClick={closeHud}
+                  className="absolute top-1 right-1 w-3.5 h-3.5 flex items-center justify-center rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 cursor-pointer transition-all"
+                  title="Tutup"
+                >
+                  <svg
+                    className="w-2 h-2"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="3"
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+
                 <div className="flex justify-between gap-3 text-slate-600">
                   <span>Hidup/Mati:</span>
                   <span className="font-mono font-bold text-slate-800">
@@ -1015,38 +1076,44 @@ export default function SimulasiPencemaranAir() {
           </div>
 
           <div className="grid grid-cols-3 gap-1.5 mt-2 text-center shrink-0">
-            <div className="p-1 bg-slate-50 rounded border border-slate-100">
-              <span className="block text-[8px] text-slate-400 uppercase font-bold">
+            <div className="p-1 bg-slate-50 rounded border border-slate-100 flex flex-col justify-center items-center min-h-[42px]">
+              <span className="block text-[8px] text-slate-400 uppercase font-bold leading-none mb-0.5">
                 Warna Air
               </span>
-              <span
-                ref={txtWarnaRef}
-                className="text-[10px] font-bold text-sky-500"
-              >
-                Biru Jernih
-              </span>
+              <div className="leading-[1.15] text-center w-full">
+                <span
+                  ref={txtWarnaRef}
+                  className="text-[10px] font-bold text-sky-500"
+                >
+                  Biru Jernih
+                </span>
+              </div>
             </div>
-            <div className="p-1 bg-slate-50 rounded border border-slate-100">
-              <span className="block text-[8px] text-slate-400 uppercase font-bold">
+            <div className="p-1 bg-slate-50 rounded border border-slate-100 flex flex-col justify-center items-center min-h-[42px]">
+              <span className="block text-[8px] text-slate-400 uppercase font-bold leading-none mb-0.5">
                 Biota
               </span>
-              <span
-                ref={txtPerilakuRef}
-                className="text-[10px] font-bold text-emerald-500"
-              >
-                Sehat Aktif
-              </span>
+              <div className="leading-[1.15] text-center w-full">
+                <span
+                  ref={txtPerilakuRef}
+                  className="text-[10px] font-bold text-emerald-500"
+                >
+                  Sehat Aktif
+                </span>
+              </div>
             </div>
-            <div className="p-1 bg-slate-50 rounded border border-slate-100">
-              <span className="block text-[8px] text-slate-400 uppercase font-bold">
+            <div className="p-1 bg-slate-50 rounded border border-slate-100 flex flex-col justify-center items-center min-h-[42px]">
+              <span className="block text-[8px] text-slate-400 uppercase font-bold leading-none mb-0.5">
                 Tingkat Toksik
               </span>
-              <span
-                ref={txtToksikRef}
-                className="text-[10px] font-bold text-slate-500"
-              >
-                Nihil
-              </span>
+              <div className="leading-[1.15] text-center w-full">
+                <span
+                  ref={txtToksikRef}
+                  className="text-[10px] font-bold text-slate-500"
+                >
+                  Nihil
+                </span>
+              </div>
             </div>
           </div>
         </section>
@@ -1064,49 +1131,29 @@ export default function SimulasiPencemaranAir() {
 
           <div className="flex-1 flex flex-col min-h-0 relative mt-2 select-none">
             {/* Grid Line Belakang */}
-            <div className="absolute inset-0 flex flex-col justify-between pointer-events-none border-l border-b border-slate-200 pb-7 pl-6">
-              <div className="w-full border-t border-slate-100 relative">
-                <span className="absolute -left-6 -top-2 text-[8px] text-slate-400 font-bold font-mono">
-                  100%
-                </span>
-              </div>
-              <div className="w-full border-t border-slate-100 relative">
-                <span className="absolute -left-6 -top-2 text-[8px] text-slate-400 font-bold font-mono">
-                  75%
-                </span>
-              </div>
-              <div className="w-full border-t border-slate-100 relative">
-                <span className="absolute -left-6 -top-2 text-[8px] text-slate-400 font-bold font-mono">
-                  50%
-                </span>
-              </div>
-              <div className="w-full border-t border-slate-100 relative">
-                <span className="absolute -left-6 -top-2 text-[8px] text-slate-400 font-bold font-mono">
-                  25%
-                </span>
-              </div>
-              <div className="w-full relative">
-                <span className="absolute -left-6 -top-2 text-[8px] text-slate-400 font-bold font-mono">
-                  0%
-                </span>
-              </div>
+            <div className="absolute inset-0 flex flex-col justify-between pointer-events-none border-l border-b border-slate-200 pb-7 pl-2">
+              <div className="w-full border-t border-slate-100"></div>
+              <div className="w-full border-t border-slate-100"></div>
+              <div className="w-full border-t border-slate-100"></div>
+              <div className="w-full border-t border-slate-100"></div>
+              <div className="w-full"></div>
             </div>
 
             {/* Container Batang */}
-            <div className="flex-1 flex justify-around items-end pl-6 pb-7 h-full relative z-10">
+            <div className="flex-1 flex justify-around items-end pl-2 pb-7 h-full relative z-10">
               {/* DO */}
               <div className="flex flex-col items-center h-full justify-end w-1/5 relative">
                 <div className="relative w-7 sm:w-9 flex-1 bg-slate-100/60 rounded-md flex flex-col justify-end overflow-visible border border-slate-200/40">
                   <span
                     ref={barDoValRef}
-                    className="absolute left-1/2 -translate-x-1/2 text-[9px] font-extrabold font-mono text-emerald-700 whitespace-nowrap bg-emerald-50 border border-emerald-200 px-1 py-0.2 rounded shadow-sm transition-all duration-300 ease-out"
+                    className="absolute left-1/2 -translate-x-1/2 text-[9px] font-extrabold font-mono text-emerald-700 whitespace-nowrap bg-emerald-50 border border-emerald-200 px-1 py-0.2 rounded shadow-sm"
                     style={{ bottom: "80%" }}
                   >
                     8.00
                   </span>
                   <div
                     ref={barDoRef}
-                    className="w-full bg-linear-to-t from-emerald-400 to-emerald-500 rounded-b-md rounded-t-sm transition-all duration-300 ease-out shadow-sm"
+                    className="w-full bg-linear-to-t from-emerald-400 to-emerald-500 rounded-b-md rounded-t-sm shadow-sm"
                     style={{ height: "80%" }}
                   ></div>
                 </div>
@@ -1123,14 +1170,14 @@ export default function SimulasiPencemaranAir() {
                 <div className="relative w-7 sm:w-9 flex-1 bg-slate-100/60 rounded-md flex flex-col justify-end overflow-visible border border-slate-200/40">
                   <span
                     ref={barPhValRef}
-                    className="absolute left-1/2 -translate-x-1/2 text-[9px] font-extrabold font-mono text-blue-700 whitespace-nowrap bg-blue-50 border border-blue-200 px-1 py-0.2 rounded shadow-sm transition-all duration-300 ease-out"
+                    className="absolute left-1/2 -translate-x-1/2 text-[9px] font-extrabold font-mono text-blue-700 whitespace-nowrap bg-blue-50 border border-blue-200 px-1 py-0.2 rounded shadow-sm"
                     style={{ bottom: "50%" }}
                   >
                     7.0
                   </span>
                   <div
                     ref={barPhRef}
-                    className="w-full bg-linear-to-t from-blue-400 to-blue-500 rounded-b-md rounded-t-sm transition-all duration-300 ease-out shadow-sm"
+                    className="w-full bg-linear-to-t from-blue-400 to-blue-500 rounded-b-md rounded-t-sm shadow-sm"
                     style={{ height: "50%" }}
                   ></div>
                 </div>
@@ -1147,14 +1194,14 @@ export default function SimulasiPencemaranAir() {
                 <div className="relative w-7 sm:w-9 flex-1 bg-slate-100/60 rounded-md flex flex-col justify-end overflow-visible border border-slate-200/40">
                   <span
                     ref={barBodValRef}
-                    className="absolute left-1/2 -translate-x-1/2 text-[9px] font-extrabold font-mono text-amber-700 whitespace-nowrap bg-amber-50 border border-amber-200 px-1 py-0.2 rounded shadow-sm transition-all duration-300 ease-out"
+                    className="absolute left-1/2 -translate-x-1/2 text-[9px] font-extrabold font-mono text-amber-700 whitespace-nowrap bg-amber-50 border border-amber-200 px-1 py-0.2 rounded shadow-sm"
                     style={{ bottom: "1%" }}
                   >
                     1.50
                   </span>
                   <div
                     ref={barBodRef}
-                    className="w-full bg-linear-to-t from-amber-400 to-amber-500 rounded-b-md rounded-t-sm transition-all duration-300 ease-out shadow-sm"
+                    className="w-full bg-linear-to-t from-amber-400 to-amber-500 rounded-b-md rounded-t-sm shadow-sm"
                     style={{ height: "1%" }}
                   ></div>
                 </div>
@@ -1171,14 +1218,14 @@ export default function SimulasiPencemaranAir() {
                 <div className="relative w-7 sm:w-9 flex-1 bg-slate-100/60 rounded-md flex flex-col justify-end overflow-visible border border-slate-200/40">
                   <span
                     ref={barCodValRef}
-                    className="absolute left-1/2 -translate-x-1/2 text-[9px] font-extrabold font-mono text-orange-700 whitespace-nowrap bg-orange-50 border border-orange-200 px-1 py-0.2 rounded shadow-sm transition-all duration-300 ease-out"
+                    className="absolute left-1/2 -translate-x-1/2 text-[9px] font-extrabold font-mono text-orange-700 whitespace-nowrap bg-orange-50 border border-orange-200 px-1 py-0.2 rounded shadow-sm"
                     style={{ bottom: "3%" }}
                   >
                     5.00
                   </span>
                   <div
                     ref={barCodRef}
-                    className="w-full bg-linear-to-t from-orange-400 to-orange-500 rounded-b-md rounded-t-sm transition-all duration-300 ease-out shadow-sm"
+                    className="w-full bg-linear-to-t from-orange-400 to-orange-500 rounded-b-md rounded-t-sm shadow-sm"
                     style={{ height: "3%" }}
                   ></div>
                 </div>
@@ -1195,14 +1242,14 @@ export default function SimulasiPencemaranAir() {
                 <div className="relative w-7 sm:w-9 flex-1 bg-slate-100/60 rounded-md flex flex-col justify-end overflow-visible border border-slate-200/40">
                   <span
                     ref={barPolValRef}
-                    className="absolute left-1/2 -translate-x-1/2 text-[9px] font-extrabold font-mono text-rose-700 whitespace-nowrap bg-rose-50 border border-rose-200 px-1 py-0.2 rounded shadow-sm transition-all duration-300 ease-out"
+                    className="absolute left-1/2 -translate-x-1/2 text-[9px] font-extrabold font-mono text-rose-700 whitespace-nowrap bg-rose-50 border border-rose-200 px-1 py-0.2 rounded shadow-sm"
                     style={{ bottom: "0%" }}
                   >
                     0.00
                   </span>
                   <div
                     ref={barPolRef}
-                    className="w-full bg-linear-to-t from-rose-400 to-rose-500 rounded-b-md rounded-t-sm transition-all duration-300 ease-out shadow-sm"
+                    className="w-full bg-linear-to-t from-rose-400 to-rose-500 rounded-b-md rounded-t-sm shadow-sm"
                     style={{ height: "0%" }}
                   ></div>
                 </div>

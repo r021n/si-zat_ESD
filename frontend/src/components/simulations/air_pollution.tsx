@@ -84,6 +84,28 @@ export default function SimulasiPencemaranUdara() {
   const [checkSampah, setCheckSampah] = useState<boolean>(false);
   const [slideAsap, setSlideAsap] = useState<number>(2); // 1: Sedikit, 2: Sedang, 3: Banyak
   const [slideAngin, setSlideAngin] = useState<number>(5); // 1-10
+  const [isHudExpanded, setIsHudExpanded] = useState<boolean>(false);
+  const hudTimerRef = useRef<any>(null);
+
+  const openHud = () => {
+    setIsHudExpanded(true);
+    if (hudTimerRef.current) clearTimeout(hudTimerRef.current);
+    hudTimerRef.current = setTimeout(() => {
+      setIsHudExpanded(false);
+    }, 5000);
+  };
+
+  const closeHud = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsHudExpanded(false);
+    if (hudTimerRef.current) clearTimeout(hudTimerRef.current);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (hudTimerRef.current) clearTimeout(hudTimerRef.current);
+    };
+  }, []);
 
   // --- REFS UNTUK ELEMENT DOM REAL-TIME (60 FPS PERFORMANCE BYPASS) ---
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -111,6 +133,13 @@ export default function SimulasiPencemaranUdara() {
 
   // --- ENGINE ENGINE LOGIC REFS ---
   const simStateRef = useRef<SimState>({ ...INITIAL_VALUES });
+  const barHeightsRef = useRef<{ AQI: number; PM25: number; CO2: number; CO: number; O2: number }>({
+    AQI: (INITIAL_VALUES.AQI / 400) * 100,
+    PM25: (INITIAL_VALUES.PM25 / 250) * 100,
+    CO2: (INITIAL_VALUES.CO2 / 1000) * 100,
+    CO: (INITIAL_VALUES.CO / 50) * 100,
+    O2: (INITIAL_VALUES.O2 / 25) * 100,
+  });
   const simTimeRef = useRef<number>(0);
   const runningRef = useRef<boolean>(false);
   const carXRef = useRef<number>(50);
@@ -559,6 +588,22 @@ export default function SimulasiPencemaranUdara() {
           state.AQI * dispersionFactor * 0.1;
         state.AQI = Math.min(450, Math.max(5, state.AQI));
 
+        // Add tiny random fluctuations (jitter) for realistic effect
+        state.PM25 += (Math.random() - 0.5) * 0.12;
+        state.PM25 = Math.max(2.0, state.PM25);
+
+        state.CO2 += (Math.random() - 0.5) * 0.6;
+        state.CO2 = Math.max(380.0, state.CO2);
+
+        state.CO += (Math.random() - 0.5) * 0.015;
+        state.CO = Math.max(0.1, state.CO);
+
+        state.O2 += (Math.random() - 0.5) * 0.008;
+        state.O2 = Math.min(21.0, Math.max(14.0, state.O2));
+
+        state.AQI += (Math.random() - 0.5) * 0.2;
+        state.AQI = Math.min(450, Math.max(5, state.AQI));
+
         // Spawn partikel emisi visual asap
         if (pbr && Math.random() < asap * 0.25 + 0.1) {
           smokeParticlesRef.current.push(
@@ -587,120 +632,129 @@ export default function SimulasiPencemaranUdara() {
             ),
           );
         }
+      }
 
-        // --- MANIPULASI ELEMENT GRAPH BAR DOM SECARA LANGSUNG (60 FPS OVERPASS) ---
-        const pctAQI = Math.min(100, Math.max(0, (state.AQI / 400) * 100));
-        const pctPM25 = Math.min(100, Math.max(0, (state.PM25 / 250) * 100));
-        const pctCO2 = Math.min(100, Math.max(0, (state.CO2 / 1000) * 100));
-        const pctCO = Math.min(100, Math.max(0, (state.CO / 50) * 100));
-        const pctO2 = Math.min(100, Math.max(0, (state.O2 / 25) * 100));
+      // --- MANIPULASI ELEMENT GRAPH BAR DOM SECARA LANGSUNG (60 FPS OVERPASS) ---
+      const pctAQI = Math.min(100, Math.max(0, (state.AQI / 400) * 100));
+      const pctPM25 = Math.min(100, Math.max(0, (state.PM25 / 250) * 100));
+      const pctCO2 = Math.min(100, Math.max(0, (state.CO2 / 1000) * 100));
+      const pctCO = Math.min(100, Math.max(0, (state.CO / 50) * 100));
+      const pctO2 = Math.min(100, Math.max(0, (state.O2 / 25) * 100));
 
-        if (barAqiRef.current) barAqiRef.current.style.height = `${pctAQI}%`;
-        if (barPm25Ref.current) barPm25Ref.current.style.height = `${pctPM25}%`;
-        if (barCo2Ref.current) barCo2Ref.current.style.height = `${pctCO2}%`;
-        if (barCoRef.current) barCoRef.current.style.height = `${pctCO}%`;
-        if (barO2Ref.current) barO2Ref.current.style.height = `${pctO2}%`;
+      // Smoothly interpolate current bar heights towards target percentages (lagged/non-realtime transition)
+      const bh = barHeightsRef.current;
+      const lerpSpeed = 1.0;
+      bh.AQI += (pctAQI - bh.AQI) * lerpSpeed;
+      bh.PM25 += (pctPM25 - bh.PM25) * lerpSpeed;
+      bh.CO2 += (pctCO2 - bh.CO2) * lerpSpeed;
+      bh.CO += (pctCO - bh.CO) * lerpSpeed;
+      bh.O2 += (pctO2 - bh.O2) * lerpSpeed;
 
-        if (barAqiValRef.current) {
-          barAqiValRef.current.style.bottom = `calc(${pctAQI}% + 4px)`;
-          barAqiValRef.current.innerText = state.AQI.toFixed(0);
-        }
-        if (barPm25ValRef.current) {
-          barPm25ValRef.current.style.bottom = `calc(${pctPM25}% + 4px)`;
-          barPm25ValRef.current.innerText = state.PM25.toFixed(1);
-        }
-        if (barCo2ValRef.current) {
-          barCo2ValRef.current.style.bottom = `calc(${pctCO2}% + 4px)`;
-          barCo2ValRef.current.innerText = state.CO2.toFixed(0);
-        }
-        if (barCoValRef.current) {
-          barCoValRef.current.style.bottom = `calc(${pctCO}% + 4px)`;
-          barCoValRef.current.innerText = state.CO.toFixed(1);
-        }
-        if (barO2ValRef.current) {
-          barO2ValRef.current.style.bottom = `calc(${pctO2}% + 4px)`;
-          barO2ValRef.current.innerText = `${state.O2.toFixed(1)}%`;
-        }
+      if (barAqiRef.current) barAqiRef.current.style.height = `${bh.AQI}%`;
+      if (barPm25Ref.current) barPm25Ref.current.style.height = `${bh.PM25}%`;
+      if (barCo2Ref.current) barCo2Ref.current.style.height = `${bh.CO2}%`;
+      if (barCoRef.current) barCoRef.current.style.height = `${bh.CO}%`;
+      if (barO2Ref.current) barO2Ref.current.style.height = `${bh.O2}%`;
 
-        const coughingWarga = citizenArrayRef.current.filter(
-          (c) => c.isCoughingNow,
-        ).length;
-        const healthyWarga = citizenArrayRef.current.length - coughingWarga;
-        if (hudHealthyRef.current)
-          hudHealthyRef.current.innerText = String(healthyWarga);
-        if (hudCoughingRef.current)
-          hudCoughingRef.current.innerText = String(coughingWarga);
-        if (hudSmogRef.current)
-          hudSmogRef.current.innerText = `${Math.min(100, (state.AQI / 400) * 100).toFixed(0)}%`;
+      if (barAqiValRef.current) {
+        barAqiValRef.current.style.bottom = `calc(${bh.AQI}% + 4px)`;
+        barAqiValRef.current.innerText = state.AQI.toFixed(0);
+      }
+      if (barPm25ValRef.current) {
+        barPm25ValRef.current.style.bottom = `calc(${bh.PM25}% + 4px)`;
+        barPm25ValRef.current.innerText = state.PM25.toFixed(1);
+      }
+      if (barCo2ValRef.current) {
+        barCo2ValRef.current.style.bottom = `calc(${bh.CO2}% + 4px)`;
+        barCo2ValRef.current.innerText = state.CO2.toFixed(0);
+      }
+      if (barCoValRef.current) {
+        barCoValRef.current.style.bottom = `calc(${bh.CO}% + 4px)`;
+        barCoValRef.current.innerText = state.CO.toFixed(1);
+      }
+      if (barO2ValRef.current) {
+        barO2ValRef.current.style.bottom = `calc(${bh.O2}% + 4px)`;
+        barO2ValRef.current.innerText = `${state.O2.toFixed(1)}%`;
+      }
 
-        if (hudMaskWarningRef.current) {
-          hudMaskWarningRef.current.className = `absolute top-2 right-2 flex items-center gap-1 bg-red-100 text-red-700 border border-red-200 text-[8px] px-1.5 py-0.5 rounded font-extrabold shadow-sm transition-all duration-300 ${
-            state.AQI > 100 ? "opacity-100 scale-100" : "opacity-0 scale-90"
-          }`;
+      const coughingWarga = citizenArrayRef.current.filter(
+        (c) => c.isCoughingNow,
+      ).length;
+      const healthyWarga = citizenArrayRef.current.length - coughingWarga;
+      if (hudHealthyRef.current)
+        hudHealthyRef.current.innerText = String(healthyWarga);
+      if (hudCoughingRef.current)
+        hudCoughingRef.current.innerText = String(coughingWarga);
+      if (hudSmogRef.current)
+        hudSmogRef.current.innerText = `${Math.min(100, (state.AQI / 400) * 100).toFixed(0)}%`;
+
+      if (hudMaskWarningRef.current) {
+        hudMaskWarningRef.current.className = `absolute top-2 right-2 flex items-center gap-1 bg-red-100 text-red-700 border border-red-200 text-[8px] px-1.5 py-0.5 rounded font-extrabold shadow-sm transition-all duration-300 ${
+          state.AQI > 100 ? "opacity-100 scale-100" : "opacity-0 scale-90"
+        }`;
+      }
+
+      if (txtWarnaRef.current) {
+        if (state.AQI < 50) {
+          txtWarnaRef.current.innerText = "Udara Bersih";
+          txtWarnaRef.current.className =
+            "text-[10px] font-bold text-sky-600";
+        } else if (state.AQI < 150) {
+          txtWarnaRef.current.innerText = "Kabut Ringan";
+          txtWarnaRef.current.className =
+            "text-[10px] font-bold text-slate-500";
+        } else {
+          txtWarnaRef.current.innerText = "Pekat Bahaya";
+          txtWarnaRef.current.className =
+            "text-[10px] font-bold text-amber-700 animate-pulse";
         }
+      }
 
-        if (txtWarnaRef.current) {
-          if (state.AQI < 50) {
-            txtWarnaRef.current.innerText = "Udara Bersih";
-            txtWarnaRef.current.className =
-              "text-[10px] font-bold text-sky-600";
-          } else if (state.AQI < 150) {
-            txtWarnaRef.current.innerText = "Kabut Ringan";
-            txtWarnaRef.current.className =
-              "text-[10px] font-bold text-slate-500";
-          } else {
-            txtWarnaRef.current.innerText = "Pekat Bahaya";
-            txtWarnaRef.current.className =
-              "text-[10px] font-bold text-amber-700 animate-pulse";
-          }
+      if (txtPerilakuRef.current) {
+        if (coughingWarga === 0) {
+          txtPerilakuRef.current.innerText = "Normal Sehat";
+          txtPerilakuRef.current.className =
+            "text-[10px] font-bold text-emerald-600";
+        } else if (state.AQI > 250) {
+          txtPerilakuRef.current.innerText = "Banyak Batuk!";
+          txtPerilakuRef.current.className =
+            "text-[10px] font-bold text-red-600 animate-bounce";
+        } else {
+          txtPerilakuRef.current.innerText = "Batuk Ringan";
+          txtPerilakuRef.current.className =
+            "text-[10px] font-bold text-amber-500";
         }
+      }
 
-        if (txtPerilakuRef.current) {
-          if (coughingWarga === 0) {
-            txtPerilakuRef.current.innerText = "Normal Sehat";
-            txtPerilakuRef.current.className =
-              "text-[10px] font-bold text-emerald-600";
-          } else if (state.AQI > 250) {
-            txtPerilakuRef.current.innerText = "Banyak Batuk!";
-            txtPerilakuRef.current.className =
-              "text-[10px] font-bold text-red-600 animate-bounce";
-          } else {
-            txtPerilakuRef.current.innerText = "Batuk Ringan";
-            txtPerilakuRef.current.className =
-              "text-[10px] font-bold text-amber-500";
-          }
+      if (txtToksikRef.current) {
+        if (state.AQI < 100) {
+          txtToksikRef.current.innerText = "Aman";
+          txtToksikRef.current.className =
+            "text-[10px] font-bold text-emerald-600";
+        } else if (state.AQI < 200) {
+          txtToksikRef.current.innerText = "Waspada Masker";
+          txtToksikRef.current.className =
+            "text-[10px] font-bold text-amber-500 font-extrabold";
+        } else {
+          txtToksikRef.current.innerText = "Evakuasi Medis!";
+          txtToksikRef.current.className =
+            "text-[10px] font-bold text-red-500 font-black animate-pulse";
         }
+      }
 
-        if (txtToksikRef.current) {
-          if (state.AQI < 100) {
-            txtToksikRef.current.innerText = "Aman";
-            txtToksikRef.current.className =
-              "text-[10px] font-bold text-emerald-600";
-          } else if (state.AQI < 200) {
-            txtToksikRef.current.innerText = "Waspada Masker";
-            txtToksikRef.current.className =
-              "text-[10px] font-bold text-amber-500 font-extrabold";
-          } else {
-            txtToksikRef.current.innerText = "Evakuasi Medis!";
-            txtToksikRef.current.className =
-              "text-[10px] font-bold text-red-500 font-black animate-pulse";
-          }
-        }
-
-        if (airStatusBadgeRef.current) {
-          if (state.AQI < 50) {
-            airStatusBadgeRef.current.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Sehat (Baik)`;
-            airStatusBadgeRef.current.className =
-              "px-2 py-0.5 rounded-full text-[9px] font-bold border flex items-center gap-1 bg-emerald-100 text-emerald-700 border-emerald-200";
-          } else if (state.AQI < 150) {
-            airStatusBadgeRef.current.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span> Tidak Sehat`;
-            airStatusBadgeRef.current.className =
-              "px-2 py-0.5 rounded-full text-[9px] font-bold border flex items-center gap-1 bg-amber-100 text-amber-700 border-amber-200";
-          } else {
-            airStatusBadgeRef.current.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span> Berbahaya!`;
-            airStatusBadgeRef.current.className =
-              "px-2 py-0.5 rounded-full text-[9px] font-bold border flex items-center gap-1 bg-red-100 text-red-700 border-red-200";
-          }
+      if (airStatusBadgeRef.current) {
+        if (state.AQI < 50) {
+          airStatusBadgeRef.current.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Sehat (Baik)`;
+          airStatusBadgeRef.current.className =
+            "px-2 py-0.5 rounded-full text-[9px] font-bold border flex items-center gap-1 bg-emerald-100 text-emerald-700 border-emerald-200";
+        } else if (state.AQI < 150) {
+          airStatusBadgeRef.current.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span> Tidak Sehat`;
+          airStatusBadgeRef.current.className =
+            "px-2 py-0.5 rounded-full text-[9px] font-bold border flex items-center gap-1 bg-amber-100 text-amber-700 border-amber-200";
+        } else {
+          airStatusBadgeRef.current.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span> Berbahaya!`;
+          airStatusBadgeRef.current.className =
+            "px-2 py-0.5 rounded-full text-[9px] font-bold border flex items-center gap-1 bg-red-100 text-red-700 border-red-200";
         }
       }
 
@@ -746,6 +800,13 @@ export default function SimulasiPencemaranUdara() {
     simTimeRef.current = 0;
     carXRef.current = 50;
     simStateRef.current = { ...INITIAL_VALUES };
+    barHeightsRef.current = {
+      AQI: (INITIAL_VALUES.AQI / 400) * 100,
+      PM25: (INITIAL_VALUES.PM25 / 250) * 100,
+      CO2: (INITIAL_VALUES.CO2 / 1000) * 100,
+      CO: (INITIAL_VALUES.CO / 50) * 100,
+      O2: (INITIAL_VALUES.O2 / 25) * 100,
+    };
 
     setCheckKendaraan(false);
     setCheckPabrik(false);
@@ -1025,8 +1086,46 @@ export default function SimulasiPencemaranUdara() {
             <div className="relative flex-1 bg-linear-to-b from-sky-200 via-sky-100 to-slate-100 rounded-lg overflow-hidden border border-slate-200 shadow-inner">
               <canvas ref={canvasRef} className="w-full h-full block"></canvas>
 
+              {/* Tombol Info HUD */}
+              <button
+                onClick={openHud}
+                className={`absolute bottom-2 left-2 w-5 h-5 bg-white/95 text-slate-700 hover:text-slate-900 border border-slate-200/80 rounded-full flex items-center justify-center font-serif font-bold italic text-[10px] shadow-md hover:scale-105 active:scale-95 cursor-pointer z-20 select-none backdrop-blur-sm transition-all duration-300 ${
+                  isHudExpanded ? "scale-0 opacity-0 pointer-events-none" : "scale-100 opacity-100"
+                }`}
+                title="Tampilkan Info"
+              >
+                i
+              </button>
+
               {/* Overlay HUD Mini */}
-              <div className="absolute bottom-2 left-2 bg-white/90 border border-slate-200/80 p-1.5 rounded shadow-sm text-[9px] space-y-0.5 pointer-events-none backdrop-blur-sm">
+              <div
+                className={`absolute bottom-2 left-2 bg-white/95 border border-slate-200/80 p-1.5 pr-6 rounded shadow-lg text-[9px] space-y-0.5 backdrop-blur-sm z-20 transition-all duration-300 origin-bottom-left ${
+                  isHudExpanded
+                    ? "scale-100 opacity-100 pointer-events-auto"
+                    : "scale-75 opacity-0 pointer-events-none"
+                }`}
+              >
+                {/* Tombol Silang */}
+                <button
+                  onClick={closeHud}
+                  className="absolute top-1 right-1 w-3.5 h-3.5 flex items-center justify-center rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 cursor-pointer transition-all"
+                  title="Tutup"
+                >
+                  <svg
+                    className="w-2 h-2"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="3"
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+
                 <div className="flex justify-between gap-3 text-slate-600">
                   <span>Warga Sehat / Batuk:</span>
                   <span className="font-mono font-bold text-slate-800">
@@ -1059,38 +1158,44 @@ export default function SimulasiPencemaranUdara() {
           </div>
 
           <div className="grid grid-cols-3 gap-1.5 mt-2 text-center shrink-0">
-            <div className="p-1 bg-slate-50 rounded border border-slate-100">
-              <span className="block text-[8px] text-slate-400 uppercase font-bold">
+            <div className="p-1 bg-slate-50 rounded border border-slate-100 flex flex-col justify-center items-center min-h-[42px]">
+              <span className="block text-[8px] text-slate-400 uppercase font-bold leading-none mb-0.5">
                 Laju Kabut
               </span>
-              <span
-                ref={txtWarnaRef}
-                className="text-[10px] font-bold text-sky-500"
-              >
-                Cerah Bersih
-              </span>
+              <div className="leading-[1.15] text-center w-full">
+                <span
+                  ref={txtWarnaRef}
+                  className="text-[10px] font-bold text-sky-500"
+                >
+                  Cerah Bersih
+                </span>
+              </div>
             </div>
-            <div className="p-1 bg-slate-50 rounded border border-slate-100">
-              <span className="block text-[8px] text-slate-400 uppercase font-bold">
+            <div className="p-1 bg-slate-50 rounded border border-slate-100 flex flex-col justify-center items-center min-h-[42px]">
+              <span className="block text-[8px] text-slate-400 uppercase font-bold leading-none mb-0.5">
                 Kondisi Fisik
               </span>
-              <span
-                ref={txtPerilakuRef}
-                className="text-[10px] font-bold text-emerald-500"
-              >
-                Normal Sehat
-              </span>
+              <div className="leading-[1.15] text-center w-full">
+                <span
+                  ref={txtPerilakuRef}
+                  className="text-[10px] font-bold text-emerald-500"
+                >
+                  Normal Sehat
+                </span>
+              </div>
             </div>
-            <div className="p-1 bg-slate-50 rounded border border-slate-100">
-              <span className="block text-[8px] text-slate-400 uppercase font-bold">
+            <div className="p-1 bg-slate-50 rounded border border-slate-100 flex flex-col justify-center items-center min-h-[42px]">
+              <span className="block text-[8px] text-slate-400 uppercase font-bold leading-none mb-0.5">
                 Peringatan
               </span>
-              <span
-                ref={txtToksikRef}
-                className="text-[10px] font-bold text-slate-500"
-              >
-                Aman
-              </span>
+              <div className="leading-[1.15] text-center w-full">
+                <span
+                  ref={txtToksikRef}
+                  className="text-[10px] font-bold text-slate-500"
+                >
+                  Aman
+                </span>
+              </div>
             </div>
           </div>
         </section>
@@ -1108,49 +1213,29 @@ export default function SimulasiPencemaranUdara() {
 
           <div className="flex-1 flex flex-col min-h-0 relative mt-2 select-none">
             {/* Grid Lines Skala Belakang */}
-            <div className="absolute inset-0 flex flex-col justify-between pointer-events-none border-l border-b border-slate-200 pb-7 pl-6">
-              <div className="w-full border-t border-slate-100 relative">
-                <span className="absolute -left-6 -top-2 text-[8px] text-slate-400 font-bold font-mono">
-                  AQI 400
-                </span>
-              </div>
-              <div className="w-full border-t border-slate-100 relative">
-                <span className="absolute -left-6 -top-2 text-[8px] text-slate-400 font-bold font-mono">
-                  AQI 300
-                </span>
-              </div>
-              <div className="w-full border-t border-slate-100 relative">
-                <span className="absolute -left-6 -top-2 text-[8px] text-slate-400 font-bold font-mono">
-                  AQI 200
-                </span>
-              </div>
-              <div className="w-full border-t border-slate-100 relative">
-                <span className="absolute -left-6 -top-2 text-[8px] text-slate-400 font-bold font-mono">
-                  AQI 100
-                </span>
-              </div>
-              <div className="w-full relative">
-                <span className="absolute -left-6 -top-2 text-[8px] text-slate-400 font-bold font-mono">
-                  AQI 0
-                </span>
-              </div>
+            <div className="absolute inset-0 flex flex-col justify-between pointer-events-none border-l border-b border-slate-200 pb-7 pl-2">
+              <div className="w-full border-t border-slate-100"></div>
+              <div className="w-full border-t border-slate-100"></div>
+              <div className="w-full border-t border-slate-100"></div>
+              <div className="w-full border-t border-slate-100"></div>
+              <div className="w-full"></div>
             </div>
 
             {/* Container Kolom Batang Dinamis */}
-            <div className="flex-1 flex justify-around items-end pl-6 pb-7 h-full relative z-10">
+            <div className="flex-1 flex justify-around items-end pl-2 pb-7 h-full relative z-10">
               {/* AQI */}
               <div className="flex flex-col items-center h-full justify-end w-1/5 relative">
                 <div className="relative w-7 sm:w-9 flex-1 bg-slate-100/60 rounded-md flex flex-col justify-end overflow-visible border border-slate-200/40">
                   <span
                     ref={barAqiValRef}
-                    className="absolute left-1/2 -translate-x-1/2 text-[9px] font-extrabold font-mono text-emerald-700 whitespace-nowrap bg-emerald-50 border border-emerald-200 px-1 py-0.2 rounded shadow-sm transition-all duration-300 ease-out"
+                    className="absolute left-1/2 -translate-x-1/2 text-[9px] font-extrabold font-mono text-emerald-700 whitespace-nowrap bg-emerald-50 border border-emerald-200 px-1 py-0.2 rounded shadow-sm"
                     style={{ bottom: "12%" }}
                   >
                     48
                   </span>
                   <div
                     ref={barAqiRef}
-                    className="w-full bg-linear-to-t from-emerald-400 to-emerald-500 rounded-b-md rounded-t-sm transition-all duration-300 ease-out shadow-sm"
+                    className="w-full bg-linear-to-t from-emerald-400 to-emerald-500 rounded-b-md rounded-t-sm shadow-sm"
                     style={{ height: "12%" }}
                   ></div>
                 </div>
@@ -1167,14 +1252,14 @@ export default function SimulasiPencemaranUdara() {
                 <div className="relative w-7 sm:w-9 flex-1 bg-slate-100/60 rounded-md flex flex-col justify-end overflow-visible border border-slate-200/40">
                   <span
                     ref={barPm25ValRef}
-                    className="absolute left-1/2 -translate-x-1/2 text-[9px] font-extrabold font-mono text-emerald-700 whitespace-nowrap bg-emerald-50 border border-emerald-200 px-1 py-0.2 rounded shadow-sm transition-all duration-300 ease-out"
+                    className="absolute left-1/2 -translate-x-1/2 text-[9px] font-extrabold font-mono text-emerald-700 whitespace-nowrap bg-emerald-50 border border-emerald-200 px-1 py-0.2 rounded shadow-sm"
                     style={{ bottom: "6%" }}
                   >
                     15
                   </span>
                   <div
                     ref={barPm25Ref}
-                    className="w-full bg-linear-to-t from-emerald-400 to-emerald-500 rounded-b-md rounded-t-sm transition-all duration-300 ease-out shadow-sm"
+                    className="w-full bg-linear-to-t from-emerald-400 to-emerald-500 rounded-b-md rounded-t-sm shadow-sm"
                     style={{ height: "6%" }}
                   ></div>
                 </div>
@@ -1191,14 +1276,14 @@ export default function SimulasiPencemaranUdara() {
                 <div className="relative w-7 sm:w-9 flex-1 bg-slate-100/60 rounded-md flex flex-col justify-end overflow-visible border border-slate-200/40">
                   <span
                     ref={barCo2ValRef}
-                    className="absolute left-1/2 -translate-x-1/2 text-[9px] font-extrabold font-mono text-cyan-700 whitespace-nowrap bg-cyan-50 border border-cyan-200 px-1 py-0.2 rounded shadow-sm transition-all duration-300 ease-out"
+                    className="absolute left-1/2 -translate-x-1/2 text-[9px] font-extrabold font-mono text-cyan-700 whitespace-nowrap bg-cyan-50 border border-cyan-200 px-1 py-0.2 rounded shadow-sm"
                     style={{ bottom: "40%" }}
                   >
                     400
                   </span>
                   <div
                     ref={barCo2Ref}
-                    className="w-full bg-linear-to-t from-cyan-400 to-cyan-500 rounded-b-md rounded-t-sm transition-all duration-300 ease-out shadow-sm"
+                    className="w-full bg-linear-to-t from-cyan-400 to-cyan-500 rounded-b-md rounded-t-sm shadow-sm"
                     style={{ height: "40%" }}
                   ></div>
                 </div>
@@ -1215,14 +1300,14 @@ export default function SimulasiPencemaranUdara() {
                 <div className="relative w-7 sm:w-9 flex-1 bg-slate-100/60 rounded-md flex flex-col justify-end overflow-visible border border-slate-200/40">
                   <span
                     ref={barCoValRef}
-                    className="absolute left-1/2 -translate-x-1/2 text-[9px] font-extrabold font-mono text-sky-700 whitespace-nowrap bg-sky-50 border border-sky-200 px-1 py-0.2 rounded shadow-sm transition-all duration-300 ease-out"
+                    className="absolute left-1/2 -translate-x-1/2 text-[9px] font-extrabold font-mono text-sky-700 whitespace-nowrap bg-sky-50 border border-sky-200 px-1 py-0.2 rounded shadow-sm"
                     style={{ bottom: "4%" }}
                   >
                     2
                   </span>
                   <div
                     ref={barCoRef}
-                    className="w-full bg-linear-to-t from-sky-400 to-sky-500 rounded-b-md rounded-t-sm transition-all duration-300 ease-out shadow-sm"
+                    className="w-full bg-linear-to-t from-sky-400 to-sky-500 rounded-b-md rounded-t-sm shadow-sm"
                     style={{ height: "4%" }}
                   ></div>
                 </div>
@@ -1239,14 +1324,14 @@ export default function SimulasiPencemaranUdara() {
                 <div className="relative w-7 sm:w-9 flex-1 bg-slate-100/60 rounded-md flex flex-col justify-end overflow-visible border border-slate-200/40">
                   <span
                     ref={barO2ValRef}
-                    className="absolute left-1/2 -translate-x-1/2 text-[9px] font-extrabold font-mono text-blue-700 whitespace-nowrap bg-blue-50 border border-blue-200 px-1 py-0.2 rounded shadow-sm transition-all duration-300 ease-out"
+                    className="absolute left-1/2 -translate-x-1/2 text-[9px] font-extrabold font-mono text-blue-700 whitespace-nowrap bg-blue-50 border border-blue-200 px-1 py-0.2 rounded shadow-sm"
                     style={{ bottom: "84%" }}
                   >
                     21.0
                   </span>
                   <div
                     ref={barO2Ref}
-                    className="w-full bg-linear-to-t from-blue-400 to-blue-500 rounded-b-md rounded-t-sm transition-all duration-300 ease-out shadow-sm"
+                    className="w-full bg-linear-to-t from-blue-400 to-blue-500 rounded-b-md rounded-t-sm shadow-sm"
                     style={{ height: "84%" }}
                   ></div>
                 </div>
