@@ -16,6 +16,13 @@ import SimulasiEutrofikasi from "./components/simulations/eutrophication";
 import SimulasiPencemaranTanah from "./components/simulations/land_pollution";
 import SimulasiPencemaranUdara from "./components/simulations/air_pollution";
 import { useAuthStore } from "./store/authStore";
+import KuisMenu from "./pages/KuisMenu";
+import PenilaianHasilBelajar from "./pages/PenilaianHasilBelajar";
+import PenilaianBerpikirSistem from "./pages/PenilaianBerpikirSistem";
+import PengumpulanTugas from "./pages/PengumpulanTugas";
+import Diskusi from "./pages/Diskusi";
+import AdminMenu from "./pages/AdminMenu";
+import AdminKuis from "./pages/AdminKuis";
 
 // Reusable minimal subpage to demonstrate working navigation
 function SubPage({ title }: { title: string }) {
@@ -98,7 +105,14 @@ function AppContent() {
           element={<SimulasiPencemaranUdara />}
         />
 
-        <Route path="/kuis" element={<SubPage title="Kuis" />} />
+        <Route path="/kuis" element={<KuisMenu />} />
+        <Route path="/kuis/hasil-belajar" element={<PenilaianHasilBelajar />} />
+        <Route path="/kuis/berpikir-sistem" element={<PenilaianBerpikirSistem />} />
+        <Route path="/kuis/berpikir-sistem/tugas" element={<PengumpulanTugas />} />
+        <Route path="/kuis/berpikir-sistem/diskusi" element={<Diskusi />} />
+        <Route path="/admin" element={<AdminMenu />} />
+        <Route path="/admin/kuis" element={<AdminKuis />} />
+
 
         {/* Fallback route */}
         <Route path="*" element={<Navigate to="/auth" replace />} />

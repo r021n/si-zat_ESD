@@ -16,13 +16,6 @@ export default function MainMenu({ onNavigate }: MainMenuProps) {
     }
   }, [user, navigate]);
 
-  const menus = [
-    { id: "profile-report", label: "Profil & Report Hasil Belajar" },
-    { id: "materi", label: "Materi" },
-    { id: "simulasi", label: "Simulasi" },
-    { id: "kuis", label: "Kuis" },
-  ];
-
   const handleMenuClick = (menuId: string) => {
     if (onNavigate) {
       onNavigate(menuId);
@@ -37,6 +30,18 @@ export default function MainMenu({ onNavigate }: MainMenuProps) {
   };
 
   if (!user) return null;
+
+  const menus = [
+    { id: "profile-report", label: "Profil & Report Hasil Belajar" },
+    { id: "materi", label: "Materi" },
+    { id: "simulasi", label: "Simulasi" },
+    { id: "kuis", label: "Kuis" },
+  ];
+
+  const isAdmin = user.status.toLowerCase() === "admin" || user.email.toLowerCase().includes("admin");
+  if (isAdmin) {
+    menus.push({ id: "admin", label: "Admin" });
+  }
 
   // Formatting display texts
   const displayName = user.nama || user.email.split("@")[0];
