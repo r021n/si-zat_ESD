@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core'
+import { sqliteTable, text, integer, blob } from 'drizzle-orm/sqlite-core'
 
 export const users = sqliteTable('users', {
   id: integer('id').primaryKey({ autoIncrement: true }),
@@ -35,4 +35,22 @@ export const submissions = sqliteTable('submissions', {
   answers: text('answers').notNull(), // JSON record mapping questionId -> number[]
   score: integer('score').notNull(),
   createdAt: text('created_at').notNull(),
-})
+})
+
+export const materials = sqliteTable('materials', {
+  id: text('id').primaryKey(),
+  title: text('title').notNull(),
+  createdAt: text('created_at').notNull(),
+  updatedAt: text('updated_at').notNull(),
+})
+
+export const materialBlocks = sqliteTable('material_blocks', {
+  id: text('id').primaryKey(),
+  materialId: text('material_id').notNull().references(() => materials.id, { onDelete: 'cascade' }),
+  type: text('type').notNull(), // 'text' | 'image' | 'audio'
+  textContent: text('text_content'),
+  mediaBlob: blob('media_blob', { mode: 'buffer' }),
+  mediaType: text('media_type'),
+  sortOrder: integer('sort_order').notNull(),
+})
+

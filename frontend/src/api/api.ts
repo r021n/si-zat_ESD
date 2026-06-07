@@ -160,3 +160,76 @@ export async function getQuizSubmissionsApi(token: string, id: string) {
   }
   return data;
 }
+
+export async function getMaterialsApi(token: string) {
+  const response = await fetch(`${API_URL}/api/materi`, {
+    method: "GET",
+    headers: {
+      "Authorization": `Bearer ${token}`
+    }
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || "Gagal mengambil data materi");
+  }
+  return data;
+}
+
+export async function getMaterialDetailApi(token: string, id: string) {
+  const response = await fetch(`${API_URL}/api/materi/${id}`, {
+    method: "GET",
+    headers: {
+      "Authorization": `Bearer ${token}`
+    }
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || "Gagal mengambil detail materi");
+  }
+  return data;
+}
+
+export async function createMaterialApi(token: string, formData: FormData) {
+  const response = await fetch(`${API_URL}/api/materi`, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${token}`
+    },
+    body: formData
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || "Gagal membuat materi");
+  }
+  return data;
+}
+
+export async function updateMaterialApi(token: string, id: string, formData: FormData) {
+  const response = await fetch(`${API_URL}/api/materi/${id}`, {
+    method: "PUT",
+    headers: {
+      "Authorization": `Bearer ${token}`
+    },
+    body: formData
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || "Gagal memperbarui materi");
+  }
+  return data;
+}
+
+export async function deleteMaterialApi(token: string, id: string) {
+  const response = await fetch(`${API_URL}/api/materi/${id}`, {
+    method: "DELETE",
+    headers: {
+      "Authorization": `Bearer ${token}`
+    }
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || "Gagal menghapus materi");
+  }
+  return data;
+}
+

@@ -4,6 +4,7 @@ import { cors } from 'hono/cors'
 import { serve } from '@hono/node-server'
 import authRoute from './routes/auth.js'
 import quizRoute from './routes/quiz.js'
+import materiRoute from './routes/materi.js'
 
 const app = new Hono()
 
@@ -40,6 +41,7 @@ app.get('/api/health', (c) => c.json({ status: 'ok', version: 'hono-4.12.23' }))
 // Mount separate routing modules
 app.route('/api/auth', authRoute)
 app.route('/api/quiz', quizRoute)
+app.route('/api/materi', materiRoute)
 
 const port = Number(process.env.PORT) || 8787
 

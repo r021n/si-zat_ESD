@@ -4,7 +4,6 @@ import {
   Routes,
   Route,
   Navigate,
-  useNavigate,
 } from "react-router-dom";
 import Auth from "./pages/Auth";
 import MainMenu from "./pages/MainMenu";
@@ -23,24 +22,11 @@ import PengumpulanTugas from "./pages/PengumpulanTugas";
 import Diskusi from "./pages/Diskusi";
 import AdminMenu from "./pages/AdminMenu";
 import AdminKuis from "./pages/AdminKuis";
+import Materi from "./pages/Materi";
+import MateriDetail from "./pages/MateriDetail";
+import MateriEditor from "./pages/MateriEditor";
 
-// Reusable minimal subpage to demonstrate working navigation
-function SubPage({ title }: { title: string }) {
-  const navigate = useNavigate();
-  return (
-    <div className="w-full min-h-screen bg-white flex justify-center items-center text-black font-sans">
-      <div className="w-full max-w-[430px] min-h-screen flex flex-col justify-center items-center px-6 py-8 gap-6 text-center">
-        <h2 className="text-xl font-bold uppercase tracking-wider">{title}</h2>
-        <button
-          onClick={() => navigate("/menu")}
-          className="px-4 py-2 border border-black bg-white text-black text-xs font-bold uppercase tracking-widest active:bg-black active:text-white transition-colors duration-100 cursor-pointer"
-        >
-          Kembali ke Menu
-        </button>
-      </div>
-    </div>
-  );
-}
+
 
 function LoadingScreen() {
   return (
@@ -84,7 +70,10 @@ function AppContent() {
           path="/profile-report"
           element={<ProfileReport />}
         />
-        <Route path="/materi" element={<SubPage title="Materi" />} />
+        <Route path="/materi" element={<Materi />} />
+        <Route path="/materi/view/:id" element={<MateriDetail />} />
+        <Route path="/admin/materi/new" element={<MateriEditor />} />
+        <Route path="/admin/materi/edit/:id" element={<MateriEditor />} />
 
         {/* Simulasi routes */}
         <Route path="/simulasi" element={<Simulasi />} />
