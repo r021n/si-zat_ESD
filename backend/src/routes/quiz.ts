@@ -84,6 +84,34 @@ quiz.get('/', async (c: any) => {
   }
 })
 
+// GET /api/quiz/my-submissions - Get all submissions for the current logged-in user
+quiz.get('/my-submissions', async (c: any) => {
+  try {
+    const user = c.get('user')
+    const userSubmissions = await db.select().from(submissions).where(eq(submissions.userId, user.id))
+
+    const parsedSubmissions = userSubmissions.map(sub => ({
+      id: sub.id,
+      quizId: sub.quizId,
+      studentName: sub.studentName,
+      studentClass: sub.studentClass,
+      answers: JSON.parse(sub.answers),
+      score: sub.score,
+      createdAt: sub.createdAt
+    }))
+
+    // Sort submissions by createdAt or ID descending (newest first)
+    parsedSubmissions.sort((a, b) => {
+      return b.createdAt.localeCompare(a.createdAt);
+    })
+
+    return c.json(parsedSubmissions)
+  } catch (error: any) {
+    console.error('Error fetching user submissions:', error)
+    return c.json({ error: 'Gagal mengambil data riwayat kuis dari server.' }, 500)
+  }
+})
+
 // GET /api/quiz/:id/submissions - Get all student submissions for a quiz (Admin only)
 quiz.get('/:id/submissions', adminMiddleware, async (c: any) => {
   try {

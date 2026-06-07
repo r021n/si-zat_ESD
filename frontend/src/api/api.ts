@@ -161,6 +161,20 @@ export async function getQuizSubmissionsApi(token: string, id: string) {
   return data;
 }
 
+export async function getMySubmissionsApi(token: string) {
+  const response = await fetch(`${API_URL}/api/quiz/my-submissions`, {
+    method: "GET",
+    headers: {
+      "Authorization": `Bearer ${token}`
+    }
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || "Gagal mengambil riwayat kuis");
+  }
+  return data;
+}
+
 export async function getMaterialsApi(token: string) {
   const response = await fetch(`${API_URL}/api/materi`, {
     method: "GET",

@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
-import { getQuizzesApi, submitQuizAnswersApi } from "../api/api";
-import { FiArrowLeft } from "react-icons/fi";
+import { getQuizzesApi, submitQuizAnswersApi, getMySubmissionsApi } from "../api/api";
+import { FiArrowLeft, FiClock } from "react-icons/fi";
 
 interface Question {
   id: string;
@@ -33,6 +33,36 @@ export default function PenilaianHasilBelajar() {
   const [submitted, setSubmitted] = useState<boolean>(false);
   const [showReview, setShowReview] = useState<boolean>(false);
   const [submittingRes, setSubmittingRes] = useState<boolean>(false);
+
+  // History States
+  const [viewingHistory, setViewingHistory] = useState<boolean>(false);
+  const [historySubmissions, setHistorySubmissions] = useState<any[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState<boolean>(false);
+
+  // Fetch history submissions when viewing history
+  useEffect(() => {
+    if (!token || !viewingHistory) return;
+    const fetchHistory = async () => {
+      setLoadingHistory(true);
+      try {
+        const data = await getMySubmissionsApi(token);
+        setHistorySubmissions(data);
+      } catch (err: any) {
+        console.error(err);
+      } finally {
+        setLoadingHistory(false);
+      }
+    };
+    fetchHistory();
+  }, [token, viewingHistory]);
+
+  const handleSelectHistory = (sub: any, quiz: Quiz | undefined) => {
+    if (!quiz) return;
+    setActiveQuiz(quiz);
+    setAnswers(sub.answers);
+    setSubmitted(true);
+    setShowReview(true);
+  };
 
   // Fetch quizzes on load
   useEffect(() => {
@@ -154,14 +184,23 @@ export default function PenilaianHasilBelajar() {
       <div className="w-full max-w-[430px] min-h-screen flex flex-col justify-between px-6 py-8">
         
         {/* VIEW 1: QUIZ SELECTOR */}
-        {!activeQuiz && (
+        {!activeQuiz && !viewingHistory && (
           <div className="w-full flex-1 flex flex-col justify-between">
             <div>
               {/* Header Section */}
-              <div className="w-full flex flex-col gap-1 mt-6">
-                <p className="text-[10px] uppercase tracking-widest text-neutral-500 font-bold">Evaluasi Pembelajaran</p>
-                <h1 className="text-xl font-bold uppercase tracking-wide">Penilaian Hasil Belajar</h1>
-                <div className="h-[2px] bg-black w-12 mt-2"></div>
+              <div className="w-full flex justify-between items-start mt-6">
+                <div className="flex flex-col gap-1">
+                  <p className="text-[10px] uppercase tracking-widest text-neutral-500 font-bold">Evaluasi Pembelajaran</p>
+                  <h1 className="text-xl font-bold uppercase tracking-wide">Penilaian Hasil Belajar</h1>
+                  <div className="h-[2px] bg-black w-12 mt-2"></div>
+                </div>
+                <button
+                  onClick={() => setViewingHistory(true)}
+                  title="Riwayat Pengerjaan"
+                  className="p-2 border border-black bg-white hover:bg-black hover:text-white cursor-pointer active:bg-black active:text-white transition-none mt-2 flex items-center justify-center"
+                >
+                  <FiClock size={18} />
+                </button>
               </div>
 
               {/* Quiz List Stack */}
@@ -204,13 +243,83 @@ export default function PenilaianHasilBelajar() {
           </div>
         )}
 
+        {/* VIEW 3: HISTORY LIST */}
+        {!activeQuiz && viewingHistory && (
+          <div className="w-full flex-1 flex flex-col justify-between">
+            <div>
+              {/* Header Section */}
+              <div className="w-full flex flex-col gap-1 mt-6">
+                <p className="text-[10px] uppercase tracking-widest text-neutral-500 font-bold">Evaluasi Pembelajaran</p>
+                <h1 className="text-xl font-bold uppercase tracking-wide">Riwayat Pengerjaan</h1>
+                <div className="h-[2px] bg-black w-12 mt-2"></div>
+              </div>
+
+              {/* History Submissions List */}
+              <div className="w-full flex flex-col gap-4 mt-8">
+                {loadingHistory ? (
+                  <div className="text-center py-12 border border-black border-dashed flex flex-col gap-3 justify-center items-center">
+                    <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">Memuat Riwayat...</span>
+                  </div>
+                ) : historySubmissions.length === 0 ? (
+                  <div className="text-center py-12 border border-black border-dashed text-xs text-neutral-500 uppercase font-bold">
+                    Belum ada riwayat pengerjaan.
+                  </div>
+                ) : (
+                  <div className="max-h-[380px] overflow-y-auto space-y-3 pr-1">
+                    {historySubmissions.map((sub) => {
+                      const quiz = quizzes.find((q) => q.id === sub.quizId);
+                      const title = quiz ? quiz.title : "Kuis Tidak Dikenal";
+                      return (
+                        <button
+                          key={sub.id}
+                          onClick={() => handleSelectHistory(sub, quiz)}
+                          disabled={!quiz}
+                          className="w-full py-3 px-4 border border-black bg-white text-black text-left font-medium active:bg-black active:text-white transition-none text-sm tracking-wide cursor-pointer flex flex-col gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <div className="flex justify-between items-start w-full">
+                            <span className="font-bold uppercase text-xs truncate max-w-[75%]">{title}</span>
+                            <span className="font-mono text-xs font-bold border border-black px-1.5 py-0.5 bg-neutral-50 text-black">
+                              {sub.score}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center w-full mt-1">
+                            <span className="text-[9px] font-mono text-neutral-500 uppercase font-bold">
+                              {sub.createdAt}
+                            </span>
+                            {!quiz && (
+                              <span className="text-[8px] text-neutral-500 uppercase font-mono">Soal Terhapus</span>
+                            )}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Back Button */}
+            <div className="w-full mt-8 mb-2">
+              <button
+                onClick={() => setViewingHistory(false)}
+                className="w-full py-3 border border-black bg-black text-white font-bold uppercase tracking-wider text-xs hover:bg-white hover:text-black cursor-pointer flex items-center justify-center gap-1.5"
+              >
+                <FiArrowLeft /> Kembali ke Daftar Kuis
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* VIEW 2: ACTIVE QUIZ PLAYER */}
         {activeQuiz && (
           <div className="w-full flex-1 flex flex-col justify-between">
             {/* Header Section */}
             <div className="w-full flex justify-between items-center mt-4 border-b border-black pb-3">
               <div className="max-w-[70%]">
-                <p className="text-[9px] uppercase tracking-widest text-neutral-500 font-bold">Pengerjaan Kuis</p>
+                <p className="text-[9px] uppercase tracking-widest text-neutral-500 font-bold">
+                  {viewingHistory ? "Riwayat Pengerjaan" : "Pengerjaan Kuis"}
+                </p>
                 <h1 className="text-xs font-bold uppercase tracking-wide truncate">{activeQuiz.title}</h1>
               </div>
               {!submitted && (
@@ -360,13 +469,25 @@ export default function PenilaianHasilBelajar() {
                     // Review Details Mode
                     <div className="flex flex-col gap-4">
                       <div className="flex justify-between items-center text-[10px] font-bold text-neutral-500 uppercase">
-                        <span>Review Jawaban</span>
-                        <button
-                          onClick={() => setShowReview(false)}
-                          className="text-black border-b border-black font-bold uppercase tracking-wider cursor-pointer"
-                        >
-                          Kembali ke Skor
-                        </button>
+                        <span>Review Jawaban {viewingHistory && "(Riwayat)"}</span>
+                        {viewingHistory ? (
+                          <button
+                            onClick={() => {
+                              setActiveQuiz(null);
+                              setShowReview(false);
+                            }}
+                            className="text-black border-b border-black font-bold uppercase tracking-wider cursor-pointer"
+                          >
+                            Kembali ke Riwayat
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => setShowReview(false)}
+                            className="text-black border-b border-black font-bold uppercase tracking-wider cursor-pointer"
+                          >
+                            Kembali ke Skor
+                          </button>
+                        )}
                       </div>
 
                       <div className="max-h-[340px] overflow-y-auto border border-black p-3 space-y-4 divide-y divide-neutral-200">
@@ -420,12 +541,24 @@ export default function PenilaianHasilBelajar() {
                         })}
                       </div>
 
-                      <button
-                        onClick={() => setActiveQuiz(null)}
-                        className="w-full py-2.5 border border-black bg-black text-white text-xs font-bold uppercase tracking-wider hover:bg-white hover:text-black cursor-pointer"
-                      >
-                        Kembali ke Daftar Kuis
-                      </button>
+                      {viewingHistory ? (
+                        <button
+                          onClick={() => {
+                            setActiveQuiz(null);
+                            setShowReview(false);
+                          }}
+                          className="w-full py-2.5 border border-black bg-black text-white text-xs font-bold uppercase tracking-wider hover:bg-white hover:text-black cursor-pointer"
+                        >
+                          Kembali ke Riwayat
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => setActiveQuiz(null)}
+                          className="w-full py-2.5 border border-black bg-black text-white text-xs font-bold uppercase tracking-wider hover:bg-white hover:text-black cursor-pointer"
+                        >
+                          Kembali ke Daftar Kuis
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>
