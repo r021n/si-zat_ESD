@@ -53,4 +53,28 @@ export const materialBlocks = sqliteTable('material_blocks', {
   mediaType: text('media_type'),
   sortOrder: integer('sort_order').notNull(),
 })
+
+export const taskSubmissions = sqliteTable('task_submissions', {
+  id: text('id').primaryKey(),
+  userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  studentName: text('student_name').notNull(),
+  studentClass: text('student_class').notNull(),
+  title: text('title').notNull(),
+  answer: text('answer').notNull(),
+  fileName: text('file_name').default(''),
+  imageBlob: blob('image_blob', { mode: 'buffer' }),
+  imageType: text('image_type'),
+  submittedAt: text('submitted_at').notNull(),
+})
+
+export const taskDiscussions = sqliteTable('task_discussions', {
+  id: text('id').primaryKey(),
+  taskSubmissionId: text('task_submission_id').notNull().references(() => taskSubmissions.id, { onDelete: 'cascade' }),
+  userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  senderName: text('sender_name').notNull(),
+  senderRole: text('sender_role').notNull(),
+  content: text('content').notNull(),
+  createdAt: text('created_at').notNull(),
+})
+
 

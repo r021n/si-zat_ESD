@@ -247,3 +247,77 @@ export async function deleteMaterialApi(token: string, id: string) {
   return data;
 }
 
+export async function getTaskSubmissionsApi(token: string) {
+  const response = await fetch(`${API_URL}/api/tasks/submissions`, {
+    method: "GET",
+    headers: {
+      "Authorization": `Bearer ${token}`
+    }
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || "Gagal mengambil daftar tugas");
+  }
+  return data;
+}
+
+export async function createTaskSubmissionApi(token: string, formData: FormData) {
+  const response = await fetch(`${API_URL}/api/tasks/submissions`, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${token}`
+    },
+    body: formData
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || "Gagal mengumpulkan tugas");
+  }
+  return data;
+}
+
+export async function deleteTaskSubmissionApi(token: string, id: string) {
+  const response = await fetch(`${API_URL}/api/tasks/submissions/${id}`, {
+    method: "DELETE",
+    headers: {
+      "Authorization": `Bearer ${token}`
+    }
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || "Gagal menghapus tugas");
+  }
+  return data;
+}
+
+export async function getTaskDiscussionsApi(token: string, submissionId: string) {
+  const response = await fetch(`${API_URL}/api/tasks/submissions/${submissionId}/discussions`, {
+    method: "GET",
+    headers: {
+      "Authorization": `Bearer ${token}`
+    }
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || "Gagal memuat diskusi");
+  }
+  return data;
+}
+
+export async function sendTaskDiscussionApi(token: string, submissionId: string, content: string) {
+  const response = await fetch(`${API_URL}/api/tasks/submissions/${submissionId}/discussions`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    },
+    body: JSON.stringify({ content })
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || "Gagal mengirimkan pesan diskusi");
+  }
+  return data;
+}
+
+
