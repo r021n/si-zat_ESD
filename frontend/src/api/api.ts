@@ -351,4 +351,34 @@ export async function recordUsageApi(token: string, seconds: number) {
   return data;
 }
 
+export async function getSiswaUsersApi(token: string) {
+  const response = await fetch(`${API_URL}/api/auth/users`, {
+    method: "GET",
+    headers: {
+      "Authorization": `Bearer ${token}`
+    }
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || "Gagal mengambil daftar siswa");
+  }
+  return data;
+}
+
+export async function changeSiswaPasswordApi(token: string, id: number, newPassword: string) {
+  const response = await fetch(`${API_URL}/api/auth/users/${id}/change-password`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    },
+    body: JSON.stringify({ password: newPassword })
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || "Gagal mengubah password siswa");
+  }
+  return data;
+}
+
 

@@ -284,5 +284,117 @@ auth.post('/record-usage', async (c) => {
   }
 })
 
+// GET /users - List all siswa (non-admin users)
+auth.get('/users', async (c) => {
+  try {
+    const authHeader = c.req.header('Authorization')
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return c.json({ error: 'Tidak terautentikasi' }, 401)
+    }
+
+    const token = authHeader.split(' ')[1]
+    const payload = await verify(token, getJwtSecret(), 'HS256')
+    const userId = payload.id as number
+
+    // Verify current user is admin
+    const [currentUser] = await db.select().from(users).where(eq(users.id, userId)).limit(1)
+    if (!currentUser) {
+      return c.json({ error: 'Pengguna tidak ditemukan' }, 401)
+    }
+
+    const isAdmin = (currentUser.status || '').toLowerCase() === 'admin' || currentUser.email.toLowerCase().includes('admin')
+    if (!isAdmin) {
+      return c.json({ error: 'Akses ditolak. Anda bukan admin.' }, 403)
+    }
+
+    // Get all users
+    const allUsers = await db.select({
+      id: users.id,
+      email: users.email,
+      kelas: users.kelas,
+      nama: users.nama,
+      status: users.status,
+      createdAt: users.createdAt,
+      openCount: users.openCount,
+      totalUsageTime: users.totalUsageTime
+    }).from(users)
+
+    // Filter to keep only non-admin (siswa) users
+    const siswaUsers = allUsers.filter(u => {
+      const status = (u.status || '').toLowerCase()
+      const email = (u.email || '').toLowerCase()
+      const isUserAdmin = status === 'admin' || email.includes('admin')
+      return !isUserAdmin
+    })
+
+    return c.json({
+      status: 'success',
+      users: siswaUsers
+    })
+  } catch (error) {
+    console.error('Error fetching users:', error)
+    return c.json({ error: 'Gagal mengambil data user' }, 500)
+  }
+})
+
+// POST /users/:id/change-password - Change a siswa's password
+auth.post('/users/:id/change-password', async (c) => {
+  try {
+    const authHeader = c.req.header('Authorization')
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return c.json({ error: 'Tidak terautentikasi' }, 401)
+    }
+
+    const token = authHeader.split(' ')[1]
+    const payload = await verify(token, getJwtSecret(), 'HS256')
+    const userId = payload.id as number
+
+    // Verify current user is admin
+    const [currentUser] = await db.select().from(users).where(eq(users.id, userId)).limit(1)
+    if (!currentUser) {
+      return c.json({ error: 'Pengguna tidak ditemukan' }, 401)
+    }
+
+    const isAdmin = (currentUser.status || '').toLowerCase() === 'admin' || currentUser.email.toLowerCase().includes('admin')
+    if (!isAdmin) {
+      return c.json({ error: 'Akses ditolak. Anda bukan admin.' }, 403)
+    }
+
+    const targetUserId = Number(c.req.param('id'))
+    if (isNaN(targetUserId)) {
+      return c.json({ error: 'ID user tidak valid' }, 400)
+    }
+
+    const { password } = await c.req.json()
+    if (!password || password.trim().length < 4) {
+      return c.json({ error: 'Password minimal 4 karakter' }, 400)
+    }
+
+    // Double check target user is not admin (to prevent admin privilege escalations or changing other admin's passwords)
+    const [targetUser] = await db.select().from(users).where(eq(users.id, targetUserId)).limit(1)
+    if (!targetUser) {
+      return c.json({ error: 'User target tidak ditemukan' }, 404)
+    }
+
+    const isTargetAdmin = (targetUser.status || '').toLowerCase() === 'admin' || targetUser.email.toLowerCase().includes('admin')
+    if (isTargetAdmin) {
+      return c.json({ error: 'Tidak dapat mengubah password akun admin lain melalui menu ini.' }, 403)
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10)
+    await db.update(users)
+      .set({ password: hashedPassword })
+      .where(eq(users.id, targetUserId))
+
+    return c.json({
+      status: 'success',
+      message: 'Password berhasil diubah.'
+    })
+  } catch (error) {
+    console.error('Error changing user password:', error)
+    return c.json({ error: 'Gagal mengubah password user' }, 500)
+  }
+})
+
 export default auth
 

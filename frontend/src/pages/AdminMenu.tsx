@@ -48,6 +48,14 @@ export default function AdminMenu() {
             <span className="font-bold uppercase text-xs">Materi</span>
             <span className="text-xs text-neutral-600">Kelola materi pembelajaran (tambah, edit, dan hapus)</span>
           </button>
+
+          <button
+            onClick={() => navigate("/admin/change-password")}
+            className="w-full py-4 px-5 border border-black bg-white text-black text-left font-medium active:bg-black active:text-white transition-none text-sm tracking-wide cursor-pointer flex flex-col gap-1"
+          >
+            <span className="font-bold uppercase text-xs">Ubah Password Siswa</span>
+            <span className="text-xs text-neutral-600">Ganti password akun siswa tanpa melihat password lama</span>
+          </button>
         </div>
 
         {/* Footer Section with Back Button */}

@@ -26,6 +26,7 @@ import AdminKuis from "./pages/AdminKuis";
 import Materi from "./pages/Materi";
 import MateriDetail from "./pages/MateriDetail";
 import MateriEditor from "./pages/MateriEditor";
+import AdminChangePassword from "./pages/AdminChangePassword";
 
 
 
@@ -153,6 +154,7 @@ function AppContent() {
         <Route path="/kuis/berpikir-sistem/diskusi" element={<Diskusi />} />
         <Route path="/admin" element={<AdminMenu />} />
         <Route path="/admin/kuis" element={<AdminKuis />} />
+        <Route path="/admin/change-password" element={<AdminChangePassword />} />
 
 
         {/* Fallback route */}
