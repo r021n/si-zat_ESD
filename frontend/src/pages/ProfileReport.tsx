@@ -4,13 +4,17 @@ import { useAuthStore } from "../store/authStore";
 
 export default function ProfileReport() {
   const navigate = useNavigate();
-  const { user, updateProfile, loading } = useAuthStore();
+  const { user, updateProfile, loading, checkAuth } = useAuthStore();
 
   const [nama, setNama] = useState("");
   const [email, setEmail] = useState("");
   const [kelas, setKelas] = useState("");
   const [status, setStatus] = useState("");
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
 
   useEffect(() => {
     if (!user) {
@@ -51,6 +55,20 @@ export default function ProfileReport() {
     } catch (e) {
       return dateStr;
     }
+  };
+
+  const formatUsageTime = (seconds?: number) => {
+    if (!seconds) return "0 detik";
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    
+    const parts = [];
+    if (h > 0) parts.push(`${h} jam`);
+    if (m > 0) parts.push(`${m} menit`);
+    if (s > 0 || parts.length === 0) parts.push(`${s} detik`);
+    
+    return parts.join(" ");
   };
 
   return (
@@ -166,6 +184,43 @@ export default function ProfileReport() {
             {loading ? "Menyimpan..." : "Simpan Perubahan"}
           </button>
         </form>
+
+        {/* Separator */}
+        <div className="border-t border-black my-6"></div>
+
+        {/* Usage Information Section */}
+        <div className="w-full flex flex-col gap-4">
+          <div className="w-full flex flex-col gap-1">
+            <p className="text-[10px] uppercase tracking-widest text-neutral-500 font-bold">Statistik Sesi</p>
+            <h2 className="text-base font-bold leading-tight uppercase tracking-wide">PENGGUNAAN APLIKASI</h2>
+          </div>
+
+          {/* Frekuensi Dibuka */}
+          <div className="flex flex-col gap-1">
+            <label className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">
+              Frekuensi Dibuka (Read-only)
+            </label>
+            <input
+              type="text"
+              value={`${user.openCount ?? 0} Kali`}
+              disabled
+              className="w-full px-3 py-2 border border-neutral-300 text-neutral-400 bg-neutral-100 text-sm font-mono cursor-not-allowed outline-none"
+            />
+          </div>
+
+          {/* Durasi Penggunaan */}
+          <div className="flex flex-col gap-1">
+            <label className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">
+              Total Durasi Penggunaan (Read-only)
+            </label>
+            <input
+              type="text"
+              value={formatUsageTime(user.totalUsageTime)}
+              disabled
+              className="w-full px-3 py-2 border border-neutral-300 text-neutral-400 bg-neutral-100 text-sm font-mono cursor-not-allowed outline-none"
+            />
+          </div>
+        </div>
 
         {/* Footer Back Button */}
         <div className="w-full mt-6 mb-2">

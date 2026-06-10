@@ -8,6 +8,8 @@ export interface User {
   nama: string;
   status: string;
   createdAt?: string;
+  openCount?: number;
+  totalUsageTime?: number;
 }
 
 interface AuthState {

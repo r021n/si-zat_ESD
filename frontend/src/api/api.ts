@@ -320,4 +320,35 @@ export async function sendTaskDiscussionApi(token: string, submissionId: string,
   return data;
 }
 
+export async function recordOpenApi(token: string) {
+  const response = await fetch(`${API_URL}/api/auth/record-open`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    }
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || "Gagal mencatat pembukaan aplikasi");
+  }
+  return data;
+}
+
+export async function recordUsageApi(token: string, seconds: number) {
+  const response = await fetch(`${API_URL}/api/auth/record-usage`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    },
+    body: JSON.stringify({ seconds })
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || "Gagal mencatat durasi penggunaan");
+  }
+  return data;
+}
+
 

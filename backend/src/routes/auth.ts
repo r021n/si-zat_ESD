@@ -1,7 +1,7 @@
 import { Hono } from 'hono'
 import { db } from '../db/index.js'
 import { users } from '../db/schema.js'
-import { eq } from 'drizzle-orm'
+import { eq, sql } from 'drizzle-orm'
 import { sign, verify } from 'hono/jwt'
 import bcrypt from 'bcryptjs'
 
@@ -53,7 +53,9 @@ auth.post('/register', async (c) => {
         kelas: newUser.kelas,
         nama: newUser.nama,
         status: newUser.status,
-        createdAt: newUser.createdAt
+        createdAt: newUser.createdAt,
+        openCount: newUser.openCount,
+        totalUsageTime: newUser.totalUsageTime
       }
     }, 201)
   } catch (error: any) {
@@ -102,7 +104,9 @@ auth.post('/login', async (c) => {
         kelas: user.kelas,
         nama: user.nama,
         status: user.status,
-        createdAt: user.createdAt
+        createdAt: user.createdAt,
+        openCount: user.openCount,
+        totalUsageTime: user.totalUsageTime
       }
     })
   } catch (error: any) {
@@ -129,7 +133,9 @@ auth.get('/me', async (c) => {
       kelas: users.kelas,
       nama: users.nama,
       status: users.status,
-      createdAt: users.createdAt
+      createdAt: users.createdAt,
+      openCount: users.openCount,
+      totalUsageTime: users.totalUsageTime
     }).from(users).where(eq(users.id, payload.id as number)).limit(1)
 
     if (!user) {
@@ -196,12 +202,85 @@ auth.put('/me', async (c) => {
         kelas: updatedUser.kelas,
         nama: updatedUser.nama,
         status: updatedUser.status,
-        createdAt: updatedUser.createdAt
+        createdAt: updatedUser.createdAt,
+        openCount: updatedUser.openCount,
+        totalUsageTime: updatedUser.totalUsageTime
       }
     })
   } catch (error: any) {
     console.error('Error during profile update:', error)
     return c.json({ error: 'Sesi kedaluwarsa atau terjadi kesalahan pada server.' }, 401)
+  }
+})
+
+auth.post('/record-open', async (c) => {
+  try {
+    const authHeader = c.req.header('Authorization')
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return c.json({ error: 'Tidak terautentikasi' }, 401)
+    }
+
+    const token = authHeader.split(' ')[1]
+    const payload = await verify(token, getJwtSecret(), 'HS256')
+    const userId = payload.id as number
+
+    const [updatedUser] = await db.update(users)
+      .set({
+        openCount: sql`${users.openCount} + 1`
+      })
+      .where(eq(users.id, userId))
+      .returning()
+
+    if (!updatedUser) {
+      return c.json({ error: 'Pengguna tidak ditemukan' }, 404)
+    }
+
+    return c.json({
+      status: 'success',
+      openCount: updatedUser.openCount
+    })
+  } catch (error) {
+    console.error('Error recording open:', error)
+    return c.json({ error: 'Gagal mencatat pembukaan aplikasi' }, 500)
+  }
+})
+
+auth.post('/record-usage', async (c) => {
+  try {
+    const authHeader = c.req.header('Authorization')
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return c.json({ error: 'Tidak terautentikasi' }, 401)
+    }
+
+    const token = authHeader.split(' ')[1]
+    const payload = await verify(token, getJwtSecret(), 'HS256')
+    const userId = payload.id as number
+
+    const { seconds } = await c.req.json()
+    const usageDelta = Number(seconds) || 0
+
+    if (usageDelta <= 0) {
+      return c.json({ error: 'Durasi penggunaan tidak valid' }, 400)
+    }
+
+    const [updatedUser] = await db.update(users)
+      .set({
+        totalUsageTime: sql`${users.totalUsageTime} + ${usageDelta}`
+      })
+      .where(eq(users.id, userId))
+      .returning()
+
+    if (!updatedUser) {
+      return c.json({ error: 'Pengguna tidak ditemukan' }, 404)
+    }
+
+    return c.json({
+      status: 'success',
+      totalUsageTime: updatedUser.totalUsageTime
+    })
+  } catch (error) {
+    console.error('Error recording usage:', error)
+    return c.json({ error: 'Gagal mencatat durasi penggunaan' }, 500)
   }
 })
 

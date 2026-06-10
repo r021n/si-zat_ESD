@@ -15,6 +15,7 @@ import SimulasiEutrofikasi from "./components/simulations/eutrophication";
 import SimulasiPencemaranTanah from "./components/simulations/land_pollution";
 import SimulasiPencemaranUdara from "./components/simulations/air_pollution";
 import { useAuthStore } from "./store/authStore";
+import { recordOpenApi, recordUsageApi } from "./api/api";
 import KuisMenu from "./pages/KuisMenu";
 import PenilaianHasilBelajar from "./pages/PenilaianHasilBelajar";
 import PenilaianBerpikirSistem from "./pages/PenilaianBerpikirSistem";
@@ -43,11 +44,62 @@ function LoadingScreen() {
 }
 
 function AppContent() {
-  const { checkAuth, initialized } = useAuthStore();
+  const { checkAuth, initialized, user, token } = useAuthStore();
 
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);
+
+  useEffect(() => {
+    if (!user || !token) return;
+
+    // 1. Record App Open
+    const hasRecordedOpen = sessionStorage.getItem("tracked_open_session");
+    if (!hasRecordedOpen) {
+      sessionStorage.setItem("tracked_open_session", "true");
+      recordOpenApi(token).catch((err) => {
+        console.error("Gagal mencatat pembukaan aplikasi:", err);
+        sessionStorage.removeItem("tracked_open_session");
+      });
+    }
+
+    // 2. Track usage time
+    let elapsedSeconds = 0;
+    const intervalTime = 10; // Heartbeat interval in seconds
+    const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8787";
+
+    const timer = setInterval(() => {
+      if (document.visibilityState === "visible") {
+        elapsedSeconds += 1;
+        if (elapsedSeconds >= intervalTime) {
+          const secondsToSend = elapsedSeconds;
+          elapsedSeconds = 0;
+          recordUsageApi(token, secondsToSend).catch((err) => {
+            console.error("Gagal mencatat durasi penggunaan:", err);
+            // Put it back to send next time
+            elapsedSeconds += secondsToSend;
+          });
+        }
+      }
+    }, 1000);
+
+    // Clean up on unmount or user change
+    return () => {
+      clearInterval(timer);
+      if (elapsedSeconds > 0) {
+        // Send remainder using fetch with keepalive: true
+        fetch(`${API_URL}/api/auth/record-usage`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+          },
+          body: JSON.stringify({ seconds: elapsedSeconds }),
+          keepalive: true,
+        }).catch(() => {});
+      }
+    };
+  }, [user, token]);
 
   if (!initialized) {
     return <LoadingScreen />;

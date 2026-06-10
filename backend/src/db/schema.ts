@@ -8,6 +8,8 @@ export const users = sqliteTable('users', {
   nama: text('nama').default(''),
   status: text('status').default('siswa'),
   createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
+  openCount: integer('open_count').default(0).notNull(),
+  totalUsageTime: integer('total_usage_time').default(0).notNull(),
 })
 
 export const quizzes = sqliteTable('quizzes', {
