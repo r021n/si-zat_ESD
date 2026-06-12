@@ -485,12 +485,7 @@ export default function AdminKuis() {
           </>
         )}
 
-        {/* Footer Info */}
-        <div className="w-full text-center mt-6">
-          <p className="text-[9px] font-mono text-neutral-400 uppercase tracking-widest">
-            SI-ZAT ESD &bull; Panel Admin Kuis
-          </p>
-        </div>
+
 
       </div>
     </div>

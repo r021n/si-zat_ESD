@@ -565,12 +565,7 @@ export default function PenilaianHasilBelajar() {
               )}
             </div>
 
-            {/* Footer Info */}
-            <div className="w-full text-center mt-4">
-              <p className="text-[9px] font-mono text-neutral-400 uppercase tracking-widest">
-                SI-ZAT ESD &bull; {activeQuiz.title.substring(0, 20)}...
-              </p>
-            </div>
+
           </div>
         )}
 

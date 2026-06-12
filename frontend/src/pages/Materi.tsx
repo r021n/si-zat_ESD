@@ -2,7 +2,13 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 import { getMaterialsApi, deleteMaterialApi } from "../api/api";
-import { FiPlus, FiEdit2, FiTrash2, FiArrowLeft, FiBookOpen } from "react-icons/fi";
+import {
+  FiPlus,
+  FiEdit2,
+  FiTrash2,
+  FiArrowLeft,
+  FiBookOpen,
+} from "react-icons/fi";
 
 export default function Materi() {
   const navigate = useNavigate();
@@ -10,7 +16,10 @@ export default function Materi() {
   const [materials, setMaterials] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const isAdmin = user && (user.status.toLowerCase() === "admin" || user.email.toLowerCase().includes("admin"));
+  const isAdmin =
+    user &&
+    (user.status.toLowerCase() === "admin" ||
+      user.email.toLowerCase().includes("admin"));
 
   const loadMaterials = async () => {
     if (!token) return;
@@ -35,11 +44,13 @@ export default function Materi() {
 
   const handleDelete = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    const confirmDelete = window.confirm("Apakah Anda yakin ingin menghapus materi ini?");
+    const confirmDelete = window.confirm(
+      "Apakah Anda yakin ingin menghapus materi ini?",
+    );
     if (!confirmDelete || !token) return;
     try {
       await deleteMaterialApi(token, id);
-      setMaterials(materials.filter(m => m.id !== id));
+      setMaterials(materials.filter((m) => m.id !== id));
       alert("Materi berhasil dihapus.");
     } catch (err: any) {
       alert(err.message || "Gagal menghapus materi.");
@@ -51,13 +62,16 @@ export default function Materi() {
   return (
     <div className="w-full min-h-screen bg-white flex justify-center items-center text-black font-sans select-none">
       <div className="w-full max-w-[430px] min-h-screen flex flex-col justify-between px-6 py-8">
-        
         <div>
           {/* Header */}
           <div className="w-full flex justify-between items-center mt-4 border-b border-black pb-3">
             <div>
-              <p className="text-[10px] uppercase tracking-widest text-neutral-500 font-bold">Pembelajaran</p>
-              <h1 className="text-xl font-bold uppercase tracking-wide">Materi Belajar</h1>
+              <p className="text-[10px] uppercase tracking-widest text-neutral-500 font-bold">
+                Pembelajaran
+              </p>
+              <h1 className="text-xl font-bold uppercase tracking-wide">
+                Materi Belajar
+              </h1>
             </div>
             {isAdmin && (
               <button
@@ -116,9 +130,11 @@ export default function Materi() {
                     )}
                   </div>
                   <div className="flex gap-2 text-[9px] font-mono text-neutral-500 uppercase font-bold mt-1">
-                    <span className="flex items-center gap-1"><FiBookOpen /> Baca Materi</span>
+                    <span className="flex items-center gap-1">
+                      <FiBookOpen /> Baca Materi
+                    </span>
                     <span>&bull;</span>
-                    <span>Dibuat: {m.createdAt.split(' ')[0]}</span>
+                    <span>Dibuat: {m.createdAt.split(" ")[0]}</span>
                   </div>
                 </div>
               ))
@@ -135,7 +151,6 @@ export default function Materi() {
             <FiArrowLeft /> Kembali
           </button>
         </div>
-
       </div>
     </div>
   );

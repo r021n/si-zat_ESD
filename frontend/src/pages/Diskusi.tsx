@@ -324,12 +324,7 @@ export default function Diskusi() {
           </div>
         )}
 
-        {/* Footer Info */}
-        <div className="w-full text-center mt-4">
-          <p className="text-[9px] font-mono text-neutral-400 uppercase tracking-widest">
-            SI-ZAT ESD &bull; Berpikir Sistem
-          </p>
-        </div>
+
 
       </div>
     </div>
