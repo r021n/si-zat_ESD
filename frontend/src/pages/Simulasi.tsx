@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
+import { LuGamepad, LuDroplets, LuFish, LuSprout, LuWind } from "react-icons/lu";
 
 export default function Simulasi() {
   const navigate = useNavigate();
@@ -23,10 +24,38 @@ export default function Simulasi() {
   }, [user, navigate]);
 
   const simulationOptions = [
-    { id: "air", label: "Pencemaran Air", desc: "Simulasi dampak polutan terhadap ekosistem air" },
-    { id: "eutrofikasi", label: "Eutrofikasi", desc: "Simulasi akumulasi nutrisi berlebih pada badan air" },
-    { id: "tanah", label: "Pencemaran Tanah", desc: "Simulasi akumulasi zat kimia berbahaya di tanah" },
-    { id: "udara", label: "Pencemaran Udara", desc: "Simulasi emisi gas berbahaya dan dampaknya pada udara" },
+    {
+      id: "air",
+      label: "Pencemaran Air",
+      desc: "Simulasi dampak polutan terhadap ekosistem air",
+      icon: <LuDroplets className="text-xl" />,
+      bgIcon: "bg-[#E6F3FF]",
+      textIcon: "text-[#2F80ED]",
+    },
+    {
+      id: "eutrofikasi",
+      label: "Eutrofikasi",
+      desc: "Simulasi akumulasi nutrisi berlebih pada badan air",
+      icon: <LuFish className="text-xl" />,
+      bgIcon: "bg-[#E6F8F6]",
+      textIcon: "text-[#2C8578]",
+    },
+    {
+      id: "tanah",
+      label: "Pencemaran Tanah",
+      desc: "Simulasi akumulasi zat kimia berbahaya di tanah",
+      icon: <LuSprout className="text-xl" />,
+      bgIcon: "bg-[#FFF4EB]",
+      textIcon: "text-[#FF9D42]",
+    },
+    {
+      id: "udara",
+      label: "Pencemaran Udara",
+      desc: "Simulasi emisi gas berbahaya dan dampaknya pada udara",
+      icon: <LuWind className="text-xl" />,
+      bgIcon: "bg-[#FFEBF0]",
+      textIcon: "text-[#D95276]",
+    },
   ];
 
   const handleOptionClick = (id: string) => {
@@ -36,40 +65,64 @@ export default function Simulasi() {
   if (!user) return null;
 
   return (
-    <div className="w-full min-h-screen bg-white flex justify-center items-center text-black font-sans">
+    <div className="w-full min-h-screen bg-[#FAF9FF] flex justify-center items-center text-[#2C2B30] font-sans select-none overflow-hidden relative">
+      {/* Decorative Blur Bubble */}
+      <div className="absolute top-[-10%] right-[-10%] w-[200px] h-[200px] bg-[#E9E4FF] rounded-full filter blur-2xl opacity-50"></div>
+
       {/* Container Mobile Portrait */}
-      <div className="w-full max-w-[430px] min-h-screen flex flex-col justify-between px-6 py-8">
+      <div className="w-full max-w-[430px] min-h-screen flex flex-col justify-between px-6 py-6 z-10">
         
         {/* Header Section */}
-        <div className="w-full flex flex-col gap-1 mt-6 mb-6">
-          <p className="text-[10px] uppercase tracking-widest text-neutral-500 font-bold">Pilihan belajar</p>
-          <h1 className="text-xl font-bold leading-tight uppercase tracking-wide">PILIHAN SIMULASI</h1>
-          <p className="text-xs text-neutral-600">Pilih salah satu topik simulasi interaktif di bawah ini.</p>
+        <div>
+          <div className="w-full flex justify-between items-center mt-4 mb-4">
+            <div>
+              <p className="text-[10px] uppercase tracking-widest text-[#9C98A6] font-bold">Pilihan belajar</p>
+              <h1 className="text-xl font-extrabold text-[#2C2B30] leading-tight mt-0.5">Pilihan Simulasi</h1>
+            </div>
+            {/* Header Icon */}
+            <div className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-[#F0EDFF] text-[#8C66FF]">
+              <LuGamepad className="text-xl" />
+            </div>
+          </div>
+          <p className="text-xs text-[#9C98A6] mb-6">Pilih salah satu topik simulasi interaktif di bawah ini untuk memulai eksperimen.</p>
         </div>
 
         {/* Simulation Buttons Stack */}
-        <div className="w-full flex flex-col gap-4 my-auto">
+        <div className="w-full flex flex-col gap-3 my-auto">
           {simulationOptions.map((option) => (
             <button
               key={option.id}
               onClick={() => handleOptionClick(option.id)}
-              className="w-full py-4 px-5 border border-black bg-white text-black text-left active:bg-black active:text-white transition-colors duration-100 cursor-pointer group"
+              className="w-full bg-white rounded-[24px] p-4 flex items-center justify-between shadow-[0_4px_12px_rgba(0,0,0,0.02)] border border-[#F0EDFF] cursor-pointer text-left transition-none active:bg-slate-50"
             >
-              <div className="font-bold text-sm tracking-wide uppercase">{option.label}</div>
-              <div className="text-[11px] text-neutral-500 group-active:text-neutral-300 mt-1 font-normal leading-relaxed">
-                {option.desc}
+              <div className="flex items-center gap-4">
+                {/* Rounded icon box */}
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-inner ${option.bgIcon} ${option.textIcon}`}>
+                  {option.icon}
+                </div>
+                <div>
+                  <h3 className="text-sm font-extrabold text-[#2C2B30] tracking-wide">{option.label}</h3>
+                  <p className="text-[10px] text-[#9C98A6] font-medium mt-0.5">{option.desc}</p>
+                </div>
               </div>
+              {/* Chevron Right */}
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 text-[#8C66FF] opacity-50 flex-shrink-0">
+                <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
+              </svg>
             </button>
           ))}
         </div>
 
         {/* Navigation Back Footer */}
-        <div className="w-full mt-8 mb-2">
+        <div className="w-full mt-6 mb-2">
           <button
             onClick={() => navigate("/menu")}
-            className="w-full py-3 border border-black bg-black text-white font-bold uppercase tracking-wider text-xs hover:bg-white hover:text-black transition-colors duration-150 cursor-pointer"
+            className="w-full py-4 bg-white border border-[#F0EDFF] text-[#8C66FF] font-extrabold uppercase tracking-wider text-xs rounded-full shadow-sm cursor-pointer transition-none flex items-center justify-center gap-2 active:bg-[#F9F8FF]"
           >
-            Kembali ke Menu
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+            </svg>
+            <span>Kembali ke Menu</span>
           </button>
         </div>
 
@@ -77,3 +130,4 @@ export default function Simulasi() {
     </div>
   );
 }
+

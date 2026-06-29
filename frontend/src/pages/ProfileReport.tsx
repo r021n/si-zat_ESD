@@ -1,6 +1,7 @@
 import { useState, useEffect, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
+import { LuEye, LuClock } from "react-icons/lu";
 
 export default function ProfileReport() {
   const navigate = useNavigate();
@@ -232,9 +233,7 @@ export default function ProfileReport() {
                   <p className="text-xs font-bold text-[#2C2B30] mt-0.5">{user.openCount ?? 0} Kali</p>
                 </div>
                 <div className="w-8 h-8 rounded-lg bg-[#E6F8F6] text-[#2C8578] flex items-center justify-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.011 12.5h2.125m-17.125 0h2.125m12.875 0h2.125m-12.875 0h2.125M2.125 12.5l-.25-2.625a3.75 3.75 0 013.75-3.75h12.75a3.75 3.75 0 013.75 3.75l-.25 2.625m-20 0h20m-20 0v5.625c0 1.036.84 1.875 1.875 1.875h16.25c1.036 0 1.875-.84 1.875-1.875V12.5m-18 0V10a2.5 2.5 0 012.5-2.5h11A2.5 2.5 0 0118 10v2.5" />
-                  </svg>
+                  <LuEye className="w-4 h-4" />
                 </div>
               </div>
 
@@ -245,9 +244,7 @@ export default function ProfileReport() {
                   <p className="text-xs font-bold text-[#2C2B30] mt-0.5">{formatUsageTime(user.totalUsageTime)}</p>
                 </div>
                 <div className="w-8 h-8 rounded-lg bg-[#FFF4EB] text-[#FF9D42] flex items-center justify-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
+                  <LuClock className="w-4 h-4" />
                 </div>
               </div>
             </div>
