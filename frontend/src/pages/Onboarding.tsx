@@ -18,13 +18,13 @@ export default function Onboarding() {
   };
 
   return (
-    <div className="w-full min-h-screen bg-gradient-to-b from-[#8C66FF] to-[#D4C5FF] flex justify-center items-center text-[#2B2927] font-sans select-none overflow-hidden relative">
-      {/* Decorative Bubbles for premium aesthetic */}
-      <div className="absolute top-[-5%] left-[-15%] w-[250px] h-[250px] bg-[#A285FF] rounded-full filter blur-2xl opacity-60"></div>
-      <div className="absolute top-[15%] right-[-10%] w-[180px] h-[180px] bg-[#9570FF] rounded-full filter blur-xl opacity-40"></div>
+    <div className="w-full min-h-screen bg-[#FAF9FF] flex justify-center items-center text-[#2B2927] font-sans select-none overflow-hidden relative">
       
       {/* Container Mobile Portrait */}
-      <div className="w-full max-w-[430px] min-h-screen flex flex-col justify-between px-6 py-6 z-10">
+      <div className="w-full max-w-[430px] min-h-screen bg-[#8C66FF] flex flex-col justify-between px-6 py-6 z-10 shadow-2xl relative overflow-hidden">
+        {/* Decorative Bubbles for premium aesthetic inside mobile view */}
+        <div className="absolute top-[-5%] left-[-15%] w-[250px] h-[250px] bg-[#A285FF] rounded-full filter blur-2xl opacity-60"></div>
+        <div className="absolute top-[15%] right-[-10%] w-[180px] h-[180px] bg-[#9570FF] rounded-full filter blur-xl opacity-40"></div>
         
         {/* Top Illustration Section */}
         <div className="w-full flex-grow flex flex-col items-center justify-center my-6">
@@ -71,7 +71,7 @@ export default function Onboarding() {
           
           {/* Logo / Header inside the card */}
           <div>
-            <h1 className="text-3xl font-black bg-gradient-to-r from-[#8C66FF] to-[#FF5E8C] bg-clip-text text-transparent uppercase tracking-wider">
+            <h1 className="text-3xl font-black text-[#8C66FF] uppercase tracking-wider">
               SI-ZAT
             </h1>
             <p className="text-[9px] font-bold uppercase tracking-widest text-[#9C98A6] mt-1">
@@ -107,7 +107,7 @@ export default function Onboarding() {
           <div className="w-full mt-1">
             <button
               onClick={handleStart}
-              className="w-full py-4 bg-gradient-to-r from-[#FF5E8C] to-[#8C66FF] text-white font-extrabold uppercase tracking-wider text-xs rounded-full shadow-[0_8px_20px_rgba(255,94,140,0.3)] cursor-pointer flex items-center justify-center gap-2"
+              className="w-full py-4 bg-[#FF5E8C] text-white font-extrabold uppercase tracking-wider text-xs rounded-full shadow-[0_8px_20px_rgba(255,94,140,0.3)] cursor-pointer flex items-center justify-center gap-2"
             >
               <span>Mulai Belajar</span>
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">

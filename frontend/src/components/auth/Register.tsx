@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { useAuthStore } from "../../store/authStore";
+import { LuEye, LuEyeOff } from "react-icons/lu";
 
 interface RegisterProps {
   onSuccess?: () => void;
@@ -78,9 +79,9 @@ export default function Register({ onSuccess }: RegisterProps) {
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-2 px-3 py-1.5 text-[8px] font-extrabold tracking-wider rounded-full bg-white text-[#8C66FF] border border-[#EBE8FF] cursor-pointer shadow-sm transition-none"
+            className="absolute right-4 text-[#8C66FF] cursor-pointer flex items-center justify-center transition-none focus:outline-none"
           >
-            {showPassword ? "HIDE" : "SHOW"}
+            {showPassword ? <LuEyeOff className="text-lg" /> : <LuEye className="text-lg" />}
           </button>
         </div>
       </div>
@@ -101,9 +102,9 @@ export default function Register({ onSuccess }: RegisterProps) {
           <button
             type="button"
             onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-            className="absolute right-2 px-3 py-1.5 text-[8px] font-extrabold tracking-wider rounded-full bg-white text-[#8C66FF] border border-[#EBE8FF] cursor-pointer shadow-sm transition-none"
+            className="absolute right-4 text-[#8C66FF] cursor-pointer flex items-center justify-center transition-none focus:outline-none"
           >
-            {showConfirmPassword ? "HIDE" : "SHOW"}
+            {showConfirmPassword ? <LuEyeOff className="text-lg" /> : <LuEye className="text-lg" />}
           </button>
         </div>
       </div>
@@ -112,7 +113,7 @@ export default function Register({ onSuccess }: RegisterProps) {
       <button
         type="submit"
         disabled={loading}
-        className="w-full mt-4 py-4 bg-gradient-to-r from-[#FF5E8C] to-[#8C66FF] text-white font-extrabold uppercase tracking-wider text-xs rounded-full shadow-[0_6px_16px_rgba(255,94,140,0.2)] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-none"
+        className="w-full mt-4 py-4 bg-[#FF5E8C] text-white font-extrabold uppercase tracking-wider text-xs rounded-full shadow-[0_6px_16px_rgba(255,94,140,0.2)] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-none"
       >
         {loading ? "Mendaftar..." : "Daftar"}
       </button>

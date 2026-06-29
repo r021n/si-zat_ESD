@@ -22,18 +22,19 @@ export default function Auth() {
   if (user) return null; // Avoid rendering login/register briefly before redirecting
 
   return (
-    <div className="w-full min-h-screen bg-gradient-to-b from-[#8C66FF] to-[#D4C5FF] flex justify-center items-center text-[#2B2927] font-sans overflow-hidden relative">
-      {/* Decorative Bubbles */}
-      <div className="absolute top-[-5%] left-[-15%] w-[250px] h-[250px] bg-[#A285FF] rounded-full filter blur-2xl opacity-60"></div>
-      <div className="absolute bottom-[-5%] right-[-10%] w-[220px] h-[220px] bg-[#9570FF] rounded-full filter blur-xl opacity-40"></div>
-
+    <div className="w-full min-h-screen bg-[#FAF9FF] flex justify-center items-center text-[#2B2927] font-sans overflow-hidden relative">
+      
       {/* Container Mobile Portrait */}
-      <div className="w-full max-w-[430px] min-h-screen flex flex-col justify-center px-6 py-6 z-10">
-        <div className="w-full bg-white rounded-[32px] px-6 py-8 shadow-[0_12px_40px_rgba(0,0,0,0.08)] flex flex-col gap-5">
+      <div className="w-full max-w-[430px] min-h-screen bg-[#8C66FF] flex flex-col justify-center px-6 py-6 z-10 shadow-2xl relative overflow-hidden">
+        {/* Decorative Bubbles inside mobile view */}
+        <div className="absolute top-[-5%] left-[-15%] w-[250px] h-[250px] bg-[#A285FF] rounded-full filter blur-2xl opacity-60"></div>
+        <div className="absolute bottom-[-5%] right-[-10%] w-[220px] h-[220px] bg-[#9570FF] rounded-full filter blur-xl opacity-40"></div>
+
+        <div className="w-full bg-white rounded-[32px] px-6 py-8 shadow-[0_12px_40px_rgba(0,0,0,0.08)] flex flex-col gap-5 relative z-10">
           
           {/* Header Section inside Card */}
           <div className="text-center mb-1">
-            <h1 className="text-2xl font-black bg-gradient-to-r from-[#8C66FF] to-[#FF5E8C] bg-clip-text text-transparent uppercase tracking-wider">
+            <h1 className="text-2xl font-black text-[#8C66FF] uppercase tracking-wider">
               SI-ZAT
             </h1>
             <p className="text-[8px] font-bold uppercase tracking-widest text-[#9C98A6] mt-0.5">
@@ -48,7 +49,7 @@ export default function Auth() {
               onClick={() => setMode("login")}
               className={`flex-1 text-center py-2.5 text-xs font-extrabold rounded-full cursor-pointer transition-none ${
                 mode === "login"
-                  ? "bg-gradient-to-r from-[#FF5E8C] to-[#8C66FF] text-white shadow-sm"
+                  ? "bg-[#FF5E8C] text-white shadow-sm"
                   : "text-[#9C98A6]"
               }`}
             >
@@ -59,7 +60,7 @@ export default function Auth() {
               onClick={() => setMode("register")}
               className={`flex-1 text-center py-2.5 text-xs font-extrabold rounded-full cursor-pointer transition-none ${
                 mode === "register"
-                  ? "bg-gradient-to-r from-[#FF5E8C] to-[#8C66FF] text-white shadow-sm"
+                  ? "bg-[#FF5E8C] text-white shadow-sm"
                   : "text-[#9C98A6]"
               }`}
             >
