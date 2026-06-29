@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 import { LuBookOpen, LuGamepad, LuPenTool, LuChartBar, LuSettings, LuGraduationCap } from "react-icons/lu";
@@ -10,6 +10,17 @@ interface MainMenuProps {
 export default function MainMenu({ onNavigate }: MainMenuProps) {
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
+
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+  const [statsDetailModal, setStatsDetailModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+  });
 
   useEffect(() => {
     if (!user) {
@@ -28,6 +39,50 @@ export default function MainMenu({ onNavigate }: MainMenuProps) {
   const handleLogout = () => {
     logout();
     navigate("/auth");
+  };
+
+  const formatAbbreviatedTime = (seconds?: number) => {
+    if (!seconds || seconds <= 0) return "0 detik";
+    if (seconds < 60) return `${seconds} detik`;
+    if (seconds < 3600) {
+      const minutes = seconds / 60;
+      const formatted = minutes.toFixed(1).replace(".", ",");
+      return `${formatted.endsWith(",0") ? Math.round(minutes) : formatted} menit`;
+    }
+    const hours = seconds / 3600;
+    const formatted = hours.toFixed(1).replace(".", ",");
+    return `${formatted.endsWith(",0") ? Math.round(hours) : formatted} jam`;
+  };
+
+  const formatFullUsageTime = (seconds?: number) => {
+    if (!seconds) return "0 detik";
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    
+    const parts = [];
+    if (h > 0) parts.push(`${h} jam`);
+    if (m > 0) parts.push(`${m} menit`);
+    if (s > 0 || parts.length === 0) parts.push(`${s} detik`);
+    
+    return parts.join(" ");
+  };
+
+  const handleOpenStatsDetail = (type: "openCount" | "usageTime") => {
+    if (!user) return;
+    if (type === "openCount") {
+      setStatsDetailModal({
+        isOpen: true,
+        title: "Detail Kunjungan",
+        message: `Aplikasi SI-ZAT ini telah dibuka sebanyak ${user.openCount ?? 0} kali oleh akun Anda.`,
+      });
+    } else {
+      setStatsDetailModal({
+        isOpen: true,
+        title: "Detail Lama Belajar",
+        message: `Total waktu belajar Anda menggunakan media interaktif ini adalah ${formatFullUsageTime(user.totalUsageTime)}.`,
+      });
+    }
   };
 
   if (!user) return null;
@@ -97,12 +152,16 @@ export default function MainMenu({ onNavigate }: MainMenuProps) {
               <p className="text-[10px] uppercase tracking-widest text-[#9C98A6] font-bold">Selamat datang,</p>
               <h1 className="text-xl font-extrabold truncate text-[#2C2B30] leading-tight mt-0.5">Hi, {displayName}</h1>
             </div>
-            {/* Search Icon placeholder matching middle mockup */}
-            <div className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-[#F0EDFF] text-[#8C66FF]">
+            {/* Logout Button (Replacing Search Icon) */}
+            <button
+              onClick={() => setIsLogoutModalOpen(true)}
+              className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-[#FFEAEA] text-[#FF5E8C] cursor-pointer transition-none"
+              title="Keluar Sesi"
+            >
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
               </svg>
-            </div>
+            </button>
           </div>
 
           {/* Glassmorphic Promo/Profile Card (matches Unlimited Storage card in mockup) */}
@@ -161,20 +220,68 @@ export default function MainMenu({ onNavigate }: MainMenuProps) {
           </div>
         </div>
 
-        {/* Footer Section with Logout */}
-        <div className="w-full mt-6 mb-2">
-          <button
-            onClick={handleLogout}
-            className="w-full py-4 bg-white border border-[#FFEAEA] text-[#FF5E8C] font-extrabold uppercase tracking-wider text-xs rounded-full shadow-sm cursor-pointer transition-none flex items-center justify-center gap-2"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" />
-            </svg>
-            <span>Keluar Sesi</span>
-          </button>
+        {/* Footer Section with Stats Report */}
+        <div className="w-full mt-6 mb-2 bg-white rounded-[24px] p-4 shadow-[0_4px_12px_rgba(0,0,0,0.02)] border border-[#F0EDFF] flex items-center justify-between">
+          <div className="flex-1 flex flex-col items-center border-r border-[#F0EDFF]/70 cursor-pointer" onClick={() => handleOpenStatsDetail("openCount")}>
+            <p className="text-[9px] uppercase tracking-wider text-[#9C98A6] font-bold">Kunjungan</p>
+            <h4 className="text-sm font-extrabold text-[#2C2B30] mt-1 hover:text-[#8C66FF] active:text-[#8C66FF] cursor-pointer transition-none">{user.openCount ?? 0} Kali</h4>
+          </div>
+          <div className="flex-1 flex flex-col items-center cursor-pointer" onClick={() => handleOpenStatsDetail("usageTime")}>
+            <p className="text-[9px] uppercase tracking-wider text-[#9C98A6] font-bold">Lama Belajar</p>
+            <h4 className="text-sm font-extrabold text-[#2C2B30] mt-1 hover:text-[#8C66FF] active:text-[#8C66FF] cursor-pointer transition-none">{formatAbbreviatedTime(user.totalUsageTime)}</h4>
+          </div>
         </div>
 
       </div>
+
+      {/* Logout Confirmation Modal */}
+      {isLogoutModalOpen && (
+        <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50 p-6 backdrop-blur-xs">
+          <div className="w-full max-w-[340px] bg-white rounded-[28px] p-6 shadow-xl border border-[#F0EDFF] flex flex-col gap-4 animate-none select-none text-left">
+            <div>
+              <h3 className="text-sm font-extrabold text-[#2C2B30] tracking-wide uppercase">Keluar Sesi</h3>
+              <p className="text-xs text-[#9C98A6] font-medium mt-2 leading-relaxed">Apakah Anda yakin ingin keluar dari aplikasi SI-ZAT?</p>
+            </div>
+            <div className="flex gap-2.5 mt-2">
+              <button
+                onClick={() => setIsLogoutModalOpen(false)}
+                className="flex-1 py-3 bg-white border border-[#F0EDFF] text-[#8C66FF] font-extrabold uppercase tracking-wider text-[10px] rounded-full shadow-sm cursor-pointer transition-none flex items-center justify-center"
+              >
+                Batal
+              </button>
+              <button
+                onClick={() => {
+                  setIsLogoutModalOpen(false);
+                  handleLogout();
+                }}
+                className="flex-1 py-3 bg-[#FF5E8C] text-white font-extrabold uppercase tracking-wider text-[10px] rounded-full shadow-md shadow-red-100 cursor-pointer transition-none flex items-center justify-center"
+              >
+                Keluar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Stats Detail Modal */}
+      {statsDetailModal.isOpen && (
+        <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50 p-6 backdrop-blur-xs">
+          <div className="w-full max-w-[340px] bg-white rounded-[28px] p-6 shadow-xl border border-[#F0EDFF] flex flex-col gap-4 animate-none select-none text-left">
+            <div>
+              <h3 className="text-sm font-extrabold text-[#2C2B30] tracking-wide uppercase">{statsDetailModal.title}</h3>
+              <p className="text-xs text-[#9C98A6] font-semibold mt-3 leading-relaxed">{statsDetailModal.message}</p>
+            </div>
+            <div className="flex gap-2.5 mt-2">
+              <button
+                onClick={() => setStatsDetailModal(prev => ({ ...prev, isOpen: false }))}
+                className="flex-1 py-3 bg-[#8C66FF] text-white font-extrabold uppercase tracking-wider text-[10px] rounded-full shadow-md shadow-purple-100 cursor-pointer transition-none flex items-center justify-center"
+              >
+                Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
