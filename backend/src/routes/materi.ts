@@ -80,16 +80,48 @@ materi.get('/', async (c: any) => {
       id: materials.id,
       title: materials.title,
       createdAt: materials.createdAt,
-      updatedAt: materials.updatedAt
+      updatedAt: materials.updatedAt,
+      sortOrder: materials.sortOrder
     }).from(materials)
     
-    // Sort by createdAt descending
-    allMaterials.sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    // Sort by sortOrder ascending, fallback to createdAt descending
+    allMaterials.sort((a, b) => {
+      const orderA = a.sortOrder ?? 0
+      const orderB = b.sortOrder ?? 0
+      if (orderA !== orderB) {
+        return orderA - orderB
+      }
+      return b.createdAt.localeCompare(a.createdAt)
+    })
 
     return c.json(allMaterials)
   } catch (error: any) {
     console.error('Error fetching materials:', error)
     return c.json({ error: 'Gagal mengambil data materi.' }, 500)
+  }
+})
+
+// PUT /api/materi/reorder - Update materials sort order (Admin only)
+materi.put('/reorder', adminMiddleware, async (c: any) => {
+  try {
+    const body = await c.req.json()
+    const { ids } = body // Expected: { ids: ["mat-1", "mat-2", ...] }
+
+    if (!ids || !Array.isArray(ids)) {
+      return c.json({ error: 'Data tidak valid. Harus menyertakan array ids.' }, 400)
+    }
+
+    // Update each material's sortOrder matching its index in the array
+    for (let i = 0; i < ids.length; i++) {
+      await db.update(materials)
+        .set({ sortOrder: i })
+        .where(eq(materials.id, ids[i]))
+    }
+
+    return c.json({ success: true, message: 'Urutan materi berhasil diperbarui.' })
+  } catch (error: any) {
+    console.error('Error reordering materials:', error)
+    return c.json({ error: `Gagal memperbarui urutan materi: ${error.message}` }, 500)
   }
 })
 

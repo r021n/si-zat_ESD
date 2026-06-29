@@ -233,6 +233,22 @@ export async function updateMaterialApi(token: string, id: string, formData: For
   return data;
 }
 
+export async function reorderMaterialsApi(token: string, ids: string[]) {
+  const response = await fetch(`${API_URL}/api/materi/reorder`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    },
+    body: JSON.stringify({ ids })
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || "Gagal mengubah urutan materi");
+  }
+  return data;
+}
+
 export async function deleteMaterialApi(token: string, id: string) {
   const response = await fetch(`${API_URL}/api/materi/${id}`, {
     method: "DELETE",

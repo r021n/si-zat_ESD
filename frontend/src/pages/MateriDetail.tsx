@@ -6,6 +6,25 @@ import { FiArrowLeft, FiChevronLeft, FiChevronRight, FiRefreshCw, FiBookOpen } f
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8787";
 
+const parseFormattedText = (text: string) => {
+  if (!text) return "";
+  // Escape HTML entities to prevent XSS
+  let html = text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\n/g, "<br />");
+  
+  // Restore allowed tags
+  html = html
+    .replace(/&lt;b&gt;([\s\S]*?)&lt;\/b&gt;/g, "<strong>$1</strong>")
+    .replace(/&lt;i&gt;([\s\S]*?)&lt;\/i&gt;/g, "<em>$1</em>")
+    .replace(/&lt;u&gt;([\s\S]*?)&lt;\/u&gt;/g, "<span class='underline'>$1</span>")
+    .replace(/&lt;s&gt;([\s\S]*?)&lt;\/s&gt;/g, "<del>$1</del>");
+
+  return <div dangerouslySetInnerHTML={{ __html: html }} className="whitespace-pre-wrap text-justify leading-relaxed" />;
+};
+
 export default function MateriDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -88,16 +107,19 @@ export default function MateriDetail() {
   if (!user) return null;
 
   return (
-    <div className="w-full min-h-screen bg-white flex justify-center items-center text-black font-sans overflow-x-hidden">
+    <div className="w-full min-h-screen bg-[#FAF9FF] flex justify-center items-center text-[#2C2B30] font-sans select-none overflow-hidden relative">
+      {/* Decorative Blur Bubble */}
+      <div className="absolute top-[-10%] right-[-10%] w-[200px] h-[200px] bg-[#E9E4FF] rounded-full filter blur-2xl opacity-50"></div>
+
       {/* Container Mobile Portrait */}
-      <div className="w-full max-w-[430px] min-h-screen flex flex-col justify-between px-6 py-8">
+      <div className="w-full max-w-[430px] min-h-screen flex flex-col justify-between px-6 py-6 z-10">
         
         <div>
           {/* Header */}
-          <div className="w-full flex justify-between items-center mt-4 border-b border-black pb-3">
+          <div className="w-full flex justify-between items-center mt-4 pb-4 border-b border-[#F0EDFF]/50">
             <div>
-              <p className="text-[10px] uppercase tracking-widest text-neutral-500 font-bold">Materi Belajar</p>
-              <h1 className="text-sm font-bold uppercase tracking-wide truncate max-w-[300px]">
+              <p className="text-[10px] uppercase tracking-widest text-[#9C98A6] font-bold">Materi Belajar</p>
+              <h1 className="text-sm font-extrabold text-[#2C2B30] truncate max-w-[300px] leading-tight">
                 {loading ? "Memuat..." : material?.title}
               </h1>
             </div>
@@ -105,23 +127,23 @@ export default function MateriDetail() {
 
           {/* Mode Selector */}
           {!loading && !error && material && (
-            <div className="w-full flex bg-white p-1 mt-4 border border-black">
+            <div className="w-full flex bg-[#F0ECFF]/50 p-1.5 mt-4 border border-[#F0EDFF] rounded-2xl">
               <button
                 onClick={() => setViewMode("flipbook")}
-                className={`flex-1 py-2 text-center text-xs font-bold uppercase tracking-wider cursor-pointer flex items-center justify-center gap-1.5 border transition-none ${
+                className={`flex-1 py-2 px-3 text-center text-xs font-extrabold uppercase tracking-wider cursor-pointer flex items-center justify-center gap-1.5 rounded-xl transition-none ${
                   viewMode === "flipbook"
-                    ? "bg-black text-white border-black"
-                    : "bg-white text-black border-transparent hover:bg-neutral-100"
+                    ? "bg-white text-[#8C66FF] shadow-sm"
+                    : "bg-transparent text-[#9C98A6]"
                 }`}
               >
                 <FiBookOpen size={13} /> Mode Flipbook
               </button>
               <button
                 onClick={() => setViewMode("classic")}
-                className={`flex-1 py-2 text-center text-xs font-bold uppercase tracking-wider cursor-pointer flex items-center justify-center gap-1.5 border transition-none ${
+                className={`flex-1 py-2 px-3 text-center text-xs font-extrabold uppercase tracking-wider cursor-pointer flex items-center justify-center gap-1.5 rounded-xl transition-none ${
                   viewMode === "classic"
-                    ? "bg-black text-white border-black"
-                    : "bg-white text-black border-transparent hover:bg-neutral-100"
+                    ? "bg-white text-[#8C66FF] shadow-sm"
+                    : "bg-transparent text-[#9C98A6]"
                 }`}
               >
                 📜 Mode Klasik
@@ -132,23 +154,23 @@ export default function MateriDetail() {
           {/* Content Area */}
           <div className="mt-6 flex flex-col gap-6">
             {loading ? (
-              <div className="w-full flex flex-col justify-center items-center gap-4 py-12 text-center">
-                <div className="w-6 h-6 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
-                <p className="text-[10px] uppercase font-bold tracking-widest text-neutral-500">
+              <div className="w-full flex flex-col justify-center items-center gap-3 py-12 text-center">
+                <div className="w-8 h-8 border-2 border-[#8C66FF] border-t-transparent rounded-full animate-spin"></div>
+                <p className="text-[10px] uppercase font-black tracking-widest text-[#9C98A6]">
                   Memuat konten...
                 </p>
               </div>
             ) : error ? (
-              <div className="text-center py-12 border border-black border-dashed text-xs text-red-600 uppercase font-bold">
+              <div className="text-center py-12 px-4 bg-white rounded-[24px] border border-[#FFEAEA] text-xs text-[#FF5E8C] uppercase font-bold tracking-wider shadow-sm">
                 {error}
               </div>
             ) : material ? (
               viewMode === "flipbook" ? (
                 <div className="flex flex-col items-center w-full">
                   {/* Progress bar */}
-                  <div className="w-full bg-white border border-black h-2.5 p-0.5 mb-5">
+                  <div className="w-full bg-[#FAF9FF] border border-[#F0EDFF] h-2.5 p-0.5 mb-5 rounded-full overflow-hidden">
                     <div 
-                      className="bg-black h-full"
+                      className="bg-[#8C66FF] h-full rounded-full transition-none"
                       style={{ width: `${(currentPage / (pages.length - 1)) * 100}%` }}
                     />
                   </div>
@@ -181,7 +203,7 @@ export default function MateriDetail() {
                       return (
                         <div
                           key={index}
-                          className="absolute top-0 left-0 w-full h-full bg-white border border-black overflow-hidden"
+                          className="absolute top-0 left-0 w-full h-full bg-white border border-[#F0EDFF] overflow-hidden rounded-[24px] shadow-[0_4px_12px_rgba(0,0,0,0.02)]"
                           style={{
                             transformOrigin: "left center",
                             transition: "transform 0.8s cubic-bezier(0.4, 0, 0.2, 1), z-index 0.8s",
@@ -195,19 +217,19 @@ export default function MateriDetail() {
                           <div className="w-full h-full p-6 flex flex-col justify-between bg-white relative">
                             {page.type === "cover" && (
                               <div className="flex flex-col justify-center items-center h-full text-center py-6">
-                                <div className="w-16 h-16 bg-white border border-black flex justify-center items-center mb-6">
-                                  <FiBookOpen size={24} className="text-black" />
+                                <div className="w-16 h-16 bg-[#F0ECFF] rounded-2xl flex justify-center items-center mb-6 shadow-inner text-[#8C66FF]">
+                                  <FiBookOpen size={24} />
                                 </div>
-                                <p className="text-[10px] uppercase tracking-widest text-neutral-500 font-bold mb-2">Materi Belajar</p>
-                                <h1 className="text-xl font-bold uppercase tracking-tight text-black border-b border-black pb-4 mb-4">
+                                <p className="text-[10px] uppercase tracking-widest text-[#9C98A6] font-bold mb-2">Materi Belajar</p>
+                                <h1 className="text-xl font-extrabold uppercase tracking-tight text-[#2C2B30] border-b border-[#F0EDFF] pb-4 mb-4 text-center w-full">
                                   {page.title}
                                 </h1>
-                                <p className="text-xs text-black max-w-[280px] leading-relaxed mb-8">
+                                <p className="text-xs text-[#9C98A6] max-w-[280px] leading-relaxed mb-8 text-center font-medium">
                                   Gunakan tombol navigasi di bawah atau usap layar untuk membaca halaman demi halaman.
                                 </p>
                                 <button
                                   onClick={() => setCurrentPage(1)}
-                                  className="px-6 py-2.5 bg-black text-white font-bold uppercase tracking-wider text-xs border border-black hover:bg-white hover:text-black transition-none rounded-none cursor-pointer"
+                                  className="px-6 py-3 bg-gradient-to-br from-[#8C66FF] to-[#6039DF] text-white font-extrabold uppercase tracking-wider text-xs rounded-full shadow-md shadow-purple-100 transition-none cursor-pointer"
                                 >
                                   Mulai Membaca
                                 </button>
@@ -217,38 +239,36 @@ export default function MateriDetail() {
                             {page.type === "block" && (
                               <div className="flex flex-col h-full justify-between">
                                 {/* Page Header */}
-                                <div className="flex justify-between items-center border-b border-black pb-2 mb-4">
-                                  <span className="text-[9px] uppercase tracking-wider font-bold text-black truncate max-w-[180px]">
+                                <div className="flex justify-between items-center border-b border-[#F0EDFF]/50 pb-2 mb-4">
+                                  <span className="text-[9px] uppercase tracking-wider font-extrabold text-[#9C98A6] truncate max-w-[180px]">
                                     {material.title}
                                   </span>
-                                  <span className="text-[9px] font-bold text-black">
-                                    Halaman {index} dari {pages.length - 2}
+                                  <span className="text-[9px] font-extrabold text-[#8C66FF] bg-[#F0ECFF] px-2 py-0.5 rounded-full">
+                                    Halaman {index} / {pages.length - 2}
                                   </span>
                                 </div>
 
-                                {/* Main Content (Scrollable if overflow) */}
+                                {/* Main Content */}
                                 <div className="flex-1 flex flex-col justify-center overflow-y-auto py-2 pr-1">
                                   {page.block.type === "text" && (
-                                    <p className="text-sm text-black whitespace-pre-wrap leading-relaxed text-justify">
-                                      {page.block.textContent}
-                                    </p>
+                                    <div className="text-xs text-[#2C2B30] font-medium leading-relaxed">
+                                      {parseFormattedText(page.block.textContent)}
+                                    </div>
                                   )}
                                   {page.block.type === "image" && (
-                                    <div className="w-full border border-black p-1 bg-white flex justify-center items-center">
+                                    <div className="w-full border border-[#F0EDFF] p-2 bg-white rounded-2xl overflow-hidden shadow-sm flex justify-center items-center">
                                       <img
                                         src={`${API_URL}${page.block.mediaUrl}`}
                                         alt="Visual Pendukung"
-                                        className="max-h-[240px] w-auto object-contain block"
+                                        className="max-h-[220px] w-auto object-contain block rounded-lg"
                                       />
                                     </div>
                                   )}
                                   {page.block.type === "audio" && (
-                                    <div className="w-full border border-black p-3 bg-neutral-50 flex flex-col gap-2">
-                                      <div className="flex items-center gap-2">
-                                        <span className="text-[9px] uppercase tracking-wider font-mono font-bold text-neutral-500">
-                                          Audio Penjelasan
-                                        </span>
-                                      </div>
+                                    <div className="w-full border border-[#F0EDFF] p-4 bg-[#FAF9FF] rounded-2xl flex flex-col gap-2.5 shadow-sm text-left">
+                                      <p className="text-[9px] uppercase tracking-widest font-bold text-[#9C98A6]">
+                                        Audio Penjelasan
+                                      </p>
                                       <audio
                                         src={`${API_URL}${page.block.mediaUrl}`}
                                         controls
@@ -259,7 +279,7 @@ export default function MateriDetail() {
                                 </div>
 
                                 {/* Page Footer */}
-                                <div className="border-t border-black pt-3 mt-4 flex justify-between items-center text-[10px] text-black font-mono">
+                                <div className="border-t border-[#F0EDFF]/50 pt-3 mt-4 flex justify-between items-center text-[10px] text-[#9C98A6] font-bold uppercase tracking-wider">
                                   <span>SI-ZAT ESD</span>
                                   <span>•</span>
                                 </div>
@@ -268,26 +288,26 @@ export default function MateriDetail() {
 
                             {page.type === "end" && (
                               <div className="flex flex-col justify-center items-center h-full text-center py-6">
-                                <div className="w-16 h-16 bg-white border border-black flex justify-center items-center mb-6">
-                                  <span className="text-2xl">🎉</span>
+                                <div className="w-16 h-16 bg-[#E6F8F6] text-[#2C8578] rounded-2xl flex justify-center items-center mb-6 shadow-inner text-2xl">
+                                  🎉
                                 </div>
-                                <p className="text-[10px] uppercase tracking-widest text-neutral-500 font-bold mb-2">Selesai Membaca</p>
-                                <h1 className="text-lg font-bold uppercase tracking-tight text-black mb-4">
+                                <p className="text-[10px] uppercase tracking-widest text-[#9C98A6] font-bold mb-2">Selesai Membaca</p>
+                                <h1 className="text-lg font-black uppercase tracking-tight text-[#2C2B30] mb-2 text-center">
                                   Materi Selesai!
-                                </h1>
-                                <p className="text-xs text-black max-w-[280px] leading-relaxed mb-8">
+                                  </h1>
+                                <p className="text-xs text-[#9C98A6] max-w-[280px] leading-relaxed mb-8 text-center font-medium">
                                   Anda telah menyelesaikan pembacaan materi.
                                 </p>
                                 <div className="flex flex-col gap-3 w-full max-w-[220px]">
                                   <button
                                     onClick={() => setCurrentPage(0)}
-                                    className="w-full py-2.5 bg-white text-black border border-black font-bold uppercase tracking-wider text-[10px] hover:bg-neutral-100 transition-none rounded-none cursor-pointer flex items-center justify-center gap-1.5"
+                                    className="w-full py-3 bg-white border border-[#F0EDFF] text-[#8C66FF] font-extrabold uppercase tracking-wider text-[10px] rounded-full shadow-sm transition-none cursor-pointer flex items-center justify-center gap-1.5"
                                   >
                                     <FiRefreshCw size={11} /> Baca Kembali
                                   </button>
                                   <button
                                     onClick={() => navigate("/materi")}
-                                    className="w-full py-2.5 bg-black text-white border border-black font-bold uppercase tracking-wider text-[10px] hover:bg-white hover:text-black transition-none rounded-none cursor-pointer flex items-center justify-center gap-1.5"
+                                    className="w-full py-3 bg-[#8C66FF] text-white font-extrabold uppercase tracking-wider text-[10px] rounded-full shadow-md shadow-purple-100 transition-none cursor-pointer flex items-center justify-center gap-1.5"
                                   >
                                     <FiArrowLeft size={11} /> Kembali ke Daftar
                                   </button>
@@ -305,52 +325,54 @@ export default function MateriDetail() {
                     <button
                       disabled={currentPage === 0}
                       onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))}
-                      className="flex-1 py-2.5 border border-black text-black font-bold uppercase tracking-wider text-xs hover:bg-neutral-100 disabled:opacity-30 disabled:hover:bg-white disabled:hover:text-black cursor-pointer rounded-none flex items-center justify-center gap-1.5 transition-none"
+                      className="flex-1 py-3 bg-white border border-[#F0EDFF] text-[#8C66FF] font-extrabold uppercase tracking-wider text-xs rounded-full shadow-sm disabled:opacity-30 cursor-pointer flex items-center justify-center gap-1.5 transition-none"
                     >
                       <FiChevronLeft /> Sebelumnya
                     </button>
-                    <span className="text-xs font-bold font-mono text-black">
+                    <span className="text-xs font-bold font-mono text-[#2C2B30]">
                       {currentPage} / {pages.length - 1}
                     </span>
                     <button
                       disabled={currentPage === pages.length - 1}
                       onClick={() => setCurrentPage(prev => Math.min(pages.length - 1, prev + 1))}
-                      className="flex-1 py-2.5 bg-black text-white font-bold uppercase tracking-wider text-xs border border-black hover:bg-white hover:text-black disabled:opacity-30 disabled:hover:bg-black disabled:hover:text-white cursor-pointer rounded-none flex items-center justify-center gap-1.5 transition-none"
+                      className="flex-1 py-3 bg-[#8C66FF] text-white font-extrabold uppercase tracking-wider text-xs rounded-full shadow-md shadow-purple-100 disabled:opacity-30 cursor-pointer flex items-center justify-center gap-1.5 transition-none"
                     >
                       Selanjutnya <FiChevronRight />
                     </button>
                   </div>
                 </div>
               ) : (
-                <div className="flex flex-col gap-6">
+                <div className="flex flex-col gap-6 w-full text-left">
                   {/* Title */}
-                  <h1 className="text-2xl font-bold border-b-2 border-black pb-2 leading-tight">
+                  <h1 className="text-xl font-extrabold text-[#2C2B30] border-b border-[#F0EDFF]/80 pb-3 leading-tight">
                     {material.title}
                   </h1>
 
                   {/* Blocks Stack */}
-                  <div className="flex flex-col gap-5">
+                  <div className="flex flex-col gap-5 w-full">
                     {material.blocks.map((block: any, idx: number) => {
                       if (block.type === "text") {
                         return (
-                          <p key={block.id || idx} className="text-sm text-neutral-800 whitespace-pre-wrap leading-relaxed text-justify">
-                            {block.textContent}
-                          </p>
+                          <div key={block.id || idx} className="bg-white rounded-[24px] p-5 border border-[#F0EDFF] shadow-[0_4px_12px_rgba(0,0,0,0.02)] w-full">
+                            <div className="text-xs text-[#2C2B30] font-medium leading-relaxed">
+                              {parseFormattedText(block.textContent)}
+                            </div>
+                          </div>
                         );
                       } else if (block.type === "image") {
                         return (
-                          <div key={block.id || idx} className="w-full border border-black p-1 bg-white">
+                          <div key={block.id || idx} className="w-full border border-[#F0EDFF] p-2 bg-white rounded-[24px] shadow-[0_4px_12px_rgba(0,0,0,0.02)] flex justify-center items-center">
                             <img
                               src={`${API_URL}${block.mediaUrl}`}
                               alt="Materi Visual"
-                              className="w-full h-auto object-contain block"
+                              className="w-full h-auto object-contain block rounded-2xl"
                             />
                           </div>
                         );
                       } else if (block.type === "audio") {
                         return (
-                          <div key={block.id || idx} className="w-full border border-black p-3 bg-neutral-50 flex flex-col gap-2">
-                            <p className="text-[9px] uppercase tracking-wider font-mono font-bold text-neutral-500">
+                          <div key={block.id || idx} className="w-full border border-[#F0EDFF] p-4 bg-white rounded-[24px] shadow-[0_4px_12px_rgba(0,0,0,0.02)] flex flex-col gap-2.5">
+                            <p className="text-[9px] uppercase tracking-widest font-bold text-[#9C98A6]">
                               Audio Penjelasan
                             </p>
                             <audio
@@ -374,7 +396,7 @@ export default function MateriDetail() {
         <div className="w-full mt-10 mb-2">
           <button
             onClick={() => navigate("/materi")}
-            className="w-full py-3 border border-black bg-black text-white font-bold uppercase tracking-wider text-xs hover:bg-white hover:text-black cursor-pointer flex items-center justify-center gap-1.5 transition-none"
+            className="w-full py-4 bg-white border border-[#F0EDFF] text-[#8C66FF] font-extrabold uppercase tracking-wider text-xs rounded-full shadow-sm cursor-pointer transition-none flex items-center justify-center gap-2"
           >
             <FiArrowLeft /> Kembali ke Daftar
           </button>
@@ -384,3 +406,4 @@ export default function MateriDetail() {
     </div>
   );
 }
+

@@ -60,6 +60,40 @@ export default function AdminKuis() {
   // Analysis States
   const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null);
 
+  // Modal State
+  const [modal, setModal] = useState<{
+    isOpen: boolean;
+    type: "alert" | "confirm";
+    title: string;
+    message: string;
+    onConfirm?: () => void;
+  }>({
+    isOpen: false,
+    type: "alert",
+    title: "",
+    message: "",
+  });
+
+  const showAlert = (message: string, title = "Info", onConfirm?: () => void) => {
+    setModal({
+      isOpen: true,
+      type: "alert",
+      title,
+      message,
+      onConfirm,
+    });
+  };
+
+  const showConfirm = (message: string, onConfirm: () => void, title = "Konfirmasi") => {
+    setModal({
+      isOpen: true,
+      type: "confirm",
+      title,
+      message,
+      onConfirm,
+    });
+  };
+
   // Authentication & Admin Check
   useEffect(() => {
     if (!user) {
@@ -222,16 +256,20 @@ export default function AdminKuis() {
   };
 
   const handleDeleteQuiz = async (id: string) => {
-    const confirmDelete = window.confirm("Apakah Anda yakin ingin menghapus kuis ini?");
-    if (!confirmDelete || !token) return;
-
-    try {
-      await deleteQuizApi(token, id);
-      setQuizzes(quizzes.filter(q => q.id !== id));
-      alert("Kuis berhasil dihapus.");
-    } catch (err: any) {
-      alert(err.message || "Gagal menghapus kuis.");
-    }
+    showConfirm(
+      "Apakah Anda yakin ingin menghapus kuis ini?",
+      async () => {
+        if (!token) return;
+        try {
+          await deleteQuizApi(token, id);
+          setQuizzes(quizzes.filter(q => q.id !== id));
+          showAlert("Kuis berhasil dihapus.", "Sukses");
+        } catch (err: any) {
+          showAlert(err.message || "Gagal menghapus kuis.", "Gagal");
+        }
+      },
+      "Hapus Kuis"
+    );
   };
 
   const handleOpenAnalysis = async (quiz: Quiz) => {
@@ -242,7 +280,7 @@ export default function AdminKuis() {
       setSelectedQuiz(quiz);
       setMode("ANALYSIS");
     } catch (err: any) {
-      alert(err.message || "Gagal mengambil data analisis.");
+      showAlert(err.message || "Gagal mengambil data analisis.", "Gagal");
     }
   };
 
@@ -261,7 +299,7 @@ export default function AdminKuis() {
 
   const handleRemoveQuestion = (questionId: string) => {
     if (questions.length <= 1) {
-      alert("Kuis harus memiliki minimal 1 soal.");
+      showAlert("Kuis harus memiliki minimal 1 soal.", "Peringatan");
       return;
     }
     setQuestions(questions.filter(q => q.id !== questionId));
@@ -321,7 +359,7 @@ export default function AdminKuis() {
         let newCorrect: number[];
         if (isSelected) {
           if (q.correctAnswers.length <= 1) {
-            alert("Harus ada minimal 1 jawaban benar.");
+            showAlert("Harus ada minimal 1 jawaban benar.", "Peringatan");
             return q;
           }
           newCorrect = q.correctAnswers.filter(idx => idx !== optIdx);
@@ -358,7 +396,7 @@ export default function AdminKuis() {
       }));
     }).catch(err => {
       console.error(err);
-      alert("Gagal membaca gambar.");
+      showAlert("Gagal membaca gambar.", "Gagal");
     });
   };
 
@@ -376,7 +414,7 @@ export default function AdminKuis() {
 
   const handleSaveQuiz = async () => {
     if (!quizTitle.trim()) {
-      alert("Judul kuis harus diisi!");
+      showAlert("Judul kuis harus diisi!", "Peringatan");
       return;
     }
     if (!token) return;
@@ -384,17 +422,17 @@ export default function AdminKuis() {
     for (let i = 0; i < questions.length; i++) {
       const q = questions[i];
       if (!q.text.trim()) {
-        alert(`Teks Soal #${i + 1} tidak boleh kosong.`);
+        showAlert(`Teks Soal #${i + 1} tidak boleh kosong.`, "Peringatan");
         return;
       }
       for (let j = 0; j < q.options.length; j++) {
         if (!q.options[j].trim()) {
-          alert(`Pilihan ${String.fromCharCode(65 + j)} pada Soal #${i + 1} tidak boleh kosong.`);
+          showAlert(`Pilihan ${String.fromCharCode(65 + j)} pada Soal #${i + 1} tidak boleh kosong.`, "Peringatan");
           return;
         }
       }
       if (q.correctAnswers.length === 0) {
-        alert(`Soal #${i + 1} harus memiliki minimal 1 jawaban benar.`);
+        showAlert(`Soal #${i + 1} harus memiliki minimal 1 jawaban benar.`, "Peringatan");
         return;
       }
     }
@@ -418,20 +456,24 @@ export default function AdminKuis() {
       setEditingQuizId(null);
       setQuizTitle("");
       setQuestions([]);
-      alert("Kuis berhasil disimpan!");
+      showAlert("Kuis berhasil disimpan!", "Sukses");
     } catch (err: any) {
-      alert(err.message || "Gagal menyimpan kuis.");
+      showAlert(err.message || "Gagal menyimpan kuis.", "Gagal");
     }
   };
+
   return (
-    <div className="w-full min-h-screen bg-white flex justify-center items-center text-black font-sans select-none">
+    <div className="w-full min-h-screen bg-[#FAF9FF] flex justify-center items-center text-[#2C2B30] font-sans select-none overflow-hidden relative">
+      {/* Decorative Blur Bubble */}
+      <div className="absolute top-[-10%] right-[-10%] w-[200px] h-[200px] bg-[#E9E4FF] rounded-full filter blur-2xl opacity-50"></div>
+
       {/* Container Mobile Portrait */}
-      <div className="w-full max-w-[430px] min-h-screen flex flex-col justify-between px-6 py-8">
+      <div className="w-full max-w-[430px] min-h-screen flex flex-col justify-between px-6 py-6 z-10">
         
         {loading ? (
-          <div className="w-full flex-1 flex flex-col justify-center items-center gap-4 text-center">
-            <div className="w-6 h-6 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
-            <p className="text-[10px] uppercase font-bold tracking-widest text-neutral-500">
+          <div className="w-full flex-1 flex flex-col justify-center items-center gap-3 text-center">
+            <div className="w-8 h-8 border-2 border-[#8C66FF] border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-[10px] uppercase font-black tracking-widest text-[#9C98A6]">
               Sinkronisasi data server...
             </p>
           </div>
@@ -465,9 +507,13 @@ export default function AdminKuis() {
                 onRemoveImage={handleRemoveImage}
                 onSave={handleSaveQuiz}
                 onCancel={() => {
-                  if (window.confirm("Batal mengedit dan buang perubahan?")) {
-                    setMode("LIST");
-                  }
+                  showConfirm(
+                    "Batal mengedit dan buang perubahan?",
+                    () => {
+                      setMode("LIST");
+                    },
+                    "Batal Edit"
+                  );
                 }}
               />
             )}
@@ -485,9 +531,38 @@ export default function AdminKuis() {
           </>
         )}
 
-
-
       </div>
+
+      {/* Styled custom modal */}
+      {modal.isOpen && (
+        <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50 p-6 backdrop-blur-xs">
+          <div className="w-full max-w-[340px] bg-white rounded-[28px] p-6 shadow-xl border border-[#F0EDFF] flex flex-col gap-4 animate-none select-none text-left">
+            <div>
+              <h3 className="text-sm font-extrabold text-[#2C2B30] tracking-wide uppercase">{modal.title}</h3>
+              <p className="text-xs text-[#9C98A6] font-medium mt-2 leading-relaxed">{modal.message}</p>
+            </div>
+            <div className="flex gap-2.5 mt-2">
+              {modal.type === "confirm" && (
+                <button
+                  onClick={() => setModal(prev => ({ ...prev, isOpen: false }))}
+                  className="flex-1 py-3 bg-white border border-[#FFEAEA] text-[#FF5E8C] font-extrabold uppercase tracking-wider text-[10px] rounded-full shadow-sm cursor-pointer transition-none flex items-center justify-center"
+                >
+                  Batal
+                </button>
+              )}
+              <button
+                onClick={() => {
+                  setModal(prev => ({ ...prev, isOpen: false }));
+                  if (modal.onConfirm) modal.onConfirm();
+                }}
+                className="flex-1 py-3 bg-[#8C66FF] text-white font-extrabold uppercase tracking-wider text-[10px] rounded-full shadow-md shadow-purple-100 cursor-pointer transition-none flex items-center justify-center"
+              >
+                Ya
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

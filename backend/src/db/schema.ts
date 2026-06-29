@@ -44,6 +44,7 @@ export const materials = sqliteTable('materials', {
   title: text('title').notNull(),
   createdAt: text('created_at').notNull(),
   updatedAt: text('updated_at').notNull(),
+  sortOrder: integer('sort_order').default(0),
 })
 
 export const materialBlocks = sqliteTable('material_blocks', {

@@ -90,14 +90,14 @@ export default function QuizAnalysis({
     <div className="w-full flex-1 flex flex-col justify-between">
       <div>
         {/* Header */}
-        <div className="w-full flex justify-between items-center mt-4 border-b border-black pb-3">
+        <div className="w-full flex justify-between items-center mt-4 pb-4 border-b border-[#F0EDFF]/50">
           <div className="max-w-[70%]">
-            <p className="text-[9px] uppercase tracking-widest text-neutral-500 font-bold">Hasil Analisis</p>
-            <h1 className="text-xs font-bold uppercase tracking-wide truncate">{selectedQuiz.title}</h1>
+            <p className="text-[10px] uppercase tracking-widest text-[#9C98A6] font-bold">Hasil Analisis</p>
+            <h1 className="text-sm font-extrabold text-[#2C2B30] truncate leading-tight mt-0.5">{selectedQuiz.title}</h1>
           </div>
           <button
             onClick={onClose}
-            className="px-2.5 py-1.5 border border-black text-[9px] font-bold uppercase tracking-wider bg-white active:bg-black active:text-white cursor-pointer"
+            className="px-4 py-2 bg-white border border-[#FFEAEA] text-[#FF5E8C] text-[10px] font-extrabold uppercase tracking-wider rounded-full shadow-sm cursor-pointer transition-none"
           >
             Tutup
           </button>
@@ -107,30 +107,34 @@ export default function QuizAnalysis({
         <div className="w-full mt-4 flex flex-col gap-4">
           {/* General Stats */}
           <div className="grid grid-cols-2 gap-3">
-            <div className="border border-black p-3 bg-neutral-50 text-center flex flex-col gap-1">
-              <span className="text-[9px] font-bold uppercase tracking-wider text-neutral-500">Siswa Menjawab</span>
-              <span className="text-xl font-extrabold">{quizSubmissions.length}</span>
+            <div className="bg-white rounded-[20px] p-4 shadow-[0_4px_12px_rgba(0,0,0,0.02)] border border-[#F0EDFF] text-center flex flex-col gap-1.5">
+              <span className="text-[9px] font-black uppercase tracking-widest text-[#9C98A6]">Siswa Menjawab</span>
+              <span className="text-2xl font-black text-[#8C66FF]">{quizSubmissions.length}</span>
             </div>
-            <div className="border border-black p-3 bg-neutral-50 text-center flex flex-col gap-1">
-              <span className="text-[9px] font-bold uppercase tracking-wider text-neutral-500">Nilai Rata-Rata</span>
-              <span className="text-xl font-extrabold">{avgScore}</span>
+            <div className="bg-white rounded-[20px] p-4 shadow-[0_4px_12px_rgba(0,0,0,0.02)] border border-[#F0EDFF] text-center flex flex-col gap-1.5">
+              <span className="text-[9px] font-black uppercase tracking-widest text-[#9C98A6]">Nilai Rata-Rata</span>
+              <span className="text-2xl font-black text-[#2C8578]">{avgScore}</span>
             </div>
           </div>
 
           {/* Tab Navigation */}
-          <div className="grid grid-cols-2 border border-black text-[10px] font-bold uppercase">
+          <div className="grid grid-cols-2 bg-[#F0ECFF]/50 p-1.5 rounded-2xl border border-[#F0EDFF]">
             <button
               onClick={() => setAnalysisTab("SUMMARY")}
-              className={`py-2 cursor-pointer text-center ${
-                analysisTab === "SUMMARY" ? "bg-black text-white" : "bg-white text-black"
+              className={`py-2 px-4 rounded-xl cursor-pointer text-center text-xs font-extrabold uppercase transition-none ${
+                analysisTab === "SUMMARY" 
+                  ? "bg-white text-[#8C66FF] shadow-sm" 
+                  : "bg-transparent text-[#9C98A6]"
               }`}
             >
               Daftar Skor
             </button>
             <button
               onClick={() => setAnalysisTab("ITEMS")}
-              className={`py-2 cursor-pointer text-center ${
-                analysisTab === "ITEMS" ? "bg-black text-white" : "bg-white text-black"
+              className={`py-2 px-4 rounded-xl cursor-pointer text-center text-xs font-extrabold uppercase transition-none ${
+                analysisTab === "ITEMS" 
+                  ? "bg-white text-[#8C66FF] shadow-sm" 
+                  : "bg-transparent text-[#9C98A6]"
               }`}
             >
               Analisis Soal
@@ -139,45 +143,45 @@ export default function QuizAnalysis({
 
           {/* Empty State */}
           {quizSubmissions.length === 0 ? (
-            <div className="border border-black p-6 bg-neutral-50 text-center flex flex-col gap-2 items-center">
-              <p className="text-xs font-bold text-neutral-500 uppercase">Belum ada respon siswa.</p>
+            <div className="bg-white rounded-[24px] border border-[#F0EDFF] p-8 text-center flex flex-col gap-2 items-center shadow-[0_4px_12px_rgba(0,0,0,0.02)]">
+              <p className="text-xs font-extrabold text-[#9C98A6] uppercase tracking-wider">Belum ada respon siswa.</p>
             </div>
           ) : (
             <div className="w-full">
               {/* TAB A: SUMMARY TABLE */}
               {analysisTab === "SUMMARY" && (
                 <div className="flex flex-col gap-2">
-                  <div className="flex justify-between items-center text-[9px] font-bold text-neutral-500 uppercase px-1">
+                  <div className="flex justify-between items-center text-[9px] font-bold text-[#9C98A6] uppercase px-1">
                     <span>Daftar Nilai Siswa</span>
-                    <div className="flex items-center gap-1">
-                      <span>Urutkan:</span>
+                    <div className="flex items-center gap-1.5">
+                      <span>Urutan:</span>
                       <select
                         value={scoreSort}
                         onChange={(e) => setScoreSort(e.target.value as any)}
-                        className="border border-black bg-white text-black px-1 py-0.5 text-[8px] font-bold outline-none cursor-pointer"
+                        className="border border-[#F0EDFF] bg-white text-[#2C2B30] px-2.5 py-1 text-[9px] font-bold rounded-lg outline-none cursor-pointer"
                       >
-                        <option value="NAME_ASC">Abjad (Default)</option>
+                        <option value="NAME_ASC">Abjad</option>
                         <option value="SCORE_DESC">Skor Terbaik</option>
                         <option value="SCORE_ASC">Skor Terendah</option>
                       </select>
                     </div>
                   </div>
                   
-                  <div className="max-h-[220px] overflow-y-auto border border-black">
-                    <table className="w-full border-collapse text-left text-[10px]">
+                  <div className="max-h-[220px] overflow-y-auto border border-[#F0EDFF] rounded-[20px] shadow-[0_4px_12px_rgba(0,0,0,0.02)] bg-white overflow-hidden">
+                    <table className="w-full border-collapse text-left text-xs">
                       <thead>
-                        <tr className="bg-black text-white uppercase font-bold text-[9px]">
-                          <th className="p-2 border-r border-white">Nama</th>
-                          <th className="p-2 border-r border-white text-center">Kelas</th>
-                          <th className="p-2 text-center">Skor</th>
+                        <tr className="bg-[#FAF9FF] text-[#2C2B30] border-b border-[#F0EDFF] uppercase font-black text-[9px] tracking-wider">
+                          <th className="p-3 border-r border-[#F0EDFF]/50">Nama</th>
+                          <th className="p-3 border-r border-[#F0EDFF]/50 text-center">Kelas</th>
+                          <th className="p-3 text-center">Skor</th>
                         </tr>
                       </thead>
                       <tbody>
                         {sortedSubmissions.map((sub, sIdx) => (
-                          <tr key={sub.id} className={`border-b border-black ${sIdx % 2 === 1 ? "bg-neutral-50" : "bg-white"}`}>
-                            <td className="p-2 font-bold truncate max-w-[120px]">{sub.studentName}</td>
-                            <td className="p-2 text-center font-mono">{sub.studentClass}</td>
-                            <td className="p-2 text-center font-mono font-bold text-xs">{sub.score}</td>
+                          <tr key={sub.id} className={`border-b border-[#F0EDFF]/30 ${sIdx % 2 === 1 ? "bg-[#FAF9FF]/40" : "bg-white"}`}>
+                            <td className="p-3 font-bold truncate max-w-[120px] text-[#2C2B30]">{sub.studentName}</td>
+                            <td className="p-3 text-center font-mono text-[#9C98A6] font-bold">{sub.studentClass}</td>
+                            <td className="p-3 text-center font-mono font-black text-sm text-[#8C66FF]">{sub.score}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -189,15 +193,15 @@ export default function QuizAnalysis({
               {/* TAB B: ITEM ACCURACY ANALYSIS */}
               {analysisTab === "ITEMS" && (
                 <div className="flex flex-col gap-3">
-                  <div className="flex justify-end items-center text-[9px] font-bold text-neutral-500 uppercase px-1">
-                    <div className="flex items-center gap-1">
-                      <span>Urutkan:</span>
+                  <div className="flex justify-end items-center text-[9px] font-bold text-[#9C98A6] uppercase px-1">
+                    <div className="flex items-center gap-1.5">
+                      <span>Urutan:</span>
                       <select
                         value={itemSort}
                         onChange={(e) => setItemSort(e.target.value as any)}
-                        className="border border-black bg-white text-black px-1 py-0.5 text-[8px] font-bold outline-none cursor-pointer"
+                        className="border border-[#F0EDFF] bg-white text-[#2C2B30] px-2.5 py-1 text-[9px] font-bold rounded-lg outline-none cursor-pointer"
                       >
-                        <option value="ORDER_ASC">Urutan Soal (Default)</option>
+                        <option value="ORDER_ASC">Urutan Soal</option>
                         <option value="ACCURACY_DESC">Akurasi Terbaik</option>
                         <option value="ACCURACY_ASC">Akurasi Terburuk</option>
                       </select>
@@ -217,15 +221,15 @@ export default function QuizAnalysis({
                         : 0;
 
                       return (
-                        <div key={q.id} className="border border-black p-3 bg-white flex flex-col gap-3">
-                          <div className="flex justify-between items-start border-b border-neutral-200 pb-1.5">
-                            <span className="text-xs font-bold">Soal #{q.originalIndex + 1}</span>
-                            <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 border border-black bg-neutral-50">
+                        <div key={q.id} className="bg-white rounded-[24px] p-5 shadow-[0_4px_12px_rgba(0,0,0,0.02)] border border-[#F0EDFF] flex flex-col gap-4">
+                          <div className="flex justify-between items-center border-b border-[#F0EDFF]/50 pb-2">
+                            <span className="text-xs font-extrabold text-[#8C66FF]">Soal #{q.originalIndex + 1}</span>
+                            <span className="text-[10px] font-mono font-bold px-2 py-0.5 bg-[#E6F8F6] text-[#2C8578] rounded-full">
                               Akurasi: {accuracy}%
                             </span>
                           </div>
 
-                          <p className="text-xs font-bold leading-normal text-neutral-800 line-clamp-3">
+                          <p className="text-xs font-bold leading-normal text-[#2C2B30] line-clamp-3">
                             {q.text}
                           </p>
 
@@ -244,15 +248,15 @@ export default function QuizAnalysis({
                                 : 0;
 
                               return (
-                                <div key={optIdx} className="flex flex-col gap-0.5">
-                                  <div className="flex justify-between text-[9px] font-bold text-neutral-700">
-                                    <span className="truncate max-w-[200px]">
+                                <div key={optIdx} className="flex flex-col gap-1">
+                                  <div className="flex justify-between text-[9px] font-bold">
+                                    <span className={`truncate max-w-[200px] ${isCorrect ? "text-[#2C8578]" : "text-[#2C2B30]"}`}>
                                       {isCorrect ? "[✓] " : ""}{letter}. {opt}
                                     </span>
-                                    <span className="font-mono">{chosenCount} mhs ({percent}%)</span>
+                                    <span className="font-mono text-[#9C98A6]">{chosenCount} mhs ({percent}%)</span>
                                   </div>
-                                  <div className="w-full h-2 border border-black bg-white">
-                                    <div className="bg-black h-full" style={{ width: `${percent}%` }}></div>
+                                  <div className="w-full h-2 bg-[#FAF9FF] border border-[#F0EDFF] rounded-full overflow-hidden">
+                                    <div className={`h-full rounded-full transition-none ${isCorrect ? "bg-[#2C8578]" : "bg-[#8C66FF]"}`} style={{ width: `${percent}%` }}></div>
                                   </div>
                                 </div>
                               );
@@ -273,11 +277,12 @@ export default function QuizAnalysis({
       <div className="w-full mt-8 mb-2 flex flex-col gap-2">
         <button
           onClick={onClose}
-          className="w-full py-3 border border-black bg-black text-white font-bold uppercase tracking-wider text-xs hover:bg-white hover:text-black cursor-pointer flex items-center justify-center gap-1.5"
+          className="w-full py-4 bg-white border border-[#F0EDFF] text-[#8C66FF] font-extrabold uppercase tracking-wider text-xs rounded-full shadow-sm cursor-pointer transition-none flex items-center justify-center gap-2"
         >
-          <FiArrowLeft /> Kembali ke Daftar Kuis
+          <FiArrowLeft className="text-sm" /> Kembali ke Daftar Kuis
         </button>
       </div>
     </div>
   );
 }
+
