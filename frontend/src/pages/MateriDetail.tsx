@@ -35,6 +35,27 @@ const parseFormattedText = (text: string) => {
   return <div dangerouslySetInnerHTML={{ __html: html }} className="whitespace-pre-wrap leading-relaxed text-justify" />;
 };
 
+const getYoutubeId = (url: string): string | null => {
+  if (!url) return null;
+  let cleanedUrl = url.trim();
+  const iframeMatch = cleanedUrl.match(/src=["'](?:https?:)?\/\/www\.youtube\.com\/embed\/([\w-]{11})/i);
+  if (iframeMatch) return iframeMatch[1];
+  
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+  const match = cleanedUrl.match(regExp);
+  
+  if (match && match[2].length === 11) {
+    return match[2];
+  }
+  
+  if (cleanedUrl.length === 11 && /^[a-zA-Z0-9_-]{11}$/.test(cleanedUrl)) {
+    return cleanedUrl;
+  }
+  
+  return null;
+};
+
+
 export default function MateriDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -298,7 +319,36 @@ export default function MateriDetail() {
                                       )}
                                     </div>
                                   )}
+                                  {page.block.type === "video youtube" && (
+                                    <div className="flex flex-col gap-2.5 items-center w-full">
+                                      {(() => {
+                                        const ytId = getYoutubeId(page.block.textContent);
+                                        if (ytId) {
+                                          return (
+                                            <div className="w-full border border-[#F0EDFF] p-2 bg-white rounded-2xl overflow-hidden shadow-sm">
+                                              <div className="relative w-full aspect-video rounded-lg overflow-hidden bg-black">
+                                                <iframe
+                                                  src={`https://www.youtube.com/embed/${ytId}`}
+                                                  title="YouTube video player"
+                                                  frameBorder="0"
+                                                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                                  allowFullScreen
+                                                  className="absolute top-0 left-0 w-full h-full"
+                                                ></iframe>
+                                              </div>
+                                            </div>
+                                          );
+                                        }
+                                        return (
+                                          <p className="text-xs text-[#FF5E8C] font-semibold text-center">
+                                            Video YouTube tidak dapat dimuat.
+                                          </p>
+                                        );
+                                      })()}
+                                    </div>
+                                  )}
                                 </div>
+
 
                                 {/* Page Footer */}
                                 <div className="border-t border-[#F0EDFF]/50 pt-3 mt-4 flex justify-between items-center text-[10px] text-[#9C98A6] font-bold uppercase tracking-wider">
@@ -414,8 +464,36 @@ export default function MateriDetail() {
                             )}
                           </div>
                         );
+                      } else if (block.type === "video youtube") {
+                        return (
+                          <div key={block.id || idx} className="w-full border border-[#F0EDFF] p-2 bg-white rounded-[24px] shadow-[0_4px_12px_rgba(0,0,0,0.02)] flex flex-col items-center gap-3">
+                            {(() => {
+                              const ytId = getYoutubeId(block.textContent);
+                              if (ytId) {
+                                return (
+                                  <div className="w-full relative aspect-video rounded-2xl overflow-hidden bg-black border border-[#F0EDFF]">
+                                    <iframe
+                                      src={`https://www.youtube.com/embed/${ytId}`}
+                                      title="YouTube video player"
+                                      frameBorder="0"
+                                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                      allowFullScreen
+                                      className="absolute top-0 left-0 w-full h-full"
+                                    ></iframe>
+                                  </div>
+                                );
+                              }
+                              return (
+                                <p className="text-xs text-[#FF5E8C] font-semibold text-center p-4">
+                                  Video YouTube tidak dapat dimuat.
+                                </p>
+                              );
+                            })()}
+                          </div>
+                        );
                       }
                       return null;
+
                     })}
                   </div>
                 </div>

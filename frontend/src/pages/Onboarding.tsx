@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 import { LuGlobe, LuLeaf, LuApple, LuBookOpen, LuGamepad, LuPenTool, LuChartBar } from "react-icons/lu";
+import unsLogo from "../assets/uns_logo.webp";
 
 export default function Onboarding() {
   const navigate = useNavigate();
@@ -19,12 +20,25 @@ export default function Onboarding() {
 
   return (
     <div className="w-full min-h-screen bg-[#FAF9FF] flex justify-center items-center text-[#2B2927] font-sans select-none overflow-hidden relative">
+      {/* Decorative Shapes for premium aesthetic */}
+      <div className="absolute top-[-5%] left-[-15%] w-[250px] h-[250px] bg-[#E9E4FF] rounded-full filter blur-2xl opacity-65"></div>
+      <div className="absolute top-[40%] right-[-20%] w-[200px] h-[200px] bg-[#FFF0E0] rounded-full filter blur-3xl opacity-50"></div>
+      <div className="absolute bottom-[-10%] left-[-10%] w-[180px] h-[180px] bg-[#FFEAEA] rounded-full filter blur-2xl opacity-60"></div>
       
       {/* Container Mobile Portrait */}
-      <div className="w-full max-w-[430px] min-h-screen bg-[#8C66FF] flex flex-col justify-between px-6 py-6 z-10 shadow-2xl relative overflow-hidden">
-        {/* Decorative Bubbles for premium aesthetic inside mobile view */}
-        <div className="absolute top-[-5%] left-[-15%] w-[250px] h-[250px] bg-[#A285FF] rounded-full filter blur-2xl opacity-60"></div>
-        <div className="absolute top-[15%] right-[-10%] w-[180px] h-[180px] bg-[#9570FF] rounded-full filter blur-xl opacity-40"></div>
+      <div className="w-full max-w-[430px] min-h-screen flex flex-col justify-between px-6 py-6 z-10 relative">
+        
+        {/* Top Header Row */}
+        <div className="w-full flex justify-between items-center mt-2 mb-2 z-20">
+          <div>
+            <p className="text-[10px] uppercase tracking-widest text-[#9C98A6] font-bold">Media Pembelajaran</p>
+            <h1 className="text-xl font-extrabold text-[#8C66FF] leading-tight mt-0.5">SI-ZAT</h1>
+          </div>
+          {/* Logo UNS Card */}
+          <div className="h-12 px-4 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-[#F0EDFF]">
+            <img src={unsLogo} alt="UNS Logo" className="h-8 w-auto object-contain" />
+          </div>
+        </div>
         
         {/* Top Illustration Section */}
         <div className="w-full flex-grow flex flex-col items-center justify-center my-6">

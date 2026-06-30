@@ -27,6 +27,7 @@ import Materi from "./pages/Materi";
 import MateriDetail from "./pages/MateriDetail";
 import MateriEditor from "./pages/MateriEditor";
 import AdminChangePassword from "./pages/AdminChangePassword";
+import ProfilPengembang from "./pages/ProfilPengembang";
 
 
 
@@ -123,6 +124,7 @@ function AppContent() {
           path="/profile-report"
           element={<ProfileReport />}
         />
+        <Route path="/profil-pengembang" element={<ProfilPengembang />} />
         <Route path="/materi" element={<Materi />} />
         <Route path="/materi/view/:id" element={<MateriDetail />} />
         <Route path="/admin/materi/new" element={<MateriEditor />} />

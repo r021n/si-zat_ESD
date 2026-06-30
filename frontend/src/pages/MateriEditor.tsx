@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 import { getMaterialDetailApi, createMaterialApi, updateMaterialApi } from "../api/api";
-import { FiArrowUp, FiArrowDown, FiTrash2, FiPlus, FiSave, FiX, FiType, FiImage, FiMusic, FiAlignLeft, FiAlignCenter, FiAlignRight, FiAlignJustify, FiLink } from "react-icons/fi";
+import { FiArrowUp, FiArrowDown, FiTrash2, FiPlus, FiSave, FiX, FiType, FiImage, FiMusic, FiAlignLeft, FiAlignCenter, FiAlignRight, FiAlignJustify, FiLink, FiYoutube } from "react-icons/fi";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8787";
 
@@ -78,6 +78,26 @@ const htmlToMarkup = (html: string): string => {
 
   let markup = Array.from(doc.body.childNodes).map(nodeToMarkup).join("");
   return markup.replace(/\n\n+/g, "\n").trim();
+};
+
+const getYoutubeId = (url: string): string | null => {
+  if (!url) return null;
+  let cleanedUrl = url.trim();
+  const iframeMatch = cleanedUrl.match(/src=["'](?:https?:)?\/\/www\.youtube\.com\/embed\/([\w-]{11})/i);
+  if (iframeMatch) return iframeMatch[1];
+  
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+  const match = cleanedUrl.match(regExp);
+  
+  if (match && match[2].length === 11) {
+    return match[2];
+  }
+  
+  if (cleanedUrl.length === 11 && /^[a-zA-Z0-9_-]{11}$/.test(cleanedUrl)) {
+    return cleanedUrl;
+  }
+  
+  return null;
 };
 
 interface RichTextEditorProps {
@@ -223,7 +243,7 @@ function RichTextEditor({ value, onChange, placeholder, minHeightClass = "min-h-
 
 interface Block {
   id: string;
-  type: "text" | "image" | "audio";
+  type: "text" | "image" | "audio" | "video youtube";
   textContent: string;
   file: File | null;
   mediaUrl?: string;
@@ -352,6 +372,17 @@ export default function MateriEditor() {
     setBlocks([...blocks, newBlock]);
   };
 
+  const addYoutubeBlock = () => {
+    const newBlock: Block = {
+      id: `blk-yt-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      type: "video youtube",
+      textContent: "",
+      file: null,
+      keepExisting: false
+    };
+    setBlocks([...blocks, newBlock]);
+  };
+
   const updateBlockText = (blockId: string, text: string) => {
     setBlocks(prev =>
       prev.map(b => (b.id === blockId ? { ...b, textContent: text } : b))
@@ -398,14 +429,24 @@ export default function MateriEditor() {
       return;
     }
 
-    // Verify all media blocks have files
+    // Verify all media blocks have files / valid inputs
     for (let i = 0; i < blocks.length; i++) {
       const b = blocks[i];
       if (b.type === "text" && !b.textContent.trim()) {
         showAlert(`Konten teks pada blok #${i + 1} tidak boleh kosong.`, "Peringatan");
         return;
       }
-      if (b.type !== "text" && !b.file && (!b.keepExisting || !b.mediaUrl)) {
+      if (b.type === "video youtube") {
+        if (!b.textContent.trim()) {
+          showAlert(`URL atau Kode Embed Video YouTube pada blok #${i + 1} tidak boleh kosong.`, "Peringatan");
+          return;
+        }
+        if (!getYoutubeId(b.textContent)) {
+          showAlert(`Format URL Video YouTube pada blok #${i + 1} tidak valid.`, "Peringatan");
+          return;
+        }
+      }
+      if (b.type !== "text" && b.type !== "video youtube" && !b.file && (!b.keepExisting || !b.mediaUrl)) {
         showAlert(`Harap unggah file media untuk blok ${b.type === "image" ? "Gambar" : "Audio"} #${i + 1}.`, "Peringatan");
         return;
       }
@@ -424,7 +465,7 @@ export default function MateriEditor() {
           type: b.type,
           textContent: b.textContent
         };
-        if (b.type !== "text") {
+        if (b.type !== "text" && b.type !== "video youtube") {
           if (b.file) {
             payloadBlock.fileKey = `file_${b.id}`;
           } else if (b.keepExisting && b.mediaUrl) {
@@ -534,6 +575,7 @@ export default function MateriEditor() {
                             {block.type === "text" && <FiType className="text-xs text-[#8C66FF]" />}
                             {block.type === "image" && <FiImage className="text-xs text-[#FF9D42]" />}
                             {block.type === "audio" && <FiMusic className="text-xs text-[#D95276]" />}
+                            {block.type === "video youtube" && <FiYoutube className="text-xs text-[#FF0000]" />}
                             Blok {block.type.toUpperCase()} #{index + 1}
                           </span>
                           <div className="flex gap-1.5">
@@ -574,6 +616,54 @@ export default function MateriEditor() {
                             placeholder="Tulis paragraf materi di sini..."
                             minHeightClass="min-h-[120px]"
                           />
+                        ) : block.type === "video youtube" ? (
+                          <div className="flex flex-col gap-2.5 w-full text-left">
+                            <div className="flex flex-col gap-1 w-full">
+                              <span className="font-bold text-[9px] uppercase tracking-widest text-[#9C98A6]">
+                                Link Video YouTube / Embed Code:
+                              </span>
+                              <input
+                                type="text"
+                                value={block.textContent}
+                                onChange={(e) => updateBlockText(block.id, e.target.value)}
+                                placeholder="Paste URL YouTube (contoh: https://www.youtube.com/watch?v=...) atau kode embed..."
+                                className="w-full p-3 border border-[#F0EDFF] bg-[#FAF9FF] text-[#2C2B30] font-medium focus:outline-none focus:border-[#8C66FF] focus:bg-white text-xs rounded-xl transition-none"
+                              />
+                            </div>
+                            
+                            {/* YouTube Preview */}
+                            {(() => {
+                              const ytId = getYoutubeId(block.textContent);
+                              if (ytId) {
+                                return (
+                                  <div className="border border-[#F0EDFF] p-3 bg-[#FAF9FF] rounded-xl flex flex-col gap-2 shadow-sm">
+                                    <p className="text-[8px] font-bold text-[#9C98A6] uppercase tracking-wider">Preview Video:</p>
+                                    <div className="relative w-full aspect-video rounded-lg overflow-hidden border border-[#F0EDFF] bg-black">
+                                      <iframe
+                                        src={`https://www.youtube.com/embed/${ytId}`}
+                                        title="YouTube video player"
+                                        frameBorder="0"
+                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                        allowFullScreen
+                                        className="absolute top-0 left-0 w-full h-full"
+                                      ></iframe>
+                                    </div>
+                                  </div>
+                                );
+                              } else if (block.textContent.trim()) {
+                                return (
+                                  <p className="text-[9px] text-[#FF5E8C] font-extrabold uppercase tracking-wider">
+                                    Format URL/Embed Code YouTube tidak valid.
+                                  </p>
+                                );
+                              }
+                              return (
+                                <p className="text-[9px] text-[#9C98A6] font-bold uppercase tracking-wider">
+                                  Silakan tempel URL YouTube untuk melihat preview.
+                                </p>
+                              );
+                            })()}
+                          </div>
                         ) : (
                           <div className="flex flex-col gap-2">
                             {/* Preview */}
@@ -639,27 +729,34 @@ export default function MateriEditor() {
                 </div>
 
                 {/* Blocks Adder Control Bar */}
-                <div className="flex gap-2 justify-center py-4 border-t border-b border-[#F0EDFF]/50 mt-2">
+                <div className="grid grid-cols-2 gap-2 py-4 border-t border-b border-[#F0EDFF]/50 mt-2">
                   <button
                     type="button"
                     onClick={addTextBlock}
-                    className="flex-1 py-3 bg-white border border-[#F0EDFF] text-[#8C66FF] text-[10px] font-extrabold uppercase tracking-wider rounded-full shadow-sm cursor-pointer flex items-center justify-center gap-1 transition-none"
+                    className="py-3 bg-white border border-[#F0EDFF] text-[#8C66FF] text-[10px] font-extrabold uppercase tracking-wider rounded-full shadow-sm cursor-pointer flex items-center justify-center gap-1.5 transition-none"
                   >
                     <FiPlus /> Teks
                   </button>
                   <button
                     type="button"
                     onClick={addImageBlock}
-                    className="flex-1 py-3 bg-white border border-[#F0EDFF] text-[#FF9D42] text-[10px] font-extrabold uppercase tracking-wider rounded-full shadow-sm cursor-pointer flex items-center justify-center gap-1 transition-none"
+                    className="py-3 bg-white border border-[#F0EDFF] text-[#FF9D42] text-[10px] font-extrabold uppercase tracking-wider rounded-full shadow-sm cursor-pointer flex items-center justify-center gap-1.5 transition-none"
                   >
                     <FiPlus /> Gambar
                   </button>
                   <button
                     type="button"
                     onClick={addAudioBlock}
-                    className="flex-1 py-3 bg-white border border-[#F0EDFF] text-[#D95276] text-[10px] font-extrabold uppercase tracking-wider rounded-full shadow-sm cursor-pointer flex items-center justify-center gap-1 transition-none"
+                    className="py-3 bg-white border border-[#F0EDFF] text-[#D95276] text-[10px] font-extrabold uppercase tracking-wider rounded-full shadow-sm cursor-pointer flex items-center justify-center gap-1.5 transition-none"
                   >
                     <FiPlus /> Audio
+                  </button>
+                  <button
+                    type="button"
+                    onClick={addYoutubeBlock}
+                    className="py-3 bg-white border border-[#F0EDFF] text-[#FF3333] text-[10px] font-extrabold uppercase tracking-wider rounded-full shadow-sm cursor-pointer flex items-center justify-center gap-1.5 transition-none"
+                  >
+                    <FiYoutube size={12} /> YouTube
                   </button>
                 </div>
               </div>

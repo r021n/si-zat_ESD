@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
-import { LuBookOpen, LuGamepad, LuPenTool, LuChartBar, LuSettings, LuGraduationCap } from "react-icons/lu";
+import { LuBookOpen, LuGamepad, LuPenTool, LuChartBar, LuSettings, LuGraduationCap, LuUser } from "react-icons/lu";
+import unsLogo from "../assets/uns_logo.webp";
 
 interface MainMenuProps {
   onNavigate?: (menu: string) => void;
@@ -123,6 +124,14 @@ export default function MainMenu({ onNavigate }: MainMenuProps) {
       bgIcon: "bg-[#F0ECFF]",
       textIcon: "text-[#8C66FF]",
     },
+    {
+      id: "profil-pengembang",
+      label: "Profil Pengembang",
+      desc: "Lihat informasi profil pengembang",
+      icon: <LuUser className="text-xl" />,
+      bgIcon: "bg-[#FFF9E6]",
+      textIcon: "text-[#FFC107]",
+    },
   ];
 
   const isAdmin = user.status.toLowerCase() === "admin" || user.email.toLowerCase().includes("admin");
@@ -152,16 +161,24 @@ export default function MainMenu({ onNavigate }: MainMenuProps) {
               <p className="text-[10px] uppercase tracking-widest text-[#9C98A6] font-bold">Selamat datang,</p>
               <h1 className="text-xl font-extrabold truncate text-[#2C2B30] leading-tight mt-0.5">Hi, {displayName}</h1>
             </div>
-            {/* Logout Button (Replacing Search Icon) */}
-            <button
-              onClick={() => setIsLogoutModalOpen(true)}
-              className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-[#FFEAEA] text-[#FF5E8C] cursor-pointer transition-none"
-              title="Keluar Sesi"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
-              </svg>
-            </button>
+            
+            <div className="flex items-center gap-2">
+              {/* Logo UNS Card */}
+              <div className="h-12 px-4 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-[#F0EDFF]">
+                <img src={unsLogo} alt="UNS Logo" className="h-8 w-auto object-contain" />
+              </div>
+              
+              {/* Logout Button (Replacing Search Icon) */}
+              <button
+                onClick={() => setIsLogoutModalOpen(true)}
+                className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-[#FFEAEA] text-[#FF5E8C] cursor-pointer transition-none"
+                title="Keluar Sesi"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-6 h-6">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+                </svg>
+              </button>
+            </div>
           </div>
 
           {/* Glassmorphic Promo/Profile Card (matches Unlimited Storage card in mockup) */}
