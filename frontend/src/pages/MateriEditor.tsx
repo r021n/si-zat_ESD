@@ -1,29 +1,225 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 import { getMaterialDetailApi, createMaterialApi, updateMaterialApi } from "../api/api";
-import { FiArrowUp, FiArrowDown, FiTrash2, FiPlus, FiSave, FiX, FiType, FiImage, FiMusic } from "react-icons/fi";
+import { FiArrowUp, FiArrowDown, FiTrash2, FiPlus, FiSave, FiX, FiType, FiImage, FiMusic, FiAlignLeft, FiAlignCenter, FiAlignRight, FiAlignJustify, FiLink } from "react-icons/fi";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8787";
 
-const parseFormattedText = (text: string) => {
-  if (!text) return "";
-  // Escape HTML entities to prevent XSS
-  let html = text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/\n/g, "<br />");
-  
-  // Restore allowed tags
-  html = html
-    .replace(/&lt;b&gt;([\s\S]*?)&lt;\/b&gt;/g, "<strong>$1</strong>")
-    .replace(/&lt;i&gt;([\s\S]*?)&lt;\/i&gt;/g, "<em>$1</em>")
-    .replace(/&lt;u&gt;([\s\S]*?)&lt;\/u&gt;/g, "<span class='underline'>$1</span>")
-    .replace(/&lt;s&gt;([\s\S]*?)&lt;\/s&gt;/g, "<del>$1</del>");
 
-  return <div dangerouslySetInnerHTML={{ __html: html }} className="whitespace-pre-wrap text-justify leading-relaxed" />;
+
+const markupToHtml = (markup: string): string => {
+  if (!markup) return "";
+  let html = markup
+    .replace(/<b>([\s\S]*?)<\/b>/g, "<strong>$1</strong>")
+    .replace(/<i>([\s\S]*?)<\/i>/g, "<em>$1</em>")
+    .replace(/<u>([\s\S]*?)<\/u>/g, "<u>$1</u>")
+    .replace(/<s>([\s\S]*?)<\/s>/g, "<strike>$1</strike>")
+    .replace(/<left>([\s\S]*?)<\/left>/g, "<div class='text-left'>$1</div>")
+    .replace(/<center>([\s\S]*?)<\/center>/g, "<div class='text-center'>$1</div>")
+    .replace(/<right>([\s\S]*?)<\/right>/g, "<div class='text-right'>$1</div>")
+    .replace(/<justify>([\s\S]*?)<\/justify>/g, "<div class='text-justify'>$1</div>")
+    .replace(/<a href=["']([\s\S]*?)["']>(.*?)<\/a>/g, '<a href="$1">$2</a>')
+    .replace(/\n/g, "<br />");
+  return html;
 };
+
+const htmlToMarkup = (html: string): string => {
+  if (!html) return "";
+  let doc = new DOMParser().parseFromString(html, 'text/html');
+  const nodeToMarkup = (node: Node): string => {
+    if (node.nodeType === Node.TEXT_NODE) {
+      return node.textContent || "";
+    }
+    if (node.nodeType === Node.ELEMENT_NODE) {
+      const el = node as HTMLElement;
+      let tagName = el.tagName.toLowerCase();
+      let inner = Array.from(el.childNodes).map(nodeToMarkup).join("");
+
+      if (tagName === "br") {
+        return "\n";
+      }
+      if (tagName === "b" || tagName === "strong") {
+        return `<b>${inner}</b>`;
+      }
+      if (tagName === "i" || tagName === "em") {
+        return `<i>${inner}</i>`;
+      }
+      if (tagName === "u") {
+        return `<u>${inner}</u>`;
+      }
+      if (tagName === "s" || tagName === "strike" || tagName === "del") {
+        return `<s>${inner}</s>`;
+      }
+      if (tagName === "a") {
+        const href = el.getAttribute("href") || "";
+        return `<a href="${href}">${inner}</a>`;
+      }
+      const align = el.style.textAlign || el.getAttribute("align") || "";
+      if (align === "center" || el.classList.contains("text-center") || tagName === "center") {
+        return `<center>${inner}</center>`;
+      }
+      if (align === "right" || el.classList.contains("text-right")) {
+        return `<right>${inner}</right>`;
+      }
+      if (align === "justify" || el.classList.contains("text-justify")) {
+        return `<justify>${inner}</justify>`;
+      }
+      if (align === "left" || el.classList.contains("text-left")) {
+        return `<left>${inner}</left>`;
+      }
+      if (tagName === "div" || tagName === "p") {
+        return inner + "\n";
+      }
+      return inner;
+    }
+    return "";
+  };
+
+  let markup = Array.from(doc.body.childNodes).map(nodeToMarkup).join("");
+  return markup.replace(/\n\n+/g, "\n").trim();
+};
+
+interface RichTextEditorProps {
+  value: string;
+  onChange: (val: string) => void;
+  placeholder: string;
+  minHeightClass?: string;
+}
+
+function RichTextEditor({ value, onChange, placeholder, minHeightClass = "min-h-[120px]" }: RichTextEditorProps) {
+  const editorRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (editorRef.current) {
+      const currentHtml = editorRef.current.innerHTML;
+      const targetHtml = markupToHtml(value);
+      if (htmlToMarkup(currentHtml) !== htmlToMarkup(targetHtml)) {
+        editorRef.current.innerHTML = targetHtml;
+      }
+    }
+  }, [value]);
+
+  const handleInput = () => {
+    if (editorRef.current) {
+      const html = editorRef.current.innerHTML;
+      onChange(htmlToMarkup(html));
+    }
+  };
+
+  const executeCommand = (command: string, val: string = "") => {
+    document.execCommand(command, false, val);
+    handleInput();
+  };
+
+  const handleLink = () => {
+    const url = prompt("Masukkan URL link:", "https://");
+    if (url) {
+      executeCommand("createLink", url);
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-2.5 w-full">
+      {/* Formatting Toolbar */}
+      <div className="flex gap-1.5 p-1 bg-[#FAF9FF] border border-[#F0EDFF] rounded-xl self-start flex-wrap">
+        <button
+          type="button"
+          onClick={() => executeCommand("bold")}
+          className="w-7 h-7 bg-white text-[#2C2B30] border border-[#F0EDFF] font-extrabold text-xs rounded-lg flex items-center justify-center transition-none cursor-pointer hover:bg-neutral-50 active:bg-neutral-100"
+          title="Tebal (Bold)"
+        >
+          B
+        </button>
+        <button
+          type="button"
+          onClick={() => executeCommand("italic")}
+          className="w-7 h-7 bg-white text-[#2C2B30] border border-[#F0EDFF] italic font-bold text-xs rounded-lg flex items-center justify-center transition-none cursor-pointer hover:bg-neutral-50 active:bg-neutral-100"
+          title="Miring (Italic)"
+        >
+          I
+        </button>
+        <button
+          type="button"
+          onClick={() => executeCommand("underline")}
+          className="w-7 h-7 bg-white text-[#2C2B30] border border-[#F0EDFF] underline font-bold text-xs rounded-lg flex items-center justify-center transition-none cursor-pointer hover:bg-neutral-50 active:bg-neutral-100"
+          title="Garis Bawah (Underline)"
+        >
+          U
+        </button>
+        <button
+          type="button"
+          onClick={() => executeCommand("strikeThrough")}
+          className="w-7 h-7 bg-white text-[#2C2B30] border border-[#F0EDFF] line-through font-bold text-xs rounded-lg flex items-center justify-center transition-none cursor-pointer hover:bg-neutral-50 active:bg-neutral-100"
+          title="Coret (Strikethrough)"
+        >
+          S
+        </button>
+
+        {/* Divider */}
+        <div className="w-[1px] h-5 bg-[#F0EDFF] self-center mx-1"></div>
+
+        <button
+          type="button"
+          onClick={() => executeCommand("justifyLeft")}
+          className="w-7 h-7 bg-white text-[#2C2B30] border border-[#F0EDFF] rounded-lg flex items-center justify-center transition-none cursor-pointer hover:bg-neutral-50 active:bg-neutral-100"
+          title="Rata Kiri (Align Left)"
+        >
+          <FiAlignLeft size={12} />
+        </button>
+        <button
+          type="button"
+          onClick={() => executeCommand("justifyCenter")}
+          className="w-7 h-7 bg-white text-[#2C2B30] border border-[#F0EDFF] rounded-lg flex items-center justify-center transition-none cursor-pointer hover:bg-neutral-50 active:bg-neutral-100"
+          title="Rata Tengah (Align Center)"
+        >
+          <FiAlignCenter size={12} />
+        </button>
+        <button
+          type="button"
+          onClick={() => executeCommand("justifyRight")}
+          className="w-7 h-7 bg-white text-[#2C2B30] border border-[#F0EDFF] rounded-lg flex items-center justify-center transition-none cursor-pointer hover:bg-neutral-50 active:bg-neutral-100"
+          title="Rata Kanan (Align Right)"
+        >
+          <FiAlignRight size={12} />
+        </button>
+        <button
+          type="button"
+          onClick={() => executeCommand("justifyFull")}
+          className="w-7 h-7 bg-white text-[#2C2B30] border border-[#F0EDFF] rounded-lg flex items-center justify-center transition-none cursor-pointer hover:bg-neutral-50 active:bg-neutral-100"
+          title="Rata Kanan Kiri (Align Justify)"
+        >
+          <FiAlignJustify size={12} />
+        </button>
+        <button
+          type="button"
+          onClick={handleLink}
+          className="w-7 h-7 bg-white text-[#2C2B30] border border-[#F0EDFF] rounded-lg flex items-center justify-center transition-none cursor-pointer hover:bg-neutral-50 active:bg-neutral-100"
+          title="Tautkan Link (Insert Link)"
+        >
+          <FiLink size={12} />
+        </button>
+      </div>
+
+      <style dangerouslySetInnerHTML={{ __html: `
+        .wysiwyg-editor:empty:before {
+          content: attr(data-placeholder);
+          color: #9C98A6;
+          font-style: italic;
+        }
+      `}} />
+      {/* Editable Area */}
+      <div
+        ref={editorRef}
+        contentEditable
+        onInput={handleInput}
+        onBlur={handleInput}
+        data-placeholder={placeholder}
+        className={`wysiwyg-editor w-full ${minHeightClass} p-3 border border-[#F0EDFF] bg-[#FAF9FF] text-[#2C2B30] font-medium focus:outline-none focus:border-[#8C66FF] focus:bg-white text-xs leading-relaxed rounded-xl transition-none overflow-y-auto text-justify`}
+      />
+    </div>
+  );
+}
 
 interface Block {
   id: string;
@@ -45,6 +241,7 @@ export default function MateriEditor() {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
 
   // Modal State
   const [modal, setModal] = useState<{
@@ -161,27 +358,6 @@ export default function MateriEditor() {
     );
   };
 
-  const insertFormat = (blockId: string, tag: "b" | "i" | "u" | "s") => {
-    const textarea = document.getElementById(`textarea-${blockId}`) as HTMLTextAreaElement | null;
-    if (!textarea) return;
-
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const text = textarea.value;
-
-    const selectedText = text.substring(start, end);
-    const replacement = `<${tag}>${selectedText}</${tag}>`;
-    const newText = text.substring(0, start) + replacement + text.substring(end);
-
-    updateBlockText(blockId, newText);
-
-    // Refocus and place cursor
-    setTimeout(() => {
-      textarea.focus();
-      const newCursorPos = start + tag.length + 2;
-      textarea.setSelectionRange(newCursorPos, newCursorPos + selectedText.length);
-    }, 0);
-  };
 
   const handleFileUpload = (blockId: string, files: FileList | null) => {
     if (!files || files.length === 0) return;
@@ -245,11 +421,10 @@ export default function MateriEditor() {
       const blocksPayload = blocks.map(b => {
         const payloadBlock: any = {
           id: b.id,
-          type: b.type
+          type: b.type,
+          textContent: b.textContent
         };
-        if (b.type === "text") {
-          payloadBlock.textContent = b.textContent;
-        } else {
+        if (b.type !== "text") {
           if (b.file) {
             payloadBlock.fileKey = `file_${b.id}`;
           } else if (b.keepExisting && b.mediaUrl) {
@@ -393,59 +568,12 @@ export default function MateriEditor() {
 
                         {/* Block Content Inputs */}
                         {block.type === "text" ? (
-                          <div className="flex flex-col gap-2.5 w-full">
-                            {/* Formatting Toolbar */}
-                            <div className="flex gap-1.5 p-1 bg-[#FAF9FF] border border-[#F0EDFF] rounded-xl self-start">
-                              <button
-                                type="button"
-                                onClick={() => insertFormat(block.id, "b")}
-                                className="w-7 h-7 bg-white text-[#2C2B30] border border-[#F0EDFF] font-extrabold text-xs rounded-lg flex items-center justify-center transition-none cursor-pointer"
-                                title="Tebal (Bold)"
-                              >
-                                B
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => insertFormat(block.id, "i")}
-                                className="w-7 h-7 bg-white text-[#2C2B30] border border-[#F0EDFF] italic font-bold text-xs rounded-lg flex items-center justify-center transition-none cursor-pointer"
-                                title="Miring (Italic)"
-                              >
-                                I
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => insertFormat(block.id, "u")}
-                                className="w-7 h-7 bg-white text-[#2C2B30] border border-[#F0EDFF] underline font-bold text-xs rounded-lg flex items-center justify-center transition-none cursor-pointer"
-                                title="Garis Bawah (Underline)"
-                              >
-                                U
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => insertFormat(block.id, "s")}
-                                className="w-7 h-7 bg-white text-[#2C2B30] border border-[#F0EDFF] line-through font-bold text-xs rounded-lg flex items-center justify-center transition-none cursor-pointer"
-                                title="Coret (Strikethrough)"
-                              >
-                                S
-                              </button>
-                            </div>
-                            <textarea
-                              id={`textarea-${block.id}`}
-                              placeholder="Tulis paragraf materi di sini..."
-                              value={block.textContent}
-                              onChange={(e) => updateBlockText(block.id, e.target.value)}
-                              className="w-full min-h-[90px] p-3 border border-[#F0EDFF] bg-[#FAF9FF] text-[#2C2B30] font-medium focus:outline-none focus:border-[#8C66FF] focus:bg-white resize-y text-xs leading-relaxed rounded-xl transition-none"
-                            />
-                            {/* Real-time Preview */}
-                            {block.textContent.trim() && (
-                              <div className="border border-[#F0EDFF] p-3 bg-[#FAF9FF] rounded-xl text-left">
-                                <p className="text-[8px] font-bold text-[#9C98A6] uppercase tracking-wider mb-1.5">Live Preview:</p>
-                                <div className="text-xs text-[#2C2B30] font-medium">
-                                  {parseFormattedText(block.textContent)}
-                                </div>
-                              </div>
-                            )}
-                          </div>
+                          <RichTextEditor
+                            value={block.textContent}
+                            onChange={(val) => updateBlockText(block.id, val)}
+                            placeholder="Tulis paragraf materi di sini..."
+                            minHeightClass="min-h-[120px]"
+                          />
                         ) : (
                           <div className="flex flex-col gap-2">
                             {/* Preview */}
@@ -490,6 +618,19 @@ export default function MateriEditor() {
                                 </label>
                               </div>
                             )}
+
+                            {/* Caption/Description Editor */}
+                            <div className="flex flex-col gap-2 mt-2 w-full">
+                              <span className="font-bold text-[9px] uppercase tracking-widest text-[#9C98A6]">
+                                Keterangan / Teks Pendukung (Opsional):
+                              </span>
+                              <RichTextEditor
+                                value={block.textContent}
+                                onChange={(val) => updateBlockText(block.id, val)}
+                                placeholder={`Tulis keterangan/deskripsi ${block.type === "image" ? "gambar" : "audio"} di sini...`}
+                                minHeightClass="min-h-[80px]"
+                              />
+                            </div>
                           </div>
                         )}
                       </div>

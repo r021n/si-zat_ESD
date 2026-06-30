@@ -22,7 +22,17 @@ const parseFormattedText = (text: string) => {
     .replace(/&lt;u&gt;([\s\S]*?)&lt;\/u&gt;/g, "<span class='underline'>$1</span>")
     .replace(/&lt;s&gt;([\s\S]*?)&lt;\/s&gt;/g, "<del>$1</del>");
 
-  return <div dangerouslySetInnerHTML={{ __html: html }} className="whitespace-pre-wrap text-justify leading-relaxed" />;
+  // Restore alignment tags
+  html = html
+    .replace(/&lt;left&gt;([\s\S]*?)&lt;\/left&gt;/g, "<div class='text-left w-full'>$1</div>")
+    .replace(/&lt;center&gt;([\s\S]*?)&lt;\/center&gt;/g, "<div class='text-center w-full'>$1</div>")
+    .replace(/&lt;right&gt;([\s\S]*?)&lt;\/right&gt;/g, "<div class='text-right w-full'>$1</div>")
+    .replace(/&lt;justify&gt;([\s\S]*?)&lt;\/justify&gt;/g, "<div class='text-justify w-full'>$1</div>");
+
+  // Restore links
+  html = html.replace(/&lt;a href=["']([\s\S]*?)["']&gt;([\s\S]*?)&lt;\/a&gt;/g, '<a href="$1" target="_blank" rel="noopener noreferrer" class="text-[#8C66FF] hover:underline font-bold break-all">$2</a>');
+
+  return <div dangerouslySetInnerHTML={{ __html: html }} className="whitespace-pre-wrap leading-relaxed text-justify" />;
 };
 
 export default function MateriDetail() {
@@ -256,12 +266,19 @@ export default function MateriDetail() {
                                     </div>
                                   )}
                                   {page.block.type === "image" && (
-                                    <div className="w-full border border-[#F0EDFF] p-2 bg-white rounded-2xl overflow-hidden shadow-sm flex justify-center items-center">
-                                      <img
-                                        src={`${API_URL}${page.block.mediaUrl}`}
-                                        alt="Visual Pendukung"
-                                        className="max-h-[220px] w-auto object-contain block rounded-lg"
-                                      />
+                                    <div className="flex flex-col gap-2.5 items-center w-full">
+                                      <div className="w-full border border-[#F0EDFF] p-2 bg-white rounded-2xl overflow-hidden shadow-sm flex justify-center items-center">
+                                        <img
+                                          src={`${API_URL}${page.block.mediaUrl}`}
+                                          alt="Visual Pendukung"
+                                          className="max-h-[170px] w-auto object-contain block rounded-lg"
+                                        />
+                                      </div>
+                                      {page.block.textContent && (
+                                        <div className="text-xs text-[#2C2B30] font-medium leading-relaxed text-center px-1">
+                                          {parseFormattedText(page.block.textContent)}
+                                        </div>
+                                      )}
                                     </div>
                                   )}
                                   {page.block.type === "audio" && (
@@ -274,6 +291,11 @@ export default function MateriDetail() {
                                         controls
                                         className="w-full custom-audio"
                                       />
+                                      {page.block.textContent && (
+                                        <div className="text-xs text-[#2C2B30] font-medium leading-relaxed mt-1">
+                                          {parseFormattedText(page.block.textContent)}
+                                        </div>
+                                      )}
                                     </div>
                                   )}
                                 </div>
@@ -361,12 +383,17 @@ export default function MateriDetail() {
                         );
                       } else if (block.type === "image") {
                         return (
-                          <div key={block.id || idx} className="w-full border border-[#F0EDFF] p-2 bg-white rounded-[24px] shadow-[0_4px_12px_rgba(0,0,0,0.02)] flex justify-center items-center">
+                          <div key={block.id || idx} className="w-full border border-[#F0EDFF] p-2 bg-white rounded-[24px] shadow-[0_4px_12px_rgba(0,0,0,0.02)] flex flex-col items-center gap-3">
                             <img
                               src={`${API_URL}${block.mediaUrl}`}
                               alt="Materi Visual"
                               className="w-full h-auto object-contain block rounded-2xl"
                             />
+                            {block.textContent && (
+                              <div className="text-xs text-[#2C2B30] font-medium leading-relaxed text-center px-4 pb-2 w-full">
+                                {parseFormattedText(block.textContent)}
+                              </div>
+                            )}
                           </div>
                         );
                       } else if (block.type === "audio") {
@@ -380,6 +407,11 @@ export default function MateriDetail() {
                               controls
                               className="w-full custom-audio"
                             />
+                            {block.textContent && (
+                              <div className="text-xs text-[#2C2B30] font-medium leading-relaxed mt-1">
+                                {parseFormattedText(block.textContent)}
+                              </div>
+                            )}
                           </div>
                         );
                       }

@@ -152,6 +152,7 @@ materi.get('/:id', async (c: any) => {
           type: block.type,
           mediaType: block.mediaType,
           mediaUrl: `/api/materi/media/${block.id}`,
+          textContent: block.textContent,
           sortOrder: block.sortOrder
         }
       }
