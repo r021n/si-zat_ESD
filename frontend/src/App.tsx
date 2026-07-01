@@ -4,6 +4,7 @@ import {
   Routes,
   Route,
   Navigate,
+  useLocation,
 } from "react-router-dom";
 import Auth from "./pages/Auth";
 import MainMenu from "./pages/MainMenu";
@@ -15,7 +16,7 @@ import SimulasiEutrofikasi from "./components/simulations/eutrophication";
 import SimulasiPencemaranTanah from "./components/simulations/land_pollution";
 import SimulasiPencemaranUdara from "./components/simulations/air_pollution";
 import { useAuthStore } from "./store/authStore";
-import { recordOpenApi, recordUsageApi } from "./api/api";
+import { recordOpenApi, recordUsageApi, recordMenuClickApi } from "./api/api";
 import KuisMenu from "./pages/KuisMenu";
 import PenilaianBerpikirSistem from "./pages/PenilaianBerpikirSistem";
 import PengumpulanTugas from "./pages/PengumpulanTugas";
@@ -29,6 +30,52 @@ import AdminChangePassword from "./pages/AdminChangePassword";
 import ProfilPengembang from "./pages/ProfilPengembang";
 
 
+
+function RouteTracker() {
+  const location = useLocation();
+  const { token, user } = useAuthStore();
+
+  useEffect(() => {
+    if (!token || !user) return;
+
+    const pathname = location.pathname;
+    let menuKey = "";
+
+    if (pathname === "/materi") {
+      menuKey = "menu materi";
+    } else if (pathname === "/simulasi") {
+      menuKey = "menu simulasi";
+    } else if (pathname === "/simulasi/air") {
+      menuKey = "menu pencemaran air";
+    } else if (pathname === "/simulasi/eutrofikasi") {
+      menuKey = "menu eutrofikasi";
+    } else if (pathname === "/simulasi/tanah") {
+      menuKey = "menu pencemaran tanah";
+    } else if (pathname === "/simulasi/udara") {
+      menuKey = "menu pencemaran udara";
+    } else if (pathname === "/kuis") {
+      menuKey = "menu kuis";
+    } else if (pathname === "/kuis/berpikir-sistem") {
+      menuKey = "menu berpikir sistem";
+    } else if (pathname === "/kuis/berpikir-sistem/tugas") {
+      menuKey = "menu pengumpulan tugas";
+    } else if (pathname === "/kuis/berpikir-sistem/diskusi") {
+      menuKey = "menu diskusi";
+    } else if (pathname === "/profil-pengembang") {
+      menuKey = "menu profil pengembang";
+    } else if (pathname === "/profile-report") {
+      menuKey = "menu profil & report";
+    }
+
+    if (menuKey) {
+      recordMenuClickApi(token, menuKey).catch((err) => {
+        console.error("Gagal mencatat kunjungan menu:", err);
+      });
+    }
+  }, [location.pathname, token, user]);
+
+  return null;
+}
 
 function LoadingScreen() {
   return (
@@ -108,6 +155,7 @@ function AppContent() {
 
   return (
     <Router>
+      <RouteTracker />
       <Routes>
         {/* Default route renders Onboarding page */}
         <Route path="/" element={<Onboarding />} />

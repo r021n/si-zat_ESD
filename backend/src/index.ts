@@ -6,6 +6,7 @@ import authRoute from './routes/auth.js'
 import quizRoute from './routes/quiz.js'
 import materiRoute from './routes/materi.js'
 import tasksRoute from './routes/tasks.js'
+import analyticsRoute from './routes/analytics.js'
 
 
 const app = new Hono()
@@ -45,6 +46,8 @@ app.route('/api/auth', authRoute)
 app.route('/api/quiz', quizRoute)
 app.route('/api/materi', materiRoute)
 app.route('/api/tasks', tasksRoute)
+app.route('/api/analytics', analyticsRoute)
+
 
 
 const port = Number(process.env.PORT) || 8787

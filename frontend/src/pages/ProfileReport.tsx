@@ -1,15 +1,38 @@
 import { useState, useEffect, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
-import { LuEye, LuClock } from "react-icons/lu";
+import { LuEye, LuClock, LuChartBar } from "react-icons/lu";
+import { getMenuAnalyticsApi } from "../api/api";
 
 export default function ProfileReport() {
   const navigate = useNavigate();
-  const { user, updateProfile, loading, checkAuth } = useAuthStore();
+  const { user, updateProfile, loading, checkAuth, token } = useAuthStore();
 
   const [nama, setNama] = useState("");
   const [kelas, setKelas] = useState("");
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  const [analyticsData, setAnalyticsData] = useState<{ menuKey: string; count: number }[]>([]);
+  const [isAnalyticsModalOpen, setIsAnalyticsModalOpen] = useState(false);
+  const [loadingAnalytics, setLoadingAnalytics] = useState(false);
+  const [analyticsError, setAnalyticsError] = useState("");
+
+  const handleOpenAnalytics = async () => {
+    setIsAnalyticsModalOpen(true);
+    setLoadingAnalytics(true);
+    setAnalyticsError("");
+    try {
+      if (!token) return;
+      const res = await getMenuAnalyticsApi(token);
+      if (res && res.status === "success") {
+        setAnalyticsData(res.data || []);
+      }
+    } catch (err: any) {
+      setAnalyticsError(err.message || "Gagal mengambil data analitik");
+    } finally {
+      setLoadingAnalytics(false);
+    }
+  };
 
   useEffect(() => {
     checkAuth();
@@ -238,13 +261,24 @@ export default function ProfileReport() {
               </div>
 
               {/* Total Durasi Penggunaan */}
-              <div className="flex justify-between items-center py-2">
+              <div className="flex justify-between items-center py-2 border-b border-[#F0EDFF]/50">
                 <div>
                   <h4 className="text-[10px] font-black uppercase tracking-widest text-[#9C98A6]">Durasi Penggunaan</h4>
                   <p className="text-xs font-bold text-[#2C2B30] mt-0.5">{formatUsageTime(user.totalUsageTime)}</p>
                 </div>
                 <div className="w-8 h-8 rounded-lg bg-[#FFF4EB] text-[#FF9D42] flex items-center justify-center">
                   <LuClock className="w-4 h-4" />
+                </div>
+              </div>
+
+              {/* Analitik Aktivitas */}
+              <div className="flex justify-between items-center py-2 cursor-pointer" onClick={handleOpenAnalytics}>
+                <div>
+                  <h4 className="text-[10px] font-black uppercase tracking-widest text-[#8C66FF]">Analitik Aktivitas</h4>
+                  <p className="text-xs font-bold text-[#8C66FF] mt-0.5 underline">Lihat menu yang sering dibuka</p>
+                </div>
+                <div className="w-8 h-8 rounded-lg bg-[#EBF3FF] text-[#4285F4] flex items-center justify-center">
+                  <LuChartBar className="w-4 h-4" />
                 </div>
               </div>
             </div>
@@ -266,6 +300,62 @@ export default function ProfileReport() {
         </div>
 
       </div>
+
+      {/* Analytics Modal */}
+      {isAnalyticsModalOpen && (
+        <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50 p-6 backdrop-blur-xs">
+          <div className="w-full max-w-[340px] bg-white rounded-[28px] p-6 shadow-xl border border-[#F0EDFF] flex flex-col gap-4 animate-none select-none text-left">
+            <div>
+              <h3 className="text-sm font-extrabold text-[#2C2B30] tracking-wide uppercase flex items-center gap-2">
+                <LuChartBar className="text-[#8C66FF]" />
+                Analitik Aktivitas
+              </h3>
+              <p className="text-[10px] text-[#9C98A6] font-semibold mt-1">
+                Menu yang paling sering Anda kunjungi
+              </p>
+            </div>
+
+            <div className="max-h-[220px] overflow-y-auto pr-1 flex flex-col gap-2.5 my-1 no-scrollbar">
+              {loadingAnalytics ? (
+                <div className="py-8 flex flex-col items-center justify-center gap-2 text-center">
+                  <div className="w-6 h-6 border-2 border-[#8C66FF] border-t-transparent rounded-full animate-spin"></div>
+                  <p className="text-[10px] text-[#9C98A6] font-bold uppercase tracking-widest animate-pulse">Memuat Analitik...</p>
+                </div>
+              ) : analyticsError ? (
+                <p className="text-xs text-[#FF5E8C] font-semibold text-center py-4">{analyticsError}</p>
+              ) : analyticsData.length === 0 ? (
+                <p className="text-xs text-[#9C98A6] font-semibold text-center py-6">Belum ada aktivitas menu yang tercatat.</p>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  {analyticsData.map((item, index) => (
+                    <div
+                      key={item.menuKey}
+                      className="w-full bg-[#FAF9FF] border border-[#F0EDFF]/70 rounded-xl px-4 py-3 flex items-center justify-between"
+                    >
+                      <div className="flex items-center gap-2 truncate">
+                        <span className="text-[10px] font-black text-[#9C98A6] w-4">{index + 1}.</span>
+                        <span className="text-xs font-bold text-[#2C2B30] truncate">{item.menuKey}</span>
+                      </div>
+                      <span className="text-xs font-black text-[#8C66FF] bg-[#F0ECFF] px-2.5 py-1 rounded-full shrink-0">
+                        {item.count}x
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="flex gap-2.5 mt-1">
+              <button
+                onClick={() => setIsAnalyticsModalOpen(false)}
+                className="w-full py-3.5 bg-[#8C66FF] text-white font-extrabold uppercase tracking-wider text-[10px] rounded-full shadow-md shadow-purple-100 cursor-pointer transition-none flex items-center justify-center"
+              >
+                Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

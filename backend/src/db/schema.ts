@@ -81,4 +81,12 @@ export const taskDiscussions = sqliteTable('task_discussions', {
   createdAt: text('created_at').notNull(),
 })
 
+export const menuClicks = sqliteTable('menu_clicks', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  menuKey: text('menu_key').notNull(),
+  count: integer('count').default(0).notNull(),
+})
+
+
 

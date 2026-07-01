@@ -397,4 +397,35 @@ export async function changeSiswaPasswordApi(token: string, id: number, newPassw
   return data;
 }
 
+export async function recordMenuClickApi(token: string, menuKey: string) {
+  const response = await fetch(`${API_URL}/api/analytics/record`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    },
+    body: JSON.stringify({ menuKey })
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || "Gagal mencatat kunjungan menu");
+  }
+  return data;
+}
+
+export async function getMenuAnalyticsApi(token: string) {
+  const response = await fetch(`${API_URL}/api/analytics`, {
+    method: "GET",
+    headers: {
+      "Authorization": `Bearer ${token}`
+    }
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || "Gagal mengambil data analitik menu");
+  }
+  return data;
+}
+
+
 

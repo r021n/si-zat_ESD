@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 import { LuGlobe, LuLeaf, LuApple, LuBookOpen, LuGamepad, LuPenTool, LuChartBar } from "react-icons/lu";
@@ -8,14 +7,12 @@ export default function Onboarding() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
 
-  useEffect(() => {
-    if (user) {
-      navigate("/menu", { replace: true });
-    }
-  }, [user, navigate]);
-
   const handleStart = () => {
-    navigate("/auth");
+    if (user) {
+      navigate("/menu");
+    } else {
+      navigate("/auth");
+    }
   };
 
   return (
