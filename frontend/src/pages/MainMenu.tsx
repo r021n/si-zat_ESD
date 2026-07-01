@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
-import { LuBookOpen, LuGamepad, LuPenTool, LuChartBar, LuSettings, LuGraduationCap, LuUser } from "react-icons/lu";
+import { LuBookOpen, LuGamepad, LuPenTool, LuChartBar, LuSettings, LuGraduationCap, LuUser, LuAward } from "react-icons/lu";
 import unsLogo from "../assets/uns_logo.webp";
 
 interface MainMenuProps {
@@ -115,6 +115,14 @@ export default function MainMenu({ onNavigate }: MainMenuProps) {
       icon: <LuPenTool className="text-xl" />,
       bgIcon: "bg-[#FFEBF0]",
       textIcon: "text-[#D95276]",
+    },
+    {
+      id: "kuis/berpikir-sistem",
+      label: "Berpikir Sistem",
+      desc: "Kumpulkan tugas & forum diskusi",
+      icon: <LuAward className="text-xl" />,
+      bgIcon: "bg-[#EBF3FF]",
+      textIcon: "text-[#4285F4]",
     },
     {
       id: "profile-report",

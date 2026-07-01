@@ -130,7 +130,7 @@ export async function deleteQuizApi(token: string, id: string) {
 export async function submitQuizAnswersApi(
   token: string,
   id: string,
-  answersData: { answers: any; score: number; createdAt?: string }
+  answersData: { answers: any; score: number; createdAt?: string; duration?: number }
 ) {
   const response = await fetch(`${API_URL}/api/quiz/${id}/submit`, {
     method: "POST",

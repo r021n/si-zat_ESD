@@ -23,6 +23,7 @@ interface Submission {
   studentClass: string;
   answers: Record<string, number[]>;
   score: number;
+  duration?: number;
   createdAt: string;
 }
 
@@ -31,6 +32,15 @@ interface QuizAnalysisProps {
   submissions: Submission[];
   onClose: () => void;
 }
+
+const formatDurationFriendly = (seconds?: number) => {
+  if (seconds === undefined || seconds === null) return "-";
+  if (seconds < 60) return `${seconds}s`;
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  if (secs === 0) return `${mins}m`;
+  return `${mins}m ${secs}s`;
+};
 
 export default function QuizAnalysis({
   selectedQuiz,
@@ -87,26 +97,26 @@ export default function QuizAnalysis({
   });
 
   return (
-    <div className="w-full flex-1 flex flex-col justify-between">
-      <div>
+    <div className="w-full flex-1 flex flex-col justify-between overflow-hidden">
+      <div className="w-full flex-1 flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="w-full flex justify-between items-center mt-4 pb-4 border-b border-[#F0EDFF]/50">
+        <div className="w-full flex justify-between items-center mt-4 pb-4 border-b border-[#F0EDFF]/50 flex-shrink-0">
           <div className="max-w-[70%]">
             <p className="text-[10px] uppercase tracking-widest text-[#9C98A6] font-bold">Hasil Analisis</p>
             <h1 className="text-sm font-extrabold text-[#2C2B30] truncate leading-tight mt-0.5">{selectedQuiz.title}</h1>
           </div>
           <button
             onClick={onClose}
-            className="px-4 py-2 bg-white border border-[#FFEAEA] text-[#FF5E8C] text-[10px] font-extrabold uppercase tracking-wider rounded-full shadow-sm cursor-pointer transition-none"
+            className="px-4 py-2 bg-white border border-[#FFEAEA] text-[#FF5E8C] text-[10px] font-extrabold uppercase tracking-wider rounded-full shadow-sm cursor-pointer transition-none flex-shrink-0"
           >
             Tutup
           </button>
         </div>
 
         {/* Core Analytics Calculations */}
-        <div className="w-full mt-4 flex flex-col gap-4">
+        <div className="w-full mt-4 flex-1 flex flex-col gap-4 overflow-hidden">
           {/* General Stats */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-3 flex-shrink-0">
             <div className="bg-white rounded-[20px] p-4 shadow-[0_4px_12px_rgba(0,0,0,0.02)] border border-[#F0EDFF] text-center flex flex-col gap-1.5">
               <span className="text-[9px] font-black uppercase tracking-widest text-[#9C98A6]">Siswa Menjawab</span>
               <span className="text-2xl font-black text-[#8C66FF]">{quizSubmissions.length}</span>
@@ -118,7 +128,7 @@ export default function QuizAnalysis({
           </div>
 
           {/* Tab Navigation */}
-          <div className="grid grid-cols-2 bg-[#F0ECFF]/50 p-1.5 rounded-2xl border border-[#F0EDFF]">
+          <div className="grid grid-cols-2 bg-[#F0ECFF]/50 p-1.5 rounded-2xl border border-[#F0EDFF] flex-shrink-0">
             <button
               onClick={() => setAnalysisTab("SUMMARY")}
               className={`py-2 px-4 rounded-xl cursor-pointer text-center text-xs font-extrabold uppercase transition-none ${
@@ -143,15 +153,15 @@ export default function QuizAnalysis({
 
           {/* Empty State */}
           {quizSubmissions.length === 0 ? (
-            <div className="bg-white rounded-[24px] border border-[#F0EDFF] p-8 text-center flex flex-col gap-2 items-center shadow-[0_4px_12px_rgba(0,0,0,0.02)]">
+            <div className="bg-white rounded-[24px] border border-[#F0EDFF] p-8 text-center flex flex-col gap-2 items-center shadow-[0_4px_12px_rgba(0,0,0,0.02)] flex-shrink-0">
               <p className="text-xs font-extrabold text-[#9C98A6] uppercase tracking-wider">Belum ada respon siswa.</p>
             </div>
           ) : (
-            <div className="w-full">
+            <div className="w-full flex-1 flex flex-col overflow-hidden">
               {/* TAB A: SUMMARY TABLE */}
               {analysisTab === "SUMMARY" && (
-                <div className="flex flex-col gap-2">
-                  <div className="flex justify-between items-center text-[9px] font-bold text-[#9C98A6] uppercase px-1">
+                <div className="flex flex-col gap-2 flex-1 overflow-hidden">
+                  <div className="flex justify-between items-center text-[9px] font-bold text-[#9C98A6] uppercase px-1 flex-shrink-0">
                     <span>Daftar Nilai Siswa</span>
                     <div className="flex items-center gap-1.5">
                       <span>Urutan:</span>
@@ -167,12 +177,13 @@ export default function QuizAnalysis({
                     </div>
                   </div>
                   
-                  <div className="max-h-[220px] overflow-y-auto border border-[#F0EDFF] rounded-[20px] shadow-[0_4px_12px_rgba(0,0,0,0.02)] bg-white overflow-hidden">
+                  <div className="flex-1 overflow-y-auto border border-[#F0EDFF] rounded-[20px] shadow-[0_4px_12px_rgba(0,0,0,0.02)] bg-white overflow-hidden">
                     <table className="w-full border-collapse text-left text-xs">
-                      <thead>
+                      <thead className="sticky top-0 bg-[#FAF9FF] z-10">
                         <tr className="bg-[#FAF9FF] text-[#2C2B30] border-b border-[#F0EDFF] uppercase font-black text-[9px] tracking-wider">
                           <th className="p-3 border-r border-[#F0EDFF]/50">Nama</th>
                           <th className="p-3 border-r border-[#F0EDFF]/50 text-center">Kelas</th>
+                          <th className="p-3 border-r border-[#F0EDFF]/50 text-center">Durasi</th>
                           <th className="p-3 text-center">Skor</th>
                         </tr>
                       </thead>
@@ -181,6 +192,7 @@ export default function QuizAnalysis({
                           <tr key={sub.id} className={`border-b border-[#F0EDFF]/30 ${sIdx % 2 === 1 ? "bg-[#FAF9FF]/40" : "bg-white"}`}>
                             <td className="p-3 font-bold truncate max-w-[120px] text-[#2C2B30]">{sub.studentName}</td>
                             <td className="p-3 text-center font-mono text-[#9C98A6] font-bold">{sub.studentClass}</td>
+                            <td className="p-3 text-center font-mono text-[#9C98A6] font-semibold">{formatDurationFriendly(sub.duration)}</td>
                             <td className="p-3 text-center font-mono font-black text-sm text-[#8C66FF]">{sub.score}</td>
                           </tr>
                         ))}
@@ -192,8 +204,8 @@ export default function QuizAnalysis({
 
               {/* TAB B: ITEM ACCURACY ANALYSIS */}
               {analysisTab === "ITEMS" && (
-                <div className="flex flex-col gap-3">
-                  <div className="flex justify-end items-center text-[9px] font-bold text-[#9C98A6] uppercase px-1">
+                <div className="flex flex-col gap-3 flex-1 overflow-hidden">
+                  <div className="flex justify-end items-center text-[9px] font-bold text-[#9C98A6] uppercase px-1 flex-shrink-0">
                     <div className="flex items-center gap-1.5">
                       <span>Urutan:</span>
                       <select
@@ -208,7 +220,7 @@ export default function QuizAnalysis({
                     </div>
                   </div>
 
-                  <div className="flex flex-col gap-4 max-h-[220px] overflow-y-auto pr-1">
+                  <div className="flex-1 flex flex-col gap-4 overflow-y-auto pr-1">
                     {sortedQuestions.map((q) => {
                       const correctCount = quizSubmissions.filter(sub => {
                         const ans = sub.answers[q.id] || [];
@@ -221,7 +233,7 @@ export default function QuizAnalysis({
                         : 0;
 
                       return (
-                        <div key={q.id} className="bg-white rounded-[24px] p-5 shadow-[0_4px_12px_rgba(0,0,0,0.02)] border border-[#F0EDFF] flex flex-col gap-4">
+                        <div key={q.id} className="bg-white rounded-[24px] p-5 shadow-[0_4px_12px_rgba(0,0,0,0.02)] border border-[#F0EDFF] flex flex-col gap-4 flex-shrink-0">
                           <div className="flex justify-between items-center border-b border-[#F0EDFF]/50 pb-2">
                             <span className="text-xs font-extrabold text-[#8C66FF]">Soal #{q.originalIndex + 1}</span>
                             <span className="text-[10px] font-mono font-bold px-2 py-0.5 bg-[#E6F8F6] text-[#2C8578] rounded-full">
@@ -274,7 +286,7 @@ export default function QuizAnalysis({
       </div>
 
       {/* Bottom Actions */}
-      <div className="w-full mt-8 mb-2 flex flex-col gap-2">
+      <div className="w-full mt-8 mb-2 flex flex-col gap-2 flex-shrink-0">
         <button
           onClick={onClose}
           className="w-full py-4 bg-white border border-[#F0EDFF] text-[#8C66FF] font-extrabold uppercase tracking-wider text-xs rounded-full shadow-sm cursor-pointer transition-none flex items-center justify-center gap-2"

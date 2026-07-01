@@ -37,6 +37,7 @@ interface Submission {
   studentClass: string;
   answers: Record<string, number[]>;
   score: number;
+  duration?: number;
   createdAt: string;
 }
 

@@ -42,10 +42,10 @@ export default function QuizForm({
   onCancel
 }: QuizFormProps) {
   return (
-    <div className="w-full flex-1 flex flex-col justify-between">
-      <div className="w-full">
+    <div className="w-full flex-1 flex flex-col justify-between overflow-hidden">
+      <div className="w-full flex-1 flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="w-full flex justify-between items-center mt-4 pb-4 border-b border-[#F0EDFF]/50">
+        <div className="w-full flex justify-between items-center mt-4 pb-4 border-b border-[#F0EDFF]/50 flex-shrink-0">
           <div>
             <p className="text-[10px] uppercase tracking-widest text-[#9C98A6] font-bold">Kelola Kuis</p>
             <h1 className="text-xl font-extrabold text-[#2C2B30] leading-tight">
@@ -61,7 +61,7 @@ export default function QuizForm({
         </div>
 
         {/* Title Field */}
-        <div className="mt-4 flex flex-col gap-1.5">
+        <div className="mt-4 flex flex-col gap-1.5 flex-shrink-0">
           <label className="text-[10px] font-black uppercase tracking-widest text-[#9C98A6]">Judul Kuis</label>
           <input
             type="text"
@@ -73,7 +73,7 @@ export default function QuizForm({
         </div>
 
         {/* Questions Builder */}
-        <div className="mt-6 flex flex-col gap-6 max-h-[360px] overflow-y-auto pr-1">
+        <div className="mt-6 flex-1 flex flex-col gap-6 overflow-y-auto pr-1">
           {questions.map((q, qIdx) => (
             <div key={q.id} className="w-full bg-white rounded-[24px] p-5 shadow-[0_4px_12px_rgba(0,0,0,0.02)] border border-[#F0EDFF] flex flex-col gap-4">
               <div className="flex justify-between items-center border-b border-[#F0EDFF]/50 pb-2">

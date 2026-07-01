@@ -97,6 +97,7 @@ quiz.get('/my-submissions', async (c: any) => {
       studentClass: sub.studentClass,
       answers: JSON.parse(sub.answers),
       score: sub.score,
+      duration: sub.duration,
       createdAt: sub.createdAt
     }))
 
@@ -125,6 +126,7 @@ quiz.get('/:id/submissions', adminMiddleware, async (c: any) => {
       studentClass: sub.studentClass,
       answers: JSON.parse(sub.answers),
       score: sub.score,
+      duration: sub.duration,
       createdAt: sub.createdAt
     }))
 
@@ -226,7 +228,7 @@ quiz.post('/:id/submit', async (c: any) => {
   try {
     const quizId = c.req.param('id')
     const user = c.get('user')
-    const { answers, score, createdAt } = await c.req.json()
+    const { answers, score, createdAt, duration } = await c.req.json()
 
     if (!answers || score === undefined) {
       return c.json({ error: 'Data pengerjaan kuis tidak lengkap.' }, 400)
@@ -242,6 +244,7 @@ quiz.post('/:id/submit', async (c: any) => {
       studentClass: user.kelas,
       answers: JSON.stringify(answers),
       score: Number(score),
+      duration: duration !== undefined && duration !== null ? Number(duration) : null,
       createdAt: createdAt || new Date().toLocaleString('id-ID')
     })
 

@@ -17,7 +17,6 @@ import SimulasiPencemaranUdara from "./components/simulations/air_pollution";
 import { useAuthStore } from "./store/authStore";
 import { recordOpenApi, recordUsageApi } from "./api/api";
 import KuisMenu from "./pages/KuisMenu";
-import PenilaianHasilBelajar from "./pages/PenilaianHasilBelajar";
 import PenilaianBerpikirSistem from "./pages/PenilaianBerpikirSistem";
 import PengumpulanTugas from "./pages/PengumpulanTugas";
 import Diskusi from "./pages/Diskusi";
@@ -150,7 +149,6 @@ function AppContent() {
         />
 
         <Route path="/kuis" element={<KuisMenu />} />
-        <Route path="/kuis/hasil-belajar" element={<PenilaianHasilBelajar />} />
         <Route path="/kuis/berpikir-sistem" element={<PenilaianBerpikirSistem />} />
         <Route path="/kuis/berpikir-sistem/tugas" element={<PengumpulanTugas />} />
         <Route path="/kuis/berpikir-sistem/diskusi" element={<Diskusi />} />
