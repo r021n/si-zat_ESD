@@ -25,7 +25,19 @@ export default function ProfileReport() {
       if (!token) return;
       const res = await getMenuAnalyticsApi(token);
       if (res && res.status === "success") {
-        setAnalyticsData(res.data || []);
+        const rawData = res.data || [];
+        const groupedMap = new Map<string, number>();
+        rawData.forEach((item: any) => {
+          const key = item.menuKey;
+          const count = Number(item.count) || 0;
+          groupedMap.set(key, (groupedMap.get(key) || 0) + count);
+        });
+        const aggregated = Array.from(groupedMap.entries()).map(([menuKey, count]) => ({
+          menuKey,
+          count,
+        }));
+        aggregated.sort((a, b) => b.count - a.count);
+        setAnalyticsData(aggregated);
       }
     } catch (err: any) {
       setAnalyticsError(err.message || "Gagal mengambil data analitik");

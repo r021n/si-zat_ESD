@@ -81,3 +81,34 @@ body {
 .animate-delay-500 {
   animation-delay: 500ms;
 }
+
+/* Custom Scrollbar Styles matching the app's purple theme */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: rgba(140, 102, 255, 0.35); /* theme color #8C66FF with opacity */
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  transition: background-color 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(96, 57, 223, 0.8); /* hover theme color #6039DF with opacity */
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+/* Firefox support */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(140, 102, 255, 0.35) transparent;
+}
+

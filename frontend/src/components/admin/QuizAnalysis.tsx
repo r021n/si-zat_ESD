@@ -184,18 +184,31 @@ export default function QuizAnalysis({
                           <th className="p-3 border-r border-[#F0EDFF]/50">Nama</th>
                           <th className="p-3 border-r border-[#F0EDFF]/50 text-center">Kelas</th>
                           <th className="p-3 border-r border-[#F0EDFF]/50 text-center">Durasi</th>
+                          <th className="p-3 border-r border-[#F0EDFF]/50 text-center">Soal (T/K)</th>
                           <th className="p-3 text-center">Skor</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {sortedSubmissions.map((sub, sIdx) => (
-                          <tr key={sub.id} className={`border-b border-[#F0EDFF]/30 ${sIdx % 2 === 1 ? "bg-[#FAF9FF]/40" : "bg-white"}`}>
-                            <td className="p-3 font-bold truncate max-w-[120px] text-[#2C2B30]">{sub.studentName}</td>
-                            <td className="p-3 text-center font-mono text-[#9C98A6] font-bold">{sub.studentClass}</td>
-                            <td className="p-3 text-center font-mono text-[#9C98A6] font-semibold">{formatDurationFriendly(sub.duration)}</td>
-                            <td className="p-3 text-center font-mono font-black text-sm text-[#8C66FF]">{sub.score}</td>
-                          </tr>
-                        ))}
+                        {sortedSubmissions.map((sub, sIdx) => {
+                          const subAnsweredCount = Object.keys(sub.answers).filter(
+                            qId => sub.answers[qId] && sub.answers[qId].length > 0
+                          ).length;
+                          const subEmptyCount = selectedQuiz.questions.length - subAnsweredCount;
+                          
+                          return (
+                            <tr key={sub.id} className={`border-b border-[#F0EDFF]/30 ${sIdx % 2 === 1 ? "bg-[#FAF9FF]/40" : "bg-white"}`}>
+                              <td className="p-3 font-bold truncate max-w-[120px] text-[#2C2B30]">{sub.studentName}</td>
+                              <td className="p-3 text-center font-mono text-[#9C98A6] font-bold">{sub.studentClass}</td>
+                              <td className="p-3 text-center font-mono text-[#9C98A6] font-semibold">{formatDurationFriendly(sub.duration)}</td>
+                              <td className="p-3 text-center font-mono text-[#9C98A6] font-semibold">
+                                <span className="text-[#2C8578]">{subAnsweredCount}</span>
+                                <span className="text-[#9C98A6]">/</span>
+                                <span className="text-[#FF5E8C]">{subEmptyCount}</span>
+                              </td>
+                              <td className="p-3 text-center font-mono font-black text-sm text-[#8C66FF]">{sub.score}</td>
+                            </tr>
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>

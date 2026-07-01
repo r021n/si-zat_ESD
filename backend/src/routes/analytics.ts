@@ -48,12 +48,23 @@ analytics.get('/', async (c: any) => {
       count: menuClicks.count
     }).from(menuClicks).where(eq(menuClicks.userId, user.id))
 
+    // Group by menuKey to aggregate duplicate rows
+    const grouped = clicks.reduce((acc: { menuKey: string; count: number }[], current) => {
+      const existing = acc.find(item => item.menuKey === current.menuKey)
+      if (existing) {
+        existing.count += current.count
+      } else {
+        acc.push({ menuKey: current.menuKey, count: current.count })
+      }
+      return acc
+    }, [])
+
     // Sort by count descending
-    clicks.sort((a, b) => b.count - a.count)
+    grouped.sort((a, b) => b.count - a.count)
 
     return c.json({
       status: 'success',
-      data: clicks
+      data: grouped
     })
   } catch (error: any) {
     console.error('Error fetching menu analytics:', error)
