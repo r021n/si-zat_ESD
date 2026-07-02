@@ -25,6 +25,7 @@ export const questions = sqliteTable('questions', {
   options: text('options').notNull(), // JSON string array
   correctAnswers: text('correct_answers').notNull(), // JSON number array
   images: text('images').notNull(), // JSON string array
+  questionType: text('question_type'),
   sortOrder: integer('sort_order').notNull(),
 })
 

@@ -65,7 +65,8 @@ quiz.get('/', async (c: any) => {
         text: ques.text,
         options: JSON.parse(ques.options),
         correctAnswers: JSON.parse(ques.correctAnswers),
-        images: JSON.parse(ques.images)
+        images: JSON.parse(ques.images),
+        questionType: ques.questionType || ""
       }))
 
       result.push({
@@ -163,6 +164,7 @@ quiz.post('/', adminMiddleware, async (c: any) => {
         options: JSON.stringify(q.options),
         correctAnswers: JSON.stringify(q.correctAnswers),
         images: JSON.stringify(q.images || []),
+        questionType: q.questionType || "",
         sortOrder: i
       })
     }
@@ -200,6 +202,7 @@ quiz.put('/:id', adminMiddleware, async (c: any) => {
         options: JSON.stringify(q.options),
         correctAnswers: JSON.stringify(q.correctAnswers),
         images: JSON.stringify(q.images || []),
+        questionType: q.questionType || "",
         sortOrder: i
       })
     }

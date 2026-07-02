@@ -20,6 +20,7 @@ interface Question {
   options: string[];
   correctAnswers: number[];
   images: string[];
+  questionType?: string;
 }
 
 interface Quiz {
@@ -243,7 +244,8 @@ export default function AdminKuis() {
         text: "",
         options: ["Pilihan A", "Pilihan B", "Pilihan C", "Pilihan D"],
         correctAnswers: [0],
-        images: []
+        images: [],
+        questionType: "C1"
       }
     ]);
     setMode("FORM");
@@ -293,7 +295,8 @@ export default function AdminKuis() {
       text: "",
       options: ["Pilihan A", "Pilihan B", "Pilihan C", "Pilihan D"],
       correctAnswers: [0],
-      images: []
+      images: [],
+      questionType: "C1"
     };
     setQuestions([...questions, newQuestion]);
   };
@@ -310,6 +313,15 @@ export default function AdminKuis() {
     setQuestions(prev => prev.map(q => {
       if (q.id === questionId) {
         return { ...q, text };
+      }
+      return q;
+    }));
+  };
+
+  const handleQuestionTypeChange = (questionId: string, questionType: string) => {
+    setQuestions(prev => prev.map(q => {
+      if (q.id === questionId) {
+        return { ...q, questionType };
       }
       return q;
     }));
@@ -501,6 +513,7 @@ export default function AdminKuis() {
                 onAddQuestion={handleAddQuestion}
                 onRemoveQuestion={handleRemoveQuestion}
                 onQuestionTextChange={handleQuestionTextChange}
+                onQuestionTypeChange={handleQuestionTypeChange}
                 onOptionCountChange={handleOptionCountChange}
                 onOptionTextChange={handleOptionTextChange}
                 onToggleCorrectAnswer={handleToggleCorrectAnswer}

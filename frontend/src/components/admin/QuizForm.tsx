@@ -6,6 +6,7 @@ interface Question {
   options: string[];
   correctAnswers: number[];
   images: string[];
+  questionType?: string;
 }
 
 interface QuizFormProps {
@@ -16,6 +17,7 @@ interface QuizFormProps {
   onAddQuestion: () => void;
   onRemoveQuestion: (id: string) => void;
   onQuestionTextChange: (id: string, text: string) => void;
+  onQuestionTypeChange: (id: string, type: string) => void;
   onOptionCountChange: (id: string, count: number) => void;
   onOptionTextChange: (id: string, optIdx: number, text: string) => void;
   onToggleCorrectAnswer: (id: string, optIdx: number) => void;
@@ -33,6 +35,7 @@ export default function QuizForm({
   onAddQuestion,
   onRemoveQuestion,
   onQuestionTextChange,
+  onQuestionTypeChange,
   onOptionCountChange,
   onOptionTextChange,
   onToggleCorrectAnswer,
@@ -146,6 +149,23 @@ export default function QuizForm({
                   <option value={3}>3 Pilihan (A - C)</option>
                   <option value={4}>4 Pilihan (A - D)</option>
                   <option value={5}>5 Pilihan (A - E)</option>
+                </select>
+              </div>
+
+              {/* Question Type Selector */}
+              <div className="flex justify-between items-center bg-[#FAF9FF] p-3 rounded-xl border border-[#F0EDFF]">
+                <label className="text-[9px] font-black uppercase tracking-widest text-[#9C98A6]">Tipe Soal (C1 - C6)</label>
+                <select
+                  value={q.questionType || "C1"}
+                  onChange={(e) => onQuestionTypeChange(q.id, e.target.value)}
+                  className="border border-[#F0EDFF] px-2.5 py-1 text-[10px] font-extrabold bg-white text-[#2C2B30] focus:outline-none rounded-lg cursor-pointer"
+                >
+                  <option value="C1">C1 (Mengingat)</option>
+                  <option value="C2">C2 (Memahami)</option>
+                  <option value="C3">C3 (Menerapkan)</option>
+                  <option value="C4">C4 (Menganalisis)</option>
+                  <option value="C5">C5 (Mengevaluasi)</option>
+                  <option value="C6">C6 (Menciptakan)</option>
                 </select>
               </div>
 

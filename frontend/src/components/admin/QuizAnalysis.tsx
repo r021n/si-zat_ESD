@@ -7,6 +7,7 @@ interface Question {
   options: string[];
   correctAnswers: number[];
   images: string[];
+  questionType?: string;
 }
 
 interface Quiz {
@@ -49,7 +50,7 @@ export default function QuizAnalysis({
 }: QuizAnalysisProps) {
   const [analysisTab, setAnalysisTab] = useState<"SUMMARY" | "ITEMS">("SUMMARY");
   const [scoreSort, setScoreSort] = useState<"NAME_ASC" | "SCORE_DESC" | "SCORE_ASC">("NAME_ASC");
-  const [itemSort, setItemSort] = useState<"ORDER_ASC" | "ACCURACY_DESC" | "ACCURACY_ASC">("ORDER_ASC");
+  const [itemSort, setItemSort] = useState<"ORDER_ASC" | "ACCURACY_DESC" | "ACCURACY_ASC" | "ANSWERED_DESC" | "EMPTY_DESC">("ORDER_ASC");
 
   const quizSubmissions = submissions.filter(s => s.quizId === selectedQuiz.id);
   const avgScore = quizSubmissions.length > 0 
@@ -79,10 +80,19 @@ export default function QuizAnalysis({
       ? Math.round((correctCount / quizSubmissions.length) * 100)
       : 0;
 
+    const answeredCount = quizSubmissions.filter(sub => {
+      const ans = sub.answers[q.id];
+      return ans && ans.length > 0;
+    }).length;
+
+    const emptyCount = quizSubmissions.length - answeredCount;
+
     return {
       ...q,
       originalIndex: qIdx,
       accuracy,
+      answeredCount,
+      emptyCount,
     };
   });
 
@@ -91,6 +101,10 @@ export default function QuizAnalysis({
       return b.accuracy - a.accuracy;
     } else if (itemSort === "ACCURACY_ASC") {
       return a.accuracy - b.accuracy;
+    } else if (itemSort === "ANSWERED_DESC") {
+      return b.answeredCount - a.answeredCount;
+    } else if (itemSort === "EMPTY_DESC") {
+      return b.emptyCount - a.emptyCount;
     } else {
       return a.originalIndex - b.originalIndex;
     }
@@ -229,6 +243,8 @@ export default function QuizAnalysis({
                         <option value="ORDER_ASC">Urutan Soal</option>
                         <option value="ACCURACY_DESC">Akurasi Terbaik</option>
                         <option value="ACCURACY_ASC">Akurasi Terburuk</option>
+                        <option value="ANSWERED_DESC">Paling Banyak Diisi</option>
+                        <option value="EMPTY_DESC">Paling Banyak Dikosongi</option>
                       </select>
                     </div>
                   </div>
@@ -248,7 +264,14 @@ export default function QuizAnalysis({
                       return (
                         <div key={q.id} className="bg-white rounded-[24px] p-5 shadow-[0_4px_12px_rgba(0,0,0,0.02)] border border-[#F0EDFF] flex flex-col gap-4 flex-shrink-0">
                           <div className="flex justify-between items-center border-b border-[#F0EDFF]/50 pb-2">
-                            <span className="text-xs font-extrabold text-[#8C66FF]">Soal #{q.originalIndex + 1}</span>
+                            <span className="text-xs font-extrabold text-[#8C66FF]">
+                              Soal #{q.originalIndex + 1}
+                              {q.questionType && (
+                                <span className="ml-1.5 px-2 py-0.5 bg-[#F0ECFF] text-[#8C66FF] rounded-md text-[9px] uppercase tracking-wider font-black">
+                                  {q.questionType}
+                                </span>
+                              )}
+                            </span>
                             <span className="text-[10px] font-mono font-bold px-2 py-0.5 bg-[#E6F8F6] text-[#2C8578] rounded-full">
                               Akurasi: {accuracy}%
                             </span>
