@@ -19,8 +19,6 @@ import { useAuthStore } from "./store/authStore";
 import { recordOpenApi, recordUsageApi, recordMenuClickApi } from "./api/api";
 import KuisMenu from "./pages/KuisMenu";
 import PenilaianBerpikirSistem from "./pages/PenilaianBerpikirSistem";
-import PengumpulanTugas from "./pages/PengumpulanTugas";
-import Diskusi from "./pages/Diskusi";
 import AdminMenu from "./pages/AdminMenu";
 import AdminKuis from "./pages/AdminKuis";
 import Materi from "./pages/Materi";
@@ -57,10 +55,6 @@ function RouteTracker() {
       menuKey = "menu kuis";
     } else if (pathname === "/kuis/berpikir-sistem") {
       menuKey = "menu berpikir sistem";
-    } else if (pathname === "/kuis/berpikir-sistem/tugas") {
-      menuKey = "menu pengumpulan tugas";
-    } else if (pathname === "/kuis/berpikir-sistem/diskusi") {
-      menuKey = "menu diskusi";
     } else if (pathname === "/profil-pengembang") {
       menuKey = "menu profil pengembang";
     } else if (pathname === "/profile-report") {
@@ -198,8 +192,6 @@ function AppContent() {
 
         <Route path="/kuis" element={<KuisMenu />} />
         <Route path="/kuis/berpikir-sistem" element={<PenilaianBerpikirSistem />} />
-        <Route path="/kuis/berpikir-sistem/tugas" element={<PengumpulanTugas />} />
-        <Route path="/kuis/berpikir-sistem/diskusi" element={<Diskusi />} />
         <Route path="/admin" element={<AdminMenu />} />
         <Route path="/admin/kuis" element={<AdminKuis />} />
         <Route path="/admin/change-password" element={<AdminChangePassword />} />
@@ -212,6 +204,12 @@ function AppContent() {
   );
 }
 
+import { CustomDialogProvider } from "./components/CustomDialog";
+
 export default function App() {
-  return <AppContent />;
+  return (
+    <CustomDialogProvider>
+      <AppContent />
+    </CustomDialogProvider>
+  );
 }

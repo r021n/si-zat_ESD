@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { useAuthStore } from "../../store/authStore";
 import { LuEye, LuEyeOff } from "react-icons/lu";
+import { useCustomDialog } from "../CustomDialog";
 
 interface LoginProps {
   onSuccess?: () => void;
@@ -12,6 +13,7 @@ export default function Login({ onSuccess }: LoginProps) {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const { login, loading } = useAuthStore();
+  const { showAlert } = useCustomDialog();
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -20,7 +22,7 @@ export default function Login({ onSuccess }: LoginProps) {
       await login(email, password);
       if (onSuccess) onSuccess();
     } catch (err: any) {
-      alert(err.message || "Email atau password salah.");
+      await showAlert(err.message || "Email atau password salah.");
     }
   };
 

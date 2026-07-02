@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { useAuthStore } from "../../store/authStore";
 import { LuEye, LuEyeOff } from "react-icons/lu";
+import { useCustomDialog } from "../CustomDialog";
 
 interface RegisterProps {
   onSuccess?: () => void;
@@ -16,20 +17,21 @@ export default function Register({ onSuccess }: RegisterProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const { register, loading } = useAuthStore();
+  const { showAlert } = useCustomDialog();
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (password !== confirmPassword) {
-      alert("Password dan konfirmasi password tidak cocok!");
+      await showAlert("Password dan konfirmasi password tidak cocok!");
       return;
     }
     
     try {
       await register(email, kelas, password);
-      alert("Registrasi berhasil!");
+      await showAlert("Registrasi berhasil!");
       if (onSuccess) onSuccess();
     } catch (err: any) {
-      alert(err.message || "Terjadi kesalahan koneksi ke server.");
+      await showAlert(err.message || "Terjadi kesalahan koneksi ke server.");
     }
   };
 

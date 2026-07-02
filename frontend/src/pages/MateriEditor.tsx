@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
+import { useCustomDialog } from "../components/CustomDialog";
 import { getMaterialDetailApi, createMaterialApi, updateMaterialApi } from "../api/api";
 import { FiArrowUp, FiArrowDown, FiTrash2, FiPlus, FiSave, FiX, FiType, FiImage, FiMusic, FiAlignLeft, FiAlignCenter, FiAlignRight, FiAlignJustify, FiLink, FiYoutube } from "react-icons/fi";
 
@@ -109,6 +110,7 @@ interface RichTextEditorProps {
 
 function RichTextEditor({ value, onChange, placeholder, minHeightClass = "min-h-[120px]" }: RichTextEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null);
+  const { showPrompt } = useCustomDialog();
 
   useEffect(() => {
     if (editorRef.current) {
@@ -132,8 +134,8 @@ function RichTextEditor({ value, onChange, placeholder, minHeightClass = "min-h-
     handleInput();
   };
 
-  const handleLink = () => {
-    const url = prompt("Masukkan URL link:", "https://");
+  const handleLink = async () => {
+    const url = await showPrompt("Masukkan URL link:", "https://");
     if (url) {
       executeCommand("createLink", url);
     }

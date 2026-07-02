@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
+import { useCustomDialog } from "../components/CustomDialog";
 import {
   getQuizzesApi,
   submitQuizAnswersApi,
@@ -42,6 +43,7 @@ const formatDurationFriendly = (seconds: number | undefined | null) => {
 export default function KuisMenu() {
   const navigate = useNavigate();
   const { token, user } = useAuthStore();
+  const { showAlert, showConfirm } = useCustomDialog();
 
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [activeQuiz, setActiveQuiz] = useState<Quiz | null>(null);
@@ -166,7 +168,7 @@ export default function KuisMenu() {
     ).length;
 
     if (answeredCount < activeQuiz.questions.length) {
-      const confirmSubmit = window.confirm(
+      const confirmSubmit = await showConfirm(
         "Anda belum menjawab semua soal. Apakah yakin ingin mengirimkan jawaban?",
       );
       if (!confirmSubmit) return;
@@ -199,7 +201,7 @@ export default function KuisMenu() {
 
       setSubmitted(true);
     } catch (err: any) {
-      alert(
+      await showAlert(
         err.message ||
           "Gagal mengirimkan jawaban ke server. Silakan coba lagi.",
       );
@@ -293,9 +295,9 @@ export default function KuisMenu() {
 
               {activeQuiz && !submitted && (
                 <button
-                  onClick={() => {
+                  onClick={async () => {
                     if (
-                      window.confirm(
+                      await showConfirm(
                         "Batal mengerjakan dan kembali ke daftar kuis? Progres Anda saat ini akan hilang.",
                       )
                     ) {
