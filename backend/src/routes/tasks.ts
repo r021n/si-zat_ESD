@@ -88,6 +88,44 @@ tasks.get('/submissions', async (c: any) => {
   }
 })
 
+// GET /api/tasks/discussions/overall-contributors - Get overall contributors (SISWA role only, grouped and ordered)
+tasks.get('/discussions/overall-contributors', async (c: any) => {
+  try {
+    const commentsWithUser = await db.select({
+      userId: taskDiscussions.userId,
+      senderName: taskDiscussions.senderName,
+      senderRole: taskDiscussions.senderRole,
+      studentClass: users.kelas,
+    })
+    .from(taskDiscussions)
+    .leftJoin(users, eq(taskDiscussions.userId, users.id))
+
+    const counts: Record<string, { name: string; count: number; studentClass: string }> = {}
+
+    for (const comment of commentsWithUser) {
+      const role = comment.senderRole?.toLowerCase()
+      // Filter only SISWA
+      if (role === 'siswa') {
+        const key = `${comment.userId}`
+        if (!counts[key]) {
+          counts[key] = {
+            name: comment.senderName,
+            count: 0,
+            studentClass: comment.studentClass || 'Tidak diketahui'
+          }
+        }
+        counts[key].count++
+      }
+    }
+
+    const sorted = Object.values(counts).sort((a, b) => b.count - a.count)
+    return c.json(sorted)
+  } catch (error: any) {
+    console.error('Error fetching overall contributors:', error)
+    return c.json({ error: 'Gagal mengambil kontributor diskusi dari server.' }, 500)
+  }
+})
+
 // POST /api/tasks/submissions - Submit task with optional image blob (multipart/form-data)
 tasks.post('/submissions', async (c: any) => {
   try {

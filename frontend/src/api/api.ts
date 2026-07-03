@@ -320,6 +320,20 @@ export async function getTaskDiscussionsApi(token: string, submissionId: string)
   return data;
 }
 
+export async function getOverallContributorsApi(token: string) {
+  const response = await fetch(`${API_URL}/api/tasks/discussions/overall-contributors`, {
+    method: "GET",
+    headers: {
+      "Authorization": `Bearer ${token}`
+    }
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || "Gagal memuat data kontributor diskusi");
+  }
+  return data;
+}
+
 export async function sendTaskDiscussionApi(token: string, submissionId: string, content: string) {
   const response = await fetch(`${API_URL}/api/tasks/submissions/${submissionId}/discussions`, {
     method: "POST",

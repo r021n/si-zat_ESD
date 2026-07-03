@@ -3,13 +3,14 @@ import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 import { useCustomDialog } from "../components/CustomDialog";
 import { FiArrowLeft, FiRefreshCw, FiSend, FiPaperclip, FiChevronDown, FiChevronUp } from "react-icons/fi";
-import { LuUpload, LuClock, LuUser, LuTrash2, LuImage, LuMessageSquare } from "react-icons/lu";
+import { LuUpload, LuClock, LuUser, LuTrash2, LuImage, LuMessageSquare, LuAward } from "react-icons/lu";
 import { 
   getTaskSubmissionsApi, 
   createTaskSubmissionApi, 
   deleteTaskSubmissionApi,
   getTaskDiscussionsApi, 
-  sendTaskDiscussionApi 
+  sendTaskDiscussionApi,
+  getOverallContributorsApi
 } from "../api/api";
 
 interface Message {
@@ -149,6 +150,62 @@ export default function PenilaianBerpikirSistem() {
   const [compressedSize, setCompressedSize] = useState<string>("");
 
   const displayName = user ? (user.nama || user.email.split("@")[0]) : "Pengguna";
+  const isAdmin = user ? (user.status.toLowerCase() === "admin" || user.email.toLowerCase().includes("admin")) : false;
+
+  const handleShowTaskContributors = async (submissionId: string, taskTitle: string) => {
+    try {
+      const data = await getTaskDiscussionsApi(token || "", submissionId);
+      
+      const counts: Record<string, { name: string; count: number }> = {};
+      data.forEach((comment: any) => {
+        const role = comment.senderRole?.toLowerCase();
+        if (role === "siswa") {
+          const key = comment.senderName;
+          if (!counts[key]) {
+            counts[key] = { name: comment.senderName, count: 0 };
+          }
+          counts[key].count++;
+        }
+      });
+
+      const sorted = Object.values(counts).sort((a: any, b: any) => b.count - a.count);
+
+      if (sorted.length === 0) {
+        await showAlert(`Belum ada komentar/diskusi dari siswa untuk tugas:\n"${taskTitle}"`);
+        return;
+      }
+
+      let message = `Daftar Kontributor Komentar:\nTugas: "${taskTitle}"\n\n`;
+      sorted.forEach((item: any, idx: number) => {
+        message += `${idx + 1}. ${item.name} - ${item.count} komentar\n`;
+      });
+
+      await showAlert(message);
+    } catch (err: any) {
+      console.error(err);
+      await showAlert("Gagal memuat kontributor diskusi.");
+    }
+  };
+
+  const handleShowOverallContributors = async () => {
+    try {
+      const data = await getOverallContributorsApi(token || "");
+      if (data.length === 0) {
+        await showAlert("Belum ada komentar/diskusi keseluruhan dari siswa.");
+        return;
+      }
+
+      let message = `Daftar Kontributor Terbanyak (Keseluruhan):\n\n`;
+      data.forEach((item: any, idx: number) => {
+        message += `${idx + 1}. ${item.name} (Kelas ${item.studentClass}) - ${item.count} komentar\n`;
+      });
+
+      await showAlert(message);
+    } catch (err: any) {
+      console.error(err);
+      await showAlert("Gagal memuat data kontributor keseluruhan.");
+    }
+  };
 
   // Fetch all submissions
   const fetchSubmissions = async (showLoading = true) => {
@@ -344,6 +401,17 @@ export default function PenilaianBerpikirSistem() {
                 </button>
               )}
 
+              {/* Overall Contributors statistics button - only visible to admin on list view */}
+              {activeView === "list" && isAdmin && (
+                <button
+                  onClick={handleShowOverallContributors}
+                  className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-[#F0EDFF] text-[#8C66FF] cursor-pointer active:bg-neutral-50 transition-none"
+                  title="Kontributor Terbanyak (Keseluruhan)"
+                >
+                  <LuAward size={18} />
+                </button>
+              )}
+
               {/* Back Button */}
               <button
                 onClick={() => {
@@ -449,11 +517,23 @@ export default function PenilaianBerpikirSistem() {
                             <span className="text-[#2C2B30] flex items-center gap-1">
                               <LuUser size={12} className="text-[#8C66FF]" /> {sub.studentName}
                             </span>
-                            {hasImage && (
-                              <span className="text-[#2C8578] flex items-center gap-1 bg-[#E6F8F6] px-2 py-0.5 rounded-md text-[9px]">
-                                <LuImage size={11} /> Lampiran
-                              </span>
-                            )}
+                            <div className="flex items-center gap-2">
+                              <button
+                                title="Statistik Kontributor Komentar"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleShowTaskContributors(sub.id, sub.title);
+                                }}
+                                className="text-[#8C66FF] hover:bg-[#F5F3FF] p-1 rounded-md transition-colors flex items-center justify-center border border-[#E9E4FF] cursor-pointer"
+                              >
+                                <LuAward size={13} />
+                              </button>
+                              {hasImage && (
+                                <span className="text-[#2C8578] flex items-center gap-1 bg-[#E6F8F6] px-2 py-0.5 rounded-md text-[9px]">
+                                  <LuImage size={11} /> Lampiran
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </div>
                       );
