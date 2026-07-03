@@ -111,4 +111,47 @@ analytics.post('/record', async (c: any) => {
   }
 })
 
+// GET /user/:id - Get menu analytics for a specific student (admin only)
+analytics.get('/user/:id', async (c: any) => {
+  try {
+    const currentUser = c.get('user')
+    const isAdmin = (currentUser.status || '').toLowerCase() === 'admin' || currentUser.email.toLowerCase().includes('admin')
+    if (!isAdmin) {
+      return c.json({ error: 'Akses ditolak. Anda bukan admin.' }, 403)
+    }
+
+    const targetUserId = Number(c.req.param('id'))
+    if (isNaN(targetUserId)) {
+      return c.json({ error: 'ID user tidak valid' }, 400)
+    }
+
+    const clicks = await db.select({
+      menuKey: menuClicks.menuKey,
+      count: menuClicks.count
+    }).from(menuClicks).where(eq(menuClicks.userId, targetUserId))
+
+    // Group by menuKey to aggregate duplicate rows
+    const grouped = clicks.reduce((acc: { menuKey: string; count: number }[], current) => {
+      const existing = acc.find(item => item.menuKey === current.menuKey)
+      if (existing) {
+        existing.count += current.count
+      } else {
+        acc.push({ menuKey: current.menuKey, count: current.count })
+      }
+      return acc
+    }, [])
+
+    // Sort by count descending
+    grouped.sort((a, b) => b.count - a.count)
+
+    return c.json({
+      status: 'success',
+      data: grouped
+    })
+  } catch (error: any) {
+    console.error('Error fetching specific user menu analytics:', error)
+    return c.json({ error: 'Gagal mengambil data analitik dari server.' }, 500)
+  }
+})
+
 export default analytics

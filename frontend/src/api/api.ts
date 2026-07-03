@@ -427,5 +427,19 @@ export async function getMenuAnalyticsApi(token: string) {
   return data;
 }
 
+export async function getSiswaAnalyticsApi(token: string, userId: number) {
+  const response = await fetch(`${API_URL}/api/analytics/user/${userId}`, {
+    method: "GET",
+    headers: {
+      "Authorization": `Bearer ${token}`
+    }
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || "Gagal mengambil data analitik menu siswa");
+  }
+  return data;
+}
+
 
 
