@@ -1,4 +1,4 @@
-import { FiX, FiUpload, FiCheck, FiPlus, FiTrash2 } from "react-icons/fi";
+import { FiX, FiUpload, FiCheck, FiPlus, FiTrash2, FiArrowLeft } from "react-icons/fi";
 
 interface Question {
   id: string;
@@ -49,18 +49,21 @@ export default function QuizForm({
       <div className="w-full flex-1 flex flex-col overflow-hidden">
         {/* Header */}
         <div className="w-full flex justify-between items-center mt-4 pb-4 border-b border-[#F0EDFF]/50 flex-shrink-0">
-          <div>
-            <p className="text-[10px] uppercase tracking-widest text-[#9C98A6] font-bold">Kelola Kuis</p>
-            <h1 className="text-xl font-extrabold text-[#2C2B30] leading-tight">
-              {editingQuizId ? "Edit Kuis" : "Kuis Baru"}
-            </h1>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={onCancel}
+              className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-[#F0EDFF] text-[#8C66FF] cursor-pointer active:bg-neutral-50 transition-none flex-shrink-0"
+              title="Batal"
+            >
+              <FiArrowLeft size={20} />
+            </button>
+            <div>
+              <p className="text-[10px] uppercase tracking-widest text-[#9C98A6] font-bold">Kelola Kuis</p>
+              <h1 className="text-xl font-extrabold text-[#2C2B30] leading-tight mt-0.5">
+                {editingQuizId ? "Edit Kuis" : "Kuis Baru"}
+              </h1>
+            </div>
           </div>
-          <button
-            onClick={onCancel}
-            className="px-4 py-2 bg-white border border-[#FFEAEA] text-[#FF5E8C] text-[10px] font-extrabold uppercase tracking-wider rounded-full shadow-sm cursor-pointer transition-none"
-          >
-            Batal
-          </button>
         </div>
 
         {/* Title Field */}

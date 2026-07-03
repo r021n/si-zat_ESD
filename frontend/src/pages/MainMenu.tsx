@@ -1,7 +1,16 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
-import { LuBookOpen, LuGamepad, LuPenTool, LuChartBar, LuSettings, LuGraduationCap, LuUser, LuAward } from "react-icons/lu";
+import {
+  LuBookOpen,
+  LuGamepad,
+  LuPenTool,
+  LuChartBar,
+  LuSettings,
+  LuGraduationCap,
+  LuUser,
+  LuAward,
+} from "react-icons/lu";
 import unsLogo from "../assets/uns_logo.webp";
 
 interface MainMenuProps {
@@ -60,12 +69,12 @@ export default function MainMenu({ onNavigate }: MainMenuProps) {
     const h = Math.floor(seconds / 3600);
     const m = Math.floor((seconds % 3600) / 60);
     const s = seconds % 60;
-    
+
     const parts = [];
     if (h > 0) parts.push(`${h} jam`);
     if (m > 0) parts.push(`${m} menit`);
     if (s > 0 || parts.length === 0) parts.push(`${s} detik`);
-    
+
     return parts.join(" ");
   };
 
@@ -142,7 +151,9 @@ export default function MainMenu({ onNavigate }: MainMenuProps) {
     },
   ];
 
-  const isAdmin = user.status.toLowerCase() === "admin" || user.email.toLowerCase().includes("admin");
+  const isAdmin =
+    user.status.toLowerCase() === "admin" ||
+    user.email.toLowerCase().includes("admin");
   if (isAdmin) {
     menus.push({
       id: "admin",
@@ -161,29 +172,47 @@ export default function MainMenu({ onNavigate }: MainMenuProps) {
 
       {/* Container Mobile Portrait */}
       <div className="w-full max-w-[430px] min-h-screen flex flex-col justify-between px-6 py-6 z-10">
-        
         {/* Top Header Section */}
         <div>
           <div className="w-full flex justify-between items-center mt-4 mb-4">
             <div>
-              <p className="text-[10px] uppercase tracking-widest text-[#9C98A6] font-bold">Selamat datang,</p>
-              <h1 className="text-xl font-extrabold truncate text-[#2C2B30] leading-tight mt-0.5">Hi, {displayName}</h1>
+              <p className="text-[10px] uppercase tracking-widest text-[#9C98A6] font-bold">
+                Selamat datang,
+              </p>
+              <h1 className="text-xl font-extrabold truncate text-[#2C2B30] leading-tight mt-0.5">
+                Hi, {displayName}
+              </h1>
             </div>
-            
+
             <div className="flex items-center gap-2">
               {/* Logo UNS Card */}
               <div className="h-12 px-4 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-[#F0EDFF]">
-                <img src={unsLogo} alt="UNS Logo" className="h-8 w-auto object-contain" />
+                <img
+                  src={unsLogo}
+                  alt="UNS Logo"
+                  className="h-8 w-auto object-contain"
+                />
               </div>
-              
+
               {/* Logout Button (Replacing Search Icon) */}
               <button
                 onClick={() => setIsLogoutModalOpen(true)}
                 className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-[#FFEAEA] text-[#FF5E8C] cursor-pointer transition-none"
                 title="Keluar Sesi"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-6 h-6">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={2.5}
+                  stroke="currentColor"
+                  className="w-6 h-6"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9"
+                  />
                 </svg>
               </button>
             </div>
@@ -197,12 +226,18 @@ export default function MainMenu({ onNavigate }: MainMenuProps) {
             <LuGraduationCap className="text-5xl opacity-15 absolute right-4 bottom-4 text-white" />
 
             <div>
-              <p className="text-[10px] text-purple-200 uppercase tracking-widest font-extrabold">SI-ZAT Portal</p>
-              <h2 className="text-lg font-black text-white leading-tight mt-1 truncate">Media Belajar Mandiri</h2>
+              <p className="text-[10px] text-purple-200 uppercase tracking-widest font-extrabold">
+                SI-ZAT Portal
+              </p>
+              <h2 className="text-lg font-black text-white leading-tight mt-1 truncate">
+                Media Belajar Mandiri
+              </h2>
             </div>
 
             <div className="mt-4 flex flex-col gap-1">
-              <p className="text-[9px] text-purple-200 font-bold uppercase tracking-wide truncate">Siswa: {user.email}</p>
+              <p className="text-[9px] text-purple-200 font-bold uppercase tracking-wide truncate">
+                Siswa: {user.email}
+              </p>
               <div className="flex gap-2 mt-1">
                 <span className="inline-block text-[9px] px-3 py-1 bg-[#FF5E8C] text-white font-extrabold rounded-full shadow-sm">
                   {displayStatus}
@@ -215,7 +250,9 @@ export default function MainMenu({ onNavigate }: MainMenuProps) {
           </div>
 
           {/* Menus Section Title */}
-          <p className="text-[10px] font-black uppercase tracking-widest text-[#9C98A6] mt-6 mb-3">Modul Aktivitas</p>
+          <p className="text-[10px] font-black uppercase tracking-widest text-[#9C98A6] mt-6 mb-3">
+            Modul Aktivitas
+          </p>
 
           {/* Menu Buttons Stack (mockup third page style) */}
           <div className="w-full flex flex-col gap-3">
@@ -227,18 +264,33 @@ export default function MainMenu({ onNavigate }: MainMenuProps) {
               >
                 <div className="flex items-center gap-4">
                   {/* Rounded icon box */}
-                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-inner ${menu.bgIcon} ${menu.textIcon}`}>
+                  <div
+                    className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-inner ${menu.bgIcon} ${menu.textIcon}`}
+                  >
                     {menu.icon}
                   </div>
                   <div>
-                    <h3 className="text-sm font-extrabold text-[#2C2B30] tracking-wide">{menu.label}</h3>
-                    <p className="text-[10px] text-[#9C98A6] font-medium mt-0.5">{menu.desc}</p>
+                    <h3 className="text-sm font-extrabold text-[#2C2B30] tracking-wide">
+                      {menu.label}
+                    </h3>
+                    <p className="text-[10px] text-[#9C98A6] font-medium mt-0.5">
+                      {menu.desc}
+                    </p>
                   </div>
                 </div>
 
                 {/* Chevron Right */}
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 text-[#8C66FF] opacity-50">
-                  <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                  className="w-5 h-5 text-[#8C66FF] opacity-50"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z"
+                    clipRule="evenodd"
+                  />
                 </svg>
               </button>
             ))}
@@ -247,16 +299,29 @@ export default function MainMenu({ onNavigate }: MainMenuProps) {
 
         {/* Footer Section with Stats Report */}
         <div className="w-full mt-6 mb-2 bg-white rounded-[24px] p-4 shadow-[0_4px_12px_rgba(0,0,0,0.02)] border border-[#F0EDFF] flex items-center justify-between">
-          <div className="flex-1 flex flex-col items-center border-r border-[#F0EDFF]/70 cursor-pointer" onClick={() => handleOpenStatsDetail("openCount")}>
-            <p className="text-[9px] uppercase tracking-wider text-[#9C98A6] font-bold">Kunjungan</p>
-            <h4 className="text-sm font-extrabold text-[#2C2B30] mt-1 hover:text-[#8C66FF] active:text-[#8C66FF] cursor-pointer transition-none">{user.openCount ?? 0} Kali</h4>
+          <div
+            className="flex-1 flex flex-col items-center border-r border-[#F0EDFF]/70 cursor-pointer"
+            onClick={() => handleOpenStatsDetail("openCount")}
+          >
+            <p className="text-[9px] uppercase tracking-wider text-[#9C98A6] font-bold">
+              Kunjungan
+            </p>
+            <h4 className="text-sm font-extrabold text-[#2C2B30] mt-1 hover:text-[#8C66FF] active:text-[#8C66FF] cursor-pointer transition-none">
+              {user.openCount ?? 0} Kali
+            </h4>
           </div>
-          <div className="flex-1 flex flex-col items-center cursor-pointer" onClick={() => handleOpenStatsDetail("usageTime")}>
-            <p className="text-[9px] uppercase tracking-wider text-[#9C98A6] font-bold">Lama Belajar</p>
-            <h4 className="text-sm font-extrabold text-[#2C2B30] mt-1 hover:text-[#8C66FF] active:text-[#8C66FF] cursor-pointer transition-none">{formatAbbreviatedTime(user.totalUsageTime)}</h4>
+          <div
+            className="flex-1 flex flex-col items-center cursor-pointer"
+            onClick={() => handleOpenStatsDetail("usageTime")}
+          >
+            <p className="text-[9px] uppercase tracking-wider text-[#9C98A6] font-bold">
+              Lama Belajar
+            </p>
+            <h4 className="text-sm font-extrabold text-[#2C2B30] mt-1 hover:text-[#8C66FF] active:text-[#8C66FF] cursor-pointer transition-none">
+              {formatAbbreviatedTime(user.totalUsageTime)}
+            </h4>
           </div>
         </div>
-
       </div>
 
       {/* Logout Confirmation Modal */}
@@ -264,8 +329,12 @@ export default function MainMenu({ onNavigate }: MainMenuProps) {
         <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50 p-6 backdrop-blur-xs">
           <div className="w-full max-w-[340px] bg-white rounded-[28px] p-6 shadow-xl border border-[#F0EDFF] flex flex-col gap-4 animate-none select-none text-left">
             <div>
-              <h3 className="text-sm font-extrabold text-[#2C2B30] tracking-wide uppercase">Keluar Sesi</h3>
-              <p className="text-xs text-[#9C98A6] font-medium mt-2 leading-relaxed">Apakah Anda yakin ingin keluar dari aplikasi SI-ZAT?</p>
+              <h3 className="text-sm font-extrabold text-[#2C2B30] tracking-wide uppercase">
+                Keluar Sesi
+              </h3>
+              <p className="text-xs text-[#9C98A6] font-medium mt-2 leading-relaxed">
+                Apakah Anda yakin ingin keluar dari aplikasi SI-ZAT?
+              </p>
             </div>
             <div className="flex gap-2.5 mt-2">
               <button
@@ -293,12 +362,18 @@ export default function MainMenu({ onNavigate }: MainMenuProps) {
         <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50 p-6 backdrop-blur-xs">
           <div className="w-full max-w-[340px] bg-white rounded-[28px] p-6 shadow-xl border border-[#F0EDFF] flex flex-col gap-4 animate-none select-none text-left">
             <div>
-              <h3 className="text-sm font-extrabold text-[#2C2B30] tracking-wide uppercase">{statsDetailModal.title}</h3>
-              <p className="text-xs text-[#9C98A6] font-semibold mt-3 leading-relaxed">{statsDetailModal.message}</p>
+              <h3 className="text-sm font-extrabold text-[#2C2B30] tracking-wide uppercase">
+                {statsDetailModal.title}
+              </h3>
+              <p className="text-xs text-[#9C98A6] font-semibold mt-3 leading-relaxed">
+                {statsDetailModal.message}
+              </p>
             </div>
             <div className="flex gap-2.5 mt-2">
               <button
-                onClick={() => setStatsDetailModal(prev => ({ ...prev, isOpen: false }))}
+                onClick={() =>
+                  setStatsDetailModal((prev) => ({ ...prev, isOpen: false }))
+                }
                 className="flex-1 py-3 bg-[#8C66FF] text-white font-extrabold uppercase tracking-wider text-[10px] rounded-full shadow-md shadow-purple-100 cursor-pointer transition-none flex items-center justify-center"
               >
                 Tutup
@@ -310,4 +385,3 @@ export default function MainMenu({ onNavigate }: MainMenuProps) {
     </div>
   );
 }
-

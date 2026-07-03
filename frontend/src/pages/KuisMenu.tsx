@@ -245,34 +245,7 @@ export default function KuisMenu() {
         {/* Header Section */}
         <div>
           <div className="w-full flex justify-between items-center mt-4 mb-4">
-            <div>
-              <p className="text-[10px] uppercase tracking-widest text-[#9C98A6] font-bold">
-                {activeQuiz
-                  ? submitted
-                    ? "Hasil Kuis"
-                    : "Pengerjaan Kuis"
-                  : "Evaluasi Pembelajaran"}
-              </p>
-              <h1 className="text-xl font-extrabold text-[#2C2B30] leading-tight mt-0.5 truncate max-w-[260px]">
-                {activeQuiz
-                  ? activeQuiz.title
-                  : viewingHistory
-                    ? "Riwayat Kuis"
-                    : "Daftar Kuis"}
-              </h1>
-            </div>
-
-            <div className="flex items-center gap-2">
-              {!activeQuiz && !viewingHistory && (
-                <button
-                  onClick={() => setViewingHistory(true)}
-                  title="Riwayat Pengerjaan"
-                  className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-[#F0EDFF] text-[#8C66FF] cursor-pointer transition-none"
-                >
-                  <FiClock size={18} />
-                </button>
-              )}
-
+            <div className="flex items-center gap-3 min-w-0 flex-1">
               {!activeQuiz && (
                 <button
                   onClick={() => {
@@ -287,9 +260,37 @@ export default function KuisMenu() {
                       ? "Kembali ke Daftar Kuis"
                       : "Kembali ke Menu Utama"
                   }
-                  className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-[#F0EDFF] text-[#8C66FF] cursor-pointer transition-none"
+                  className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-[#F0EDFF] text-[#8C66FF] cursor-pointer transition-none flex-shrink-0"
                 >
                   <FiArrowLeft size={20} />
+                </button>
+              )}
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] uppercase tracking-widest text-[#9C98A6] font-bold">
+                  {activeQuiz
+                    ? submitted
+                      ? "Hasil Kuis"
+                      : "Pengerjaan Kuis"
+                    : "Evaluasi Pembelajaran"}
+                </p>
+                <h1 className="text-xl font-extrabold text-[#2C2B30] leading-tight mt-0.5 truncate">
+                  {activeQuiz
+                    ? activeQuiz.title
+                    : viewingHistory
+                      ? "Riwayat Kuis"
+                      : "Daftar Kuis"}
+                </h1>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 flex-shrink-0">
+              {!activeQuiz && !viewingHistory && (
+                <button
+                  onClick={() => setViewingHistory(true)}
+                  title="Riwayat Pengerjaan"
+                  className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-[#F0EDFF] text-[#8C66FF] cursor-pointer transition-none"
+                >
+                  <FiClock size={18} />
                 </button>
               )}
 

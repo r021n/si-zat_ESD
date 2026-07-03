@@ -1,7 +1,15 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useAuthStore } from "../store/authStore";
-import { LuPenTool, LuBookOpen, LuLock, LuChartBar, LuChevronLeft, LuClock, LuEye } from "react-icons/lu";
+import {
+  LuPenTool,
+  LuBookOpen,
+  LuLock,
+  LuChartBar,
+  LuClock,
+  LuEye,
+} from "react-icons/lu";
+import { FiArrowLeft } from "react-icons/fi";
 import { getSiswaUsersApi, getSiswaAnalyticsApi } from "../api/api";
 
 export default function AdminMenu() {
@@ -14,7 +22,9 @@ export default function AdminMenu() {
   const [siswaError, setSiswaError] = useState("");
 
   const [selectedSiswa, setSelectedSiswa] = useState<any | null>(null);
-  const [siswaAnalyticsData, setSiswaAnalyticsData] = useState<{ menuKey: string; count: number }[]>([]);
+  const [siswaAnalyticsData, setSiswaAnalyticsData] = useState<
+    { menuKey: string; count: number }[]
+  >([]);
   const [isAnalyticsModalOpen, setIsAnalyticsModalOpen] = useState(false);
   const [loadingAnalytics, setLoadingAnalytics] = useState(false);
   const [analyticsError, setAnalyticsError] = useState("");
@@ -24,7 +34,9 @@ export default function AdminMenu() {
       navigate("/auth");
       return;
     }
-    const isAdmin = user.status.toLowerCase() === "admin" || user.email.toLowerCase().includes("admin");
+    const isAdmin =
+      user.status.toLowerCase() === "admin" ||
+      user.email.toLowerCase().includes("admin");
     if (!isAdmin) {
       navigate("/menu");
     }
@@ -68,10 +80,12 @@ export default function AdminMenu() {
           const count = Number(item.count) || 0;
           groupedMap.set(key, (groupedMap.get(key) || 0) + count);
         });
-        const aggregated = Array.from(groupedMap.entries()).map(([menuKey, count]) => ({
-          menuKey,
-          count,
-        }));
+        const aggregated = Array.from(groupedMap.entries()).map(
+          ([menuKey, count]) => ({
+            menuKey,
+            count,
+          }),
+        );
         aggregated.sort((a, b) => b.count - a.count);
         setSiswaAnalyticsData(aggregated);
       }
@@ -95,20 +109,6 @@ export default function AdminMenu() {
     const hours = seconds / 3600;
     const formatted = hours.toFixed(1).replace(".", ",");
     return `${formatted.endsWith(",0") ? Math.round(hours) : formatted} jam`;
-  };
-
-  const formatFullUsageTime = (seconds?: number) => {
-    if (!seconds) return "0 detik";
-    const h = Math.floor(seconds / 3600);
-    const m = Math.floor((seconds % 3600) / 60);
-    const s = seconds % 60;
-    
-    const parts = [];
-    if (h > 0) parts.push(`${h} jam`);
-    if (m > 0) parts.push(`${m} menit`);
-    if (s > 0 || parts.length === 0) parts.push(`${s} detik`);
-    
-    return parts.join(" ");
   };
 
   const adminMenus = [
@@ -152,21 +152,29 @@ export default function AdminMenu() {
 
   return (
     <div className="w-full min-h-screen bg-[#FAF9FF] flex justify-center items-center text-[#2C2B30] font-sans select-none overflow-hidden relative">
-      {/* Decorative Blur Bubble */}
       <div className="absolute top-[-10%] right-[-10%] w-[200px] h-[200px] bg-[#E9E4FF] rounded-full filter blur-2xl opacity-50"></div>
 
-      {/* Container Mobile Portrait */}
       <div className="w-full max-w-[430px] min-h-screen flex flex-col justify-between px-6 py-6 z-10">
-        
         {!showSiswaInsights ? (
           <>
-            {/* Header Section */}
-            <div className="w-full flex flex-col gap-1 mt-6">
-              <p className="text-[10px] uppercase tracking-widest text-[#9C98A6] font-bold">Panel Administrator</p>
-              <h1 className="text-xl font-extrabold text-[#2C2B30] leading-tight">Menu Admin</h1>
+            <div className="w-full flex items-center gap-3 mt-6">
+              <button
+                onClick={() => navigate("/menu")}
+                className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-[#F0EDFF] text-[#8C66FF] cursor-pointer active:bg-neutral-50 transition-none flex-shrink-0"
+                title="Kembali"
+              >
+                <FiArrowLeft size={20} />
+              </button>
+              <div>
+                <p className="text-[10px] uppercase tracking-widest text-[#9C98A6] font-bold">
+                  Panel Administrator
+                </p>
+                <h1 className="text-xl font-extrabold text-[#2C2B30] leading-tight mt-0.5">
+                  Menu Admin
+                </h1>
+              </div>
             </div>
 
-            {/* Menu Options Stack */}
             <div className="w-full flex flex-col gap-3 my-auto">
               {adminMenus.map((menu) => (
                 <button
@@ -182,34 +190,36 @@ export default function AdminMenu() {
                 >
                   <div className="flex items-center gap-4">
                     {/* Rounded icon box */}
-                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-inner ${menu.bgIcon} ${menu.textIcon}`}>
+                    <div
+                      className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-inner ${menu.bgIcon} ${menu.textIcon}`}
+                    >
                       {menu.icon}
                     </div>
                     <div>
-                      <h3 className="text-sm font-extrabold text-[#2C2B30] tracking-wide">{menu.label}</h3>
-                      <p className="text-[10px] text-[#9C98A6] font-medium mt-0.5">{menu.desc}</p>
+                      <h3 className="text-sm font-extrabold text-[#2C2B30] tracking-wide">
+                        {menu.label}
+                      </h3>
+                      <p className="text-[10px] text-[#9C98A6] font-medium mt-0.5">
+                        {menu.desc}
+                      </p>
                     </div>
                   </div>
 
                   {/* Chevron Right */}
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 text-[#8C66FF] opacity-50">
-                    <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                    className="w-5 h-5 text-[#8C66FF] opacity-50"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z"
+                      clipRule="evenodd"
+                    />
                   </svg>
                 </button>
               ))}
-            </div>
-
-            {/* Footer Section with Back Button */}
-            <div className="w-full mt-6 mb-2">
-              <button
-                onClick={() => navigate("/menu")}
-                className="w-full py-4 bg-white border border-[#F0EDFF] text-[#8C66FF] font-extrabold uppercase tracking-wider text-xs rounded-full shadow-sm cursor-pointer transition-none flex items-center justify-center gap-2"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
-                </svg>
-                <span>Kembali ke Menu Utama</span>
-              </button>
             </div>
           </>
         ) : (
@@ -218,13 +228,18 @@ export default function AdminMenu() {
             <div className="w-full flex items-center gap-3 mt-6 mb-4">
               <button
                 onClick={() => setShowSiswaInsights(false)}
-                className="w-9 h-9 bg-white border border-[#F0EDFF] text-[#8C66FF] rounded-xl flex items-center justify-center shadow-sm cursor-pointer"
+                className="w-10 h-10 bg-white border border-[#F0EDFF] text-[#8C66FF] rounded-2xl flex items-center justify-center shadow-sm cursor-pointer transition-none active:bg-neutral-50 flex-shrink-0"
+                title="Kembali"
               >
-                <LuChevronLeft className="text-lg" />
+                <FiArrowLeft className="text-lg" />
               </button>
               <div>
-                <p className="text-[10px] uppercase tracking-widest text-[#9C98A6] font-bold">Insight Aktivitas</p>
-                <h1 className="text-lg font-extrabold text-[#2C2B30] leading-tight">Data Siswa</h1>
+                <p className="text-[10px] uppercase tracking-widest text-[#9C98A6] font-bold">
+                  Insight Aktivitas
+                </p>
+                <h1 className="text-lg font-extrabold text-[#2C2B30] leading-tight mt-0.5">
+                  Data Siswa
+                </h1>
               </div>
             </div>
 
@@ -233,11 +248,15 @@ export default function AdminMenu() {
               {loadingSiswa ? (
                 <div className="py-20 flex flex-col items-center justify-center gap-3 text-center">
                   <div className="w-8 h-8 border-3 border-[#8C66FF] border-t-transparent rounded-full animate-spin"></div>
-                  <p className="text-[10px] text-[#9C98A6] font-bold uppercase tracking-widest animate-pulse">Memuat Data Siswa...</p>
+                  <p className="text-[10px] text-[#9C98A6] font-bold uppercase tracking-widest animate-pulse">
+                    Memuat Data Siswa...
+                  </p>
                 </div>
               ) : siswaError ? (
                 <div className="py-12 text-center">
-                  <p className="text-xs text-[#FF5E8C] font-semibold">{siswaError}</p>
+                  <p className="text-xs text-[#FF5E8C] font-semibold">
+                    {siswaError}
+                  </p>
                   <button
                     onClick={fetchSiswaList}
                     className="mt-4 px-4 py-2 bg-[#8C66FF] text-white text-[10px] uppercase tracking-wider font-extrabold rounded-full"
@@ -246,17 +265,24 @@ export default function AdminMenu() {
                   </button>
                 </div>
               ) : siswaList.length === 0 ? (
-                <p className="text-xs text-[#9C98A6] font-semibold text-center py-20">Belum ada data siswa terdaftar.</p>
+                <p className="text-xs text-[#9C98A6] font-semibold text-center py-20">
+                  Belum ada data siswa terdaftar.
+                </p>
               ) : (
                 siswaList.map((siswa) => (
-                  <div key={siswa.id} className="w-full bg-white rounded-[28px] p-5 shadow-[0_4px_12px_rgba(0,0,0,0.02)] border border-[#F0EDFF] flex flex-col gap-4">
+                  <div
+                    key={siswa.id}
+                    className="w-full bg-white rounded-[28px] p-5 shadow-[0_4px_12px_rgba(0,0,0,0.02)] border border-[#F0EDFF] flex flex-col gap-4"
+                  >
                     {/* Header: Name and Class */}
                     <div className="flex justify-between items-start">
                       <div className="truncate pr-2">
                         <h3 className="text-sm font-extrabold text-[#2C2B30] tracking-wide truncate">
                           {siswa.nama || siswa.email.split("@")[0]}
                         </h3>
-                        <p className="text-[9px] text-[#9C98A6] font-semibold truncate mt-0.5">{siswa.email}</p>
+                        <p className="text-[9px] text-[#9C98A6] font-semibold truncate mt-0.5">
+                          {siswa.email}
+                        </p>
                       </div>
                       <span className="inline-block text-[9px] px-3 py-1 bg-[#F0ECFF] text-[#8C66FF] font-extrabold rounded-full shrink-0">
                         Kelas {siswa.kelas || "-"}
@@ -269,13 +295,17 @@ export default function AdminMenu() {
                         <p className="text-[8px] uppercase tracking-wider text-[#9C98A6] font-bold flex items-center gap-1">
                           <LuEye className="text-[10px]" /> Kunjungan
                         </p>
-                        <h4 className="text-xs font-black text-[#2C2B30] mt-1">{siswa.openCount ?? 0} Kali</h4>
+                        <h4 className="text-xs font-black text-[#2C2B30] mt-1">
+                          {siswa.openCount ?? 0} Kali
+                        </h4>
                       </div>
                       <div className="flex-1 flex flex-col items-center">
                         <p className="text-[8px] uppercase tracking-wider text-[#9C98A6] font-bold flex items-center gap-1">
                           <LuClock className="text-[10px]" /> Lama Belajar
                         </p>
-                        <h4 className="text-xs font-black text-[#2C2B30] mt-1">{formatAbbreviatedTime(siswa.totalUsageTime)}</h4>
+                        <h4 className="text-xs font-black text-[#2C2B30] mt-1">
+                          {formatAbbreviatedTime(siswa.totalUsageTime)}
+                        </h4>
                       </div>
                     </div>
 
@@ -291,20 +321,8 @@ export default function AdminMenu() {
                 ))
               )}
             </div>
-
-            {/* Back Button */}
-            <div className="w-full mt-2 mb-2">
-              <button
-                onClick={() => setShowSiswaInsights(false)}
-                className="w-full py-4 bg-white border border-[#F0EDFF] text-[#8C66FF] font-extrabold uppercase tracking-wider text-xs rounded-full shadow-sm cursor-pointer transition-none flex items-center justify-center gap-2"
-              >
-                <LuChevronLeft className="w-4 h-4" />
-                <span>Kembali ke Menu Admin</span>
-              </button>
-            </div>
           </>
         )}
-
       </div>
 
       {/* Analytics Modal similar to ProfileReport.tsx */}
@@ -317,7 +335,10 @@ export default function AdminMenu() {
                 Analitik Aktivitas
               </h3>
               <p className="text-[10px] text-[#9C98A6] font-semibold mt-1">
-                Menu yang paling sering dikunjungi oleh: <span className="text-[#2C2B30] font-bold">{selectedSiswa.nama || selectedSiswa.email.split("@")[0]}</span>
+                Menu yang paling sering dikunjungi oleh:{" "}
+                <span className="text-[#2C2B30] font-bold">
+                  {selectedSiswa.nama || selectedSiswa.email.split("@")[0]}
+                </span>
               </p>
             </div>
 
@@ -325,12 +346,18 @@ export default function AdminMenu() {
               {loadingAnalytics ? (
                 <div className="py-8 flex flex-col items-center justify-center gap-2 text-center">
                   <div className="w-6 h-6 border-2 border-[#8C66FF] border-t-transparent rounded-full animate-spin"></div>
-                  <p className="text-[10px] text-[#9C98A6] font-bold uppercase tracking-widest animate-pulse">Memuat Analitik...</p>
+                  <p className="text-[10px] text-[#9C98A6] font-bold uppercase tracking-widest animate-pulse">
+                    Memuat Analitik...
+                  </p>
                 </div>
               ) : analyticsError ? (
-                <p className="text-xs text-[#FF5E8C] font-semibold text-center py-4">{analyticsError}</p>
+                <p className="text-xs text-[#FF5E8C] font-semibold text-center py-4">
+                  {analyticsError}
+                </p>
               ) : siswaAnalyticsData.length === 0 ? (
-                <p className="text-xs text-[#9C98A6] font-semibold text-center py-6">Belum ada aktivitas menu yang tercatat.</p>
+                <p className="text-xs text-[#9C98A6] font-semibold text-center py-6">
+                  Belum ada aktivitas menu yang tercatat.
+                </p>
               ) : (
                 <div className="flex flex-col gap-2">
                   {siswaAnalyticsData.map((item, index) => (
@@ -339,8 +366,12 @@ export default function AdminMenu() {
                       className="w-full bg-[#FAF9FF] border border-[#F0EDFF]/70 rounded-xl px-4 py-3 flex items-center justify-between"
                     >
                       <div className="flex items-center gap-2 truncate">
-                        <span className="text-[10px] font-black text-[#9C98A6] w-4">{index + 1}.</span>
-                        <span className="text-xs font-bold text-[#2C2B30] truncate">{item.menuKey}</span>
+                        <span className="text-[10px] font-black text-[#9C98A6] w-4">
+                          {index + 1}.
+                        </span>
+                        <span className="text-xs font-bold text-[#2C2B30] truncate">
+                          {item.menuKey}
+                        </span>
                       </div>
                       <span className="text-xs font-black text-[#8C66FF] bg-[#F0ECFF] px-2.5 py-1 rounded-full shrink-0">
                         {item.count}x
@@ -365,4 +396,3 @@ export default function AdminMenu() {
     </div>
   );
 }
-

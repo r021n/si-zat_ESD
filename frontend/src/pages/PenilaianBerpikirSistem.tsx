@@ -373,22 +373,40 @@ export default function PenilaianBerpikirSistem() {
         {/* Top Header Section */}
         <div>
           <div className="w-full flex justify-between items-center mt-4 mb-4">
-            <div>
-              <p className="text-[10px] uppercase tracking-widest text-[#9C98A6] font-bold">
-                {activeView === "list" && "Evaluasi Pembelajaran"}
-                {activeView === "detail" && "Forum Diskusi"}
-                {activeView === "upload" && "Pengumpulan Tugas"}
-                {activeView === "history" && "Riwayat Pengumpulan"}
-              </p>
-              <h1 className="text-xl font-extrabold text-[#2C2B30] leading-tight mt-0.5">
-                {activeView === "list" && "Berpikir Sistem"}
-                {activeView === "detail" && "Diskusi Tugas"}
-                {activeView === "upload" && "Kirim Tugas"}
-                {activeView === "history" && "Tugas Saya"}
-              </h1>
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+              <button
+                onClick={() => {
+                  if (activeView === "list") {
+                    navigate("/menu");
+                  } else if (activeView === "detail") {
+                    setSelectedSubmission(null);
+                    setActiveView("list");
+                  } else {
+                    setActiveView("list");
+                  }
+                }}
+                className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-[#F0EDFF] text-[#8C66FF] cursor-pointer active:bg-neutral-50 transition-none flex-shrink-0"
+                title="Kembali"
+              >
+                <FiArrowLeft size={20} />
+              </button>
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] uppercase tracking-widest text-[#9C98A6] font-bold">
+                  {activeView === "list" && "Evaluasi Pembelajaran"}
+                  {activeView === "detail" && "Forum Diskusi"}
+                  {activeView === "upload" && "Pengumpulan Tugas"}
+                  {activeView === "history" && "Riwayat Pengumpulan"}
+                </p>
+                <h1 className="text-xl font-extrabold text-[#2C2B30] leading-tight mt-0.5 truncate">
+                  {activeView === "list" && "Berpikir Sistem"}
+                  {activeView === "detail" && "Diskusi Tugas"}
+                  {activeView === "upload" && "Kirim Tugas"}
+                  {activeView === "history" && "Tugas Saya"}
+                </h1>
+              </div>
             </div>
             
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-shrink-0">
               {/* Refresh button - only visible on list view */}
               {activeView === "list" && (
                 <button
@@ -411,24 +429,6 @@ export default function PenilaianBerpikirSistem() {
                   <LuAward size={18} />
                 </button>
               )}
-
-              {/* Back Button */}
-              <button
-                onClick={() => {
-                  if (activeView === "list") {
-                    navigate("/menu");
-                  } else if (activeView === "detail") {
-                    setSelectedSubmission(null);
-                    setActiveView("list");
-                  } else {
-                    setActiveView("list");
-                  }
-                }}
-                className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-[#F0EDFF] text-[#8C66FF] cursor-pointer active:bg-neutral-50 transition-none"
-                title="Kembali"
-              >
-                <FiArrowLeft size={20} />
-              </button>
             </div>
           </div>
         </div>
@@ -868,24 +868,6 @@ export default function PenilaianBerpikirSistem() {
               </div>
             </div>
           )}
-
-        </div>
-
-        {/* Footer Section with Back Button */}
-        <div className="w-full mt-6 mb-2">
-          <button
-            onClick={() => {
-              if (activeView === "list") {
-                navigate("/menu");
-              } else {
-                setSelectedSubmission(null);
-                setActiveView("list");
-              }
-            }}
-            className="w-full py-3.5 bg-white border border-[#F0EDFF] text-[#8C66FF] font-extrabold uppercase tracking-wider text-[10px] rounded-full shadow-sm cursor-pointer transition-none flex items-center justify-center gap-1.5 active:bg-neutral-50"
-          >
-            <FiArrowLeft /> {activeView === "list" ? "Kembali ke Menu Utama" : "Kembali ke Daftar Tugas"}
-          </button>
         </div>
 
       </div>

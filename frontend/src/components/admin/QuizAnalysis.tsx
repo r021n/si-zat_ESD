@@ -115,16 +115,19 @@ export default function QuizAnalysis({
       <div className="w-full flex-1 flex flex-col overflow-hidden">
         {/* Header */}
         <div className="w-full flex justify-between items-center mt-4 pb-4 border-b border-[#F0EDFF]/50 flex-shrink-0">
-          <div className="max-w-[70%]">
-            <p className="text-[10px] uppercase tracking-widest text-[#9C98A6] font-bold">Hasil Analisis</p>
-            <h1 className="text-sm font-extrabold text-[#2C2B30] truncate leading-tight mt-0.5">{selectedQuiz.title}</h1>
+          <div className="flex items-center gap-3 min-w-0 flex-1">
+            <button
+              onClick={onClose}
+              className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-[#F0EDFF] text-[#8C66FF] cursor-pointer active:bg-neutral-50 transition-none flex-shrink-0"
+              title="Kembali"
+            >
+              <FiArrowLeft size={20} />
+            </button>
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] uppercase tracking-widest text-[#9C98A6] font-bold">Hasil Analisis</p>
+              <h1 className="text-sm font-extrabold text-[#2C2B30] truncate leading-tight mt-0.5">{selectedQuiz.title}</h1>
+            </div>
           </div>
-          <button
-            onClick={onClose}
-            className="px-4 py-2 bg-white border border-[#FFEAEA] text-[#FF5E8C] text-[10px] font-extrabold uppercase tracking-wider rounded-full shadow-sm cursor-pointer transition-none flex-shrink-0"
-          >
-            Tutup
-          </button>
         </div>
 
         {/* Core Analytics Calculations */}
@@ -319,16 +322,6 @@ export default function QuizAnalysis({
             </div>
           )}
         </div>
-      </div>
-
-      {/* Bottom Actions */}
-      <div className="w-full mt-8 mb-2 flex flex-col gap-2 flex-shrink-0">
-        <button
-          onClick={onClose}
-          className="w-full py-4 bg-white border border-[#F0EDFF] text-[#8C66FF] font-extrabold uppercase tracking-wider text-xs rounded-full shadow-sm cursor-pointer transition-none flex items-center justify-center gap-2"
-        >
-          <FiArrowLeft className="text-sm" /> Kembali ke Daftar Kuis
-        </button>
       </div>
     </div>
   );

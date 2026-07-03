@@ -51,13 +51,22 @@ export default function QuizList({
       <div>
         {/* Header */}
         <div className="w-full flex justify-between items-center mt-4 pb-4">
-          <div>
-            <p className="text-[10px] uppercase tracking-widest text-[#9C98A6] font-bold">Panel Admin</p>
-            <h1 className="text-xl font-extrabold text-[#2C2B30] leading-tight">Kelola Kuis</h1>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={onBack}
+              className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-[#F0EDFF] text-[#8C66FF] cursor-pointer active:bg-neutral-50 transition-none flex-shrink-0"
+              title="Kembali"
+            >
+              <FiArrowLeft size={20} />
+            </button>
+            <div>
+              <p className="text-[10px] uppercase tracking-widest text-[#9C98A6] font-bold">Panel Admin</p>
+              <h1 className="text-xl font-extrabold text-[#2C2B30] leading-tight mt-0.5">Kelola Kuis</h1>
+            </div>
           </div>
           <button
             onClick={onCreateNewQuiz}
-            className="px-4 py-2.5 bg-gradient-to-br from-[#8C66FF] to-[#6039DF] text-white text-[10px] font-extrabold uppercase tracking-wider rounded-full shadow-md shadow-purple-100 cursor-pointer flex items-center gap-1.5 transition-none"
+            className="px-4 py-2.5 bg-gradient-to-br from-[#8C66FF] to-[#6039DF] text-white text-[10px] font-extrabold uppercase tracking-wider rounded-full shadow-md shadow-purple-100 cursor-pointer flex items-center gap-1.5 transition-none flex-shrink-0"
           >
             <FiPlus className="text-xs" /> Buat Kuis
           </button>
@@ -117,16 +126,6 @@ export default function QuizList({
             })
           )}
         </div>
-      </div>
-
-      {/* Back Button */}
-      <div className="w-full mt-8 mb-2">
-        <button
-          onClick={onBack}
-          className="w-full py-4 bg-white border border-[#F0EDFF] text-[#8C66FF] font-extrabold uppercase tracking-wider text-xs rounded-full shadow-sm cursor-pointer transition-none flex items-center justify-center gap-2"
-        >
-          <FiArrowLeft /> Kembali ke Menu Admin
-        </button>
       </div>
     </div>
   );

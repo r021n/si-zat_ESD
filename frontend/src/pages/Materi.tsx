@@ -1,7 +1,11 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
-import { getMaterialsApi, deleteMaterialApi, reorderMaterialsApi } from "../api/api";
+import {
+  getMaterialsApi,
+  deleteMaterialApi,
+  reorderMaterialsApi,
+} from "../api/api";
 import {
   FiPlus,
   FiEdit2,
@@ -30,7 +34,11 @@ export default function Materi() {
     message: "",
   });
 
-  const showAlert = (message: string, title = "Info", onConfirm?: () => void) => {
+  const showAlert = (
+    message: string,
+    title = "Info",
+    onConfirm?: () => void,
+  ) => {
     setModal({
       isOpen: true,
       type: "alert",
@@ -40,7 +48,11 @@ export default function Materi() {
     });
   };
 
-  const showConfirm = (message: string, onConfirm: () => void, title = "Konfirmasi") => {
+  const showConfirm = (
+    message: string,
+    onConfirm: () => void,
+    title = "Konfirmasi",
+  ) => {
     setModal({
       isOpen: true,
       type: "confirm",
@@ -94,7 +106,7 @@ export default function Materi() {
           showAlert(err.message || "Gagal menghapus materi.", "Gagal");
         }
       },
-      "Hapus Materi"
+      "Hapus Materi",
     );
   };
 
@@ -127,7 +139,7 @@ export default function Materi() {
     if (!token) return;
     setLoading(true);
     try {
-      const ids = reorderedMaterials.map(m => m.id);
+      const ids = reorderedMaterials.map((m) => m.id);
       await reorderMaterialsApi(token, ids);
       setMaterials(reorderedMaterials);
       setIsReordering(false);
@@ -151,13 +163,22 @@ export default function Materi() {
         <div>
           {/* Header */}
           <div className="w-full flex justify-between items-center mt-4 pb-4 border-b border-[#F0EDFF]/50">
-            <div>
-              <p className="text-[10px] uppercase tracking-widest text-[#9C98A6] font-bold">
-                Pembelajaran
-              </p>
-              <h1 className="text-xl font-extrabold text-[#2C2B30] leading-tight">
-                Materi Belajar
-              </h1>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => navigate(isAdmin ? "/admin" : "/menu")}
+                className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-[#F0EDFF] text-[#8C66FF] cursor-pointer active:bg-neutral-50 transition-none flex-shrink-0"
+                title="Kembali"
+              >
+                <FiArrowLeft size={20} />
+              </button>
+              <div>
+                <p className="text-[10px] uppercase tracking-widest text-[#9C98A6] font-bold">
+                  Pembelajaran
+                </p>
+                <h1 className="text-xl font-extrabold text-[#2C2B30] leading-tight">
+                  Materi Belajar
+                </h1>
+              </div>
             </div>
             {isAdmin && !isReordering && (
               <div className="flex gap-2">
@@ -210,7 +231,9 @@ export default function Materi() {
               (isReordering ? reorderedMaterials : materials).map((m, idx) => (
                 <div
                   key={m.id}
-                  onClick={() => !isReordering && navigate(`/materi/view/${m.id}`)}
+                  onClick={() =>
+                    !isReordering && navigate(`/materi/view/${m.id}`)
+                  }
                   className={`w-full bg-white rounded-[24px] p-5 shadow-[0_4px_12px_rgba(0,0,0,0.02)] border border-[#F0EDFF] flex flex-col gap-3 transition-none ${
                     isReordering ? "" : "cursor-pointer"
                   }`}
@@ -276,16 +299,6 @@ export default function Materi() {
             )}
           </div>
         </div>
-
-        {/* Back Button */}
-        <div className="w-full mt-8 mb-2">
-          <button
-            onClick={() => navigate(isAdmin ? "/admin" : "/menu")}
-            className="w-full py-4 bg-white border border-[#F0EDFF] text-[#8C66FF] font-extrabold uppercase tracking-wider text-xs rounded-full shadow-sm cursor-pointer transition-none flex items-center justify-center gap-2"
-          >
-            <FiArrowLeft /> Kembali
-          </button>
-        </div>
       </div>
 
       {/* Styled custom modal */}
@@ -293,13 +306,19 @@ export default function Materi() {
         <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50 p-6 backdrop-blur-xs">
           <div className="w-full max-w-[340px] bg-white rounded-[28px] p-6 shadow-xl border border-[#F0EDFF] flex flex-col gap-4 animate-none select-none text-left">
             <div>
-              <h3 className="text-sm font-extrabold text-[#2C2B30] tracking-wide uppercase">{modal.title}</h3>
-              <p className="text-xs text-[#9C98A6] font-medium mt-2 leading-relaxed">{modal.message}</p>
+              <h3 className="text-sm font-extrabold text-[#2C2B30] tracking-wide uppercase">
+                {modal.title}
+              </h3>
+              <p className="text-xs text-[#9C98A6] font-medium mt-2 leading-relaxed">
+                {modal.message}
+              </p>
             </div>
             <div className="flex gap-2.5 mt-2">
               {modal.type === "confirm" && (
                 <button
-                  onClick={() => setModal(prev => ({ ...prev, isOpen: false }))}
+                  onClick={() =>
+                    setModal((prev) => ({ ...prev, isOpen: false }))
+                  }
                   className="flex-1 py-3 bg-white border border-[#FFEAEA] text-[#FF5E8C] font-extrabold uppercase tracking-wider text-[10px] rounded-full shadow-sm cursor-pointer transition-none flex items-center justify-center"
                 >
                   Batal
@@ -307,7 +326,7 @@ export default function Materi() {
               )}
               <button
                 onClick={() => {
-                  setModal(prev => ({ ...prev, isOpen: false }));
+                  setModal((prev) => ({ ...prev, isOpen: false }));
                   if (modal.onConfirm) modal.onConfirm();
                 }}
                 className="flex-1 py-3 bg-[#8C66FF] text-white font-extrabold uppercase tracking-wider text-[10px] rounded-full shadow-md shadow-purple-100 cursor-pointer transition-none flex items-center justify-center"
@@ -321,4 +340,3 @@ export default function Materi() {
     </div>
   );
 }
-
