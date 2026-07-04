@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
+import { useAppBack } from "../hooks/useAppBack";
 
 import QuizList from "../components/admin/QuizList";
 import QuizForm from "../components/admin/QuizForm";
@@ -46,6 +47,7 @@ type ViewMode = "LIST" | "FORM" | "ANALYSIS";
 
 export default function AdminKuis() {
   const navigate = useNavigate();
+  const goBack = useAppBack();
   const { user, token } = useAuthStore();
 
   // Mode & States
@@ -500,7 +502,7 @@ export default function AdminKuis() {
                 onOpenAnalysis={handleOpenAnalysis}
                 onEditQuiz={handleEditQuiz}
                 onDeleteQuiz={handleDeleteQuiz}
-                onBack={() => navigate("/admin")}
+                onBack={() => goBack("/admin")}
               />
             )}
 

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
+import { useAppBack } from "../hooks/useAppBack";
 import { getMaterialDetailApi } from "../api/api";
 import {
   FiArrowLeft,
@@ -90,6 +91,7 @@ const getYoutubeId = (url: string): string | null => {
 export default function MateriDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const goBack = useAppBack();
   const { user, token } = useAuthStore();
   const [material, setMaterial] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -180,7 +182,7 @@ export default function MateriDetail() {
           <div className="w-full flex justify-between items-center mt-4 pb-4 border-b border-[#F0EDFF]/50">
             <div className="flex items-center gap-3 min-w-0 flex-1">
               <button
-                onClick={() => navigate("/materi")}
+                onClick={() => goBack("/materi")}
                 className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-[#F0EDFF] text-[#8C66FF] cursor-pointer active:bg-neutral-50 transition-none flex-shrink-0"
                 title="Kembali"
               >
@@ -440,7 +442,7 @@ export default function MateriDetail() {
                                     <FiRefreshCw size={11} /> Baca Kembali
                                   </button>
                                   <button
-                                    onClick={() => navigate("/materi")}
+                                    onClick={() => goBack("/materi")}
                                     className="w-full py-3 bg-[#8C66FF] text-white font-extrabold uppercase tracking-wider text-[10px] rounded-full shadow-md shadow-purple-100 transition-none cursor-pointer flex items-center justify-center gap-1.5"
                                   >
                                     <FiArrowLeft size={11} /> Kembali ke Daftar

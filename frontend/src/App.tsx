@@ -5,7 +5,11 @@ import {
   Route,
   Navigate,
   useLocation,
+  useNavigate,
 } from "react-router-dom";
+import { App as CapApp } from "@capacitor/app";
+import { Capacitor } from "@capacitor/core";
+import { useCustomDialog } from "./components/CustomDialog";
 import Auth from "./pages/Auth";
 import MainMenu from "./pages/MainMenu";
 import Onboarding from "./pages/Onboarding";
@@ -67,6 +71,46 @@ function RouteTracker() {
       });
     }
   }, [location.pathname, token, user]);
+
+  return null;
+}
+
+function BackButtonHandler() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { showConfirm } = useCustomDialog();
+
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+
+    let isDialogActive = false;
+
+    const backButtonHandler = CapApp.addListener("backButton", async (data: any) => {
+      const currentPath = location.pathname;
+
+      if (currentPath === "/menu" || currentPath === "/" || currentPath === "/auth") {
+        if (isDialogActive) return;
+        isDialogActive = true;
+
+        const confirmExit = await showConfirm("Apakah Anda yakin ingin keluar dari aplikasi?");
+        isDialogActive = false;
+
+        if (confirmExit) {
+          CapApp.exitApp();
+        }
+      } else {
+        if (data.canGoBack) {
+          window.history.back();
+        } else {
+          navigate("/menu");
+        }
+      }
+    });
+
+    return () => {
+      backButtonHandler.then((listener: any) => listener.remove());
+    };
+  }, [location.pathname, navigate, showConfirm]);
 
   return null;
 }
@@ -150,6 +194,7 @@ function AppContent() {
   return (
     <Router>
       <RouteTracker />
+      <BackButtonHandler />
       <Routes>
         {/* Default route renders Onboarding page */}
         <Route path="/" element={<Onboarding />} />

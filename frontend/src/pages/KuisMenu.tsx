@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 import { useCustomDialog } from "../components/CustomDialog";
+import { useAppBack } from "../hooks/useAppBack";
 import {
   getQuizzesApi,
   submitQuizAnswersApi,
@@ -41,7 +41,7 @@ const formatDurationFriendly = (seconds: number | undefined | null) => {
 };
 
 export default function KuisMenu() {
-  const navigate = useNavigate();
+  const goBack = useAppBack();
   const { token, user } = useAuthStore();
   const { showAlert, showConfirm } = useCustomDialog();
 
@@ -252,7 +252,7 @@ export default function KuisMenu() {
                     if (viewingHistory) {
                       setViewingHistory(false);
                     } else {
-                      navigate("/menu");
+                      goBack("/menu");
                     }
                   }}
                   title={

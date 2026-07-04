@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 import { useCustomDialog } from "../components/CustomDialog";
+import { useAppBack } from "../hooks/useAppBack";
 import { getMaterialDetailApi, createMaterialApi, updateMaterialApi } from "../api/api";
 import { FiArrowLeft, FiArrowUp, FiArrowDown, FiTrash2, FiPlus, FiSave, FiType, FiImage, FiMusic, FiAlignLeft, FiAlignCenter, FiAlignRight, FiAlignJustify, FiLink, FiYoutube } from "react-icons/fi";
 
@@ -255,6 +256,7 @@ interface Block {
 export default function MateriEditor() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const goBack = useAppBack();
   const { user, token } = useAuthStore();
 
   const isEditMode = !!id;
@@ -504,7 +506,7 @@ export default function MateriEditor() {
     showConfirm(
       "Batal mengedit dan buang semua perubahan?",
       () => {
-        navigate("/materi");
+        goBack("/materi");
       },
       "Batal Edit"
     );

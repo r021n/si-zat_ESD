@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useAuthStore } from "../store/authStore";
+import { useAppBack } from "../hooks/useAppBack";
 import {
   LuPenTool,
   LuBookOpen,
@@ -14,6 +15,7 @@ import { getSiswaUsersApi, getSiswaAnalyticsApi } from "../api/api";
 
 export default function AdminMenu() {
   const navigate = useNavigate();
+  const goBack = useAppBack();
   const { user, token } = useAuthStore();
 
   const [showSiswaInsights, setShowSiswaInsights] = useState(false);
@@ -159,7 +161,7 @@ export default function AdminMenu() {
           <>
             <div className="w-full flex items-center gap-3 mt-6">
               <button
-                onClick={() => navigate("/menu")}
+                onClick={() => goBack("/menu")}
                 className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-[#F0EDFF] text-[#8C66FF] cursor-pointer active:bg-neutral-50 transition-none flex-shrink-0"
                 title="Kembali"
               >

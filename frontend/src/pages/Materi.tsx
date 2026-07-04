@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
+import { useAppBack } from "../hooks/useAppBack";
 import {
   getMaterialsApi,
   deleteMaterialApi,
@@ -16,6 +17,7 @@ import {
 
 export default function Materi() {
   const navigate = useNavigate();
+  const goBack = useAppBack();
   const { user, token } = useAuthStore();
   const [materials, setMaterials] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -165,7 +167,7 @@ export default function Materi() {
           <div className="w-full flex justify-between items-center mt-4 pb-4 border-b border-[#F0EDFF]/50">
             <div className="flex items-center gap-3">
               <button
-                onClick={() => navigate(isAdmin ? "/admin" : "/menu")}
+                onClick={() => goBack(isAdmin ? "/admin" : "/menu")}
                 className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-[#F0EDFF] text-[#8C66FF] cursor-pointer active:bg-neutral-50 transition-none flex-shrink-0"
                 title="Kembali"
               >

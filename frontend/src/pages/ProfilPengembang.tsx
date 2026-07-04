@@ -3,11 +3,13 @@ import { useAuthStore } from "../store/authStore";
 import { useEffect } from "react";
 import { LuGraduationCap, LuAward } from "react-icons/lu";
 import { FiArrowLeft } from "react-icons/fi";
+import { useAppBack } from "../hooks/useAppBack";
 import pengembangImg from "../assets/pengembang.jpg";
 import unsLogo from "../assets/uns_logo.webp";
 
 export default function ProfilPengembang() {
   const navigate = useNavigate();
+  const goBack = useAppBack();
   const { user, checkAuth } = useAuthStore();
 
   useEffect(() => {
@@ -34,7 +36,7 @@ export default function ProfilPengembang() {
           <div className="w-full flex justify-between items-center mt-4 mb-4">
             <div className="flex items-center gap-3">
               <button
-                onClick={() => navigate("/menu")}
+                onClick={() => goBack("/menu")}
                 className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-[#F0EDFF] text-[#8C66FF] cursor-pointer active:bg-neutral-50 transition-none flex-shrink-0"
                 title="Kembali"
               >

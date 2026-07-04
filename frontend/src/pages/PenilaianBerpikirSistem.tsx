@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 import { useCustomDialog } from "../components/CustomDialog";
 import { FiArrowLeft, FiRefreshCw, FiSend, FiPaperclip, FiChevronDown, FiChevronUp } from "react-icons/fi";
+import { useAppBack } from "../hooks/useAppBack";
 import { LuUpload, LuClock, LuUser, LuTrash2, LuImage, LuMessageSquare, LuAward } from "react-icons/lu";
 import { 
   getTaskSubmissionsApi, 
@@ -115,7 +115,7 @@ function compressImage(file: File, maxSizeBytes: number = 200 * 1024): Promise<B
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8787";
 
 export default function PenilaianBerpikirSistem() {
-  const navigate = useNavigate();
+  const goBack = useAppBack();
   const { user, token } = useAuthStore();
   const { showAlert, showConfirm } = useCustomDialog();
 
@@ -377,7 +377,7 @@ export default function PenilaianBerpikirSistem() {
               <button
                 onClick={() => {
                   if (activeView === "list") {
-                    navigate("/menu");
+                    goBack("/menu");
                   } else if (activeView === "detail") {
                     setSelectedSubmission(null);
                     setActiveView("list");

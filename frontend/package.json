@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@capacitor/android": "^8.3.4",
+    "@capacitor/app": "^8.1.0",
     "@capacitor/core": "^8.3.4",
     "@capacitor/screen-orientation": "^8.0.1",
     "react": "^19.2.6",
@@ -21,6 +22,7 @@
     "zustand": "^5.0.14"
   },
   "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
     "@capacitor/cli": "^8.3.4",
     "@eslint/js": "^10.0.1",
     "@tailwindcss/vite": "^4.3.0",
