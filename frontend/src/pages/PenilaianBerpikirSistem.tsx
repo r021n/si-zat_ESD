@@ -32,6 +32,12 @@ interface TaskSubmission {
   submittedAt: string;
 }
 
+interface ContributorData {
+  name: string;
+  detail?: string;
+  count: number;
+}
+
 // Canvas-based image compression helper
 function compressImage(file: File, maxSizeBytes: number = 200 * 1024): Promise<Blob> {
   return new Promise((resolve, reject) => {
@@ -149,63 +155,95 @@ export default function PenilaianBerpikirSistem() {
   const [originalSize, setOriginalSize] = useState<string>("");
   const [compressedSize, setCompressedSize] = useState<string>("");
 
+  // Contributor Modal State
+  const [isContributorModalOpen, setIsContributorModalOpen] = useState<boolean>(false);
+  const [contributorModalType, setContributorModalType] = useState<"overall" | "task">("overall");
+  const [contributorModalTaskTitle, setContributorModalTaskTitle] = useState<string>("");
+  const [contributorModalSubmissionId, setContributorModalSubmissionId] = useState<string>("");
+  const [loadingContributors, setLoadingContributors] = useState<boolean>(false);
+  const [contributorsData, setContributorsData] = useState<ContributorData[]>([]);
+  const [contributorsError, setContributorsError] = useState<string | null>(null);
+
   const displayName = user ? (user.nama || user.email.split("@")[0]) : "Pengguna";
   const isAdmin = user ? (user.status.toLowerCase() === "admin" || user.email.toLowerCase().includes("admin")) : false;
 
-  const handleShowTaskContributors = async (submissionId: string, taskTitle: string) => {
-    try {
-      const data = await getTaskDiscussionsApi(token || "", submissionId);
-      
-      const counts: Record<string, { name: string; count: number }> = {};
-      data.forEach((comment: any) => {
-        const role = comment.senderRole?.toLowerCase();
-        if (role === "siswa") {
-          const key = comment.senderName;
-          if (!counts[key]) {
-            counts[key] = { name: comment.senderName, count: 0 };
-          }
-          counts[key].count++;
+  const handleShowTaskContributors = (submissionId: string, taskTitle: string) => {
+    setContributorModalType("task");
+    setContributorModalSubmissionId(submissionId);
+    setContributorModalTaskTitle(taskTitle);
+    setIsContributorModalOpen(true);
+  };
+
+  const handleShowOverallContributors = () => {
+    setContributorModalType("overall");
+    setContributorModalSubmissionId("");
+    setContributorModalTaskTitle("Keseluruhan");
+    setIsContributorModalOpen(true);
+  };
+
+  // Fetch contributor data after modal is opened
+  useEffect(() => {
+    if (!isContributorModalOpen) return;
+
+    let active = true;
+
+    const fetchContributors = async () => {
+      setLoadingContributors(true);
+      setContributorsError(null);
+      setContributorsData([]);
+
+      try {
+        if (contributorModalType === "overall") {
+          const data = await getOverallContributorsApi(token || "");
+          if (!active) return;
+          const formatted = data.map((item: any) => ({
+            name: item.name,
+            detail: `Kelas ${item.studentClass}`,
+            count: item.count
+          }));
+          setContributorsData(formatted);
+        } else {
+          const data = await getTaskDiscussionsApi(token || "", contributorModalSubmissionId);
+          if (!active) return;
+
+          const counts: Record<string, { name: string; count: number }> = {};
+          data.forEach((comment: any) => {
+            const role = comment.senderRole?.toLowerCase();
+            if (role === "siswa") {
+              const key = comment.senderName;
+              if (!counts[key]) {
+                counts[key] = { name: comment.senderName, count: 0 };
+              }
+              counts[key].count++;
+            }
+          });
+
+          const sorted = Object.values(counts)
+            .sort((a: any, b: any) => b.count - a.count)
+            .map((item: any) => ({
+              name: item.name,
+              count: item.count
+            }));
+
+          setContributorsData(sorted);
         }
-      });
-
-      const sorted = Object.values(counts).sort((a: any, b: any) => b.count - a.count);
-
-      if (sorted.length === 0) {
-        await showAlert(`Belum ada komentar/diskusi dari siswa untuk tugas:\n"${taskTitle}"`);
-        return;
+      } catch (err: any) {
+        if (!active) return;
+        console.error(err);
+        setContributorsError(err.message || "Gagal memuat data kontributor.");
+      } finally {
+        if (active) {
+          setLoadingContributors(false);
+        }
       }
+    };
 
-      let message = `Daftar Kontributor Komentar:\nTugas: "${taskTitle}"\n\n`;
-      sorted.forEach((item: any, idx: number) => {
-        message += `${idx + 1}. ${item.name} - ${item.count} komentar\n`;
-      });
+    fetchContributors();
 
-      await showAlert(message);
-    } catch (err: any) {
-      console.error(err);
-      await showAlert("Gagal memuat kontributor diskusi.");
-    }
-  };
-
-  const handleShowOverallContributors = async () => {
-    try {
-      const data = await getOverallContributorsApi(token || "");
-      if (data.length === 0) {
-        await showAlert("Belum ada komentar/diskusi keseluruhan dari siswa.");
-        return;
-      }
-
-      let message = `Daftar Kontributor Terbanyak (Keseluruhan):\n\n`;
-      data.forEach((item: any, idx: number) => {
-        message += `${idx + 1}. ${item.name} (Kelas ${item.studentClass}) - ${item.count} komentar\n`;
-      });
-
-      await showAlert(message);
-    } catch (err: any) {
-      console.error(err);
-      await showAlert("Gagal memuat data kontributor keseluruhan.");
-    }
-  };
+    return () => {
+      active = false;
+    };
+  }, [isContributorModalOpen, contributorModalType, contributorModalSubmissionId, token]);
 
   // Fetch all submissions
   const fetchSubmissions = async (showLoading = true) => {
@@ -869,6 +907,81 @@ export default function PenilaianBerpikirSistem() {
             </div>
           )}
         </div>
+
+        {/* Contributor Modal */}
+        {isContributorModalOpen && (
+          <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50 p-6 backdrop-blur-xs">
+            <div className="w-full max-w-[340px] bg-white rounded-[28px] p-6 shadow-xl border border-[#F0EDFF] flex flex-col gap-4 animate-none select-none text-left">
+              <div>
+                <h3 className="text-sm font-extrabold text-[#2C2B30] tracking-wide uppercase flex items-center gap-2">
+                  <LuAward className="text-[#8C66FF]" />
+                  Kontributor Terbanyak
+                </h3>
+                <p className="text-[10px] text-[#9C98A6] font-semibold mt-1 line-clamp-2">
+                  {contributorModalType === "overall"
+                    ? "Berdasarkan keseluruhan topik diskusi"
+                    : `Tugas: "${contributorModalTaskTitle}"`}
+                </p>
+              </div>
+
+              <div className="max-h-[220px] overflow-y-auto pr-1 flex flex-col gap-2.5 my-1 no-scrollbar">
+                {loadingContributors ? (
+                  <div className="py-8 flex flex-col items-center justify-center gap-2 text-center">
+                    <div className="w-6 h-6 border-2 border-[#8C66FF] border-t-transparent rounded-full animate-spin"></div>
+                    <p className="text-[10px] text-[#9C98A6] font-bold uppercase tracking-widest animate-pulse">
+                      Memuat Kontributor...
+                    </p>
+                  </div>
+                ) : contributorsError ? (
+                  <p className="text-xs text-[#FF5E8C] font-semibold text-center py-4">
+                    {contributorsError}
+                  </p>
+                ) : contributorsData.length === 0 ? (
+                  <p className="text-xs text-[#9C98A6] font-semibold text-center py-6">
+                    Belum ada komentar/diskusi yang tercatat.
+                  </p>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    {contributorsData.map((item, index) => (
+                      <div
+                        key={index}
+                        className="w-full bg-[#FAF9FF] border border-[#F0EDFF]/70 rounded-xl px-4 py-3 flex items-center justify-between"
+                      >
+                        <div className="flex items-center gap-2 truncate min-w-0">
+                          <span className="text-[10px] font-black text-[#9C98A6] w-4 shrink-0">
+                            {index + 1}.
+                          </span>
+                          <div className="flex flex-col truncate min-w-0">
+                            <span className="text-xs font-bold text-[#2C2B30] truncate">
+                              {item.name}
+                            </span>
+                            {item.detail && (
+                              <span className="text-[9px] text-[#9C98A6] font-semibold mt-0.5">
+                                {item.detail}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <span className="text-xs font-black text-[#8C66FF] bg-[#F0ECFF] px-2.5 py-1 rounded-full shrink-0">
+                          {item.count}x
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="flex gap-2.5 mt-1">
+                <button
+                  onClick={() => setIsContributorModalOpen(false)}
+                  className="w-full py-3.5 bg-[#8C66FF] text-white font-extrabold uppercase tracking-wider text-[10px] rounded-full shadow-md shadow-purple-100 cursor-pointer transition-none flex items-center justify-center"
+                >
+                  Tutup
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
       </div>
     </div>
