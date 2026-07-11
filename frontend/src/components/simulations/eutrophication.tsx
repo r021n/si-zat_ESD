@@ -64,7 +64,10 @@ export default function SimulasiEutrofikasi() {
           try {
             await ScreenOrientation.unlock();
           } catch (unlockErr) {
-            console.warn("ScreenOrientation unlock/portrait lock failed:", unlockErr);
+            console.warn(
+              "ScreenOrientation unlock/portrait lock failed:",
+              unlockErr,
+            );
           }
         }
       };
@@ -365,7 +368,9 @@ export default function SimulasiEutrofikasi() {
       this.x = 40;
       this.y = 20;
       this.size = Math.random() * 2 + 1.5;
-      this.color = `rgba(${Math.floor(Math.random() * 40 + 190)}, ${Math.floor(Math.random() * 30 + 150)}, 60, ${Math.random() * 0.4 + 0.4})`;
+      this.color = `rgba(${Math.floor(Math.random() * 40 + 190)}, ${Math.floor(
+        Math.random() * 30 + 150,
+      )}, 60, ${Math.random() * 0.4 + 0.4})`;
       this.vx = (Math.random() * 0.8 + 0.3) * (fertilizerLevel * 0.7);
       this.vy = (Math.random() * 1.0 + 0.5) * (fertilizerLevel * 0.7);
       this.alpha = 1.0;
@@ -516,9 +521,10 @@ export default function SimulasiEutrofikasi() {
         const aerationRate = 0.012 * (1.0 + inputHujan * 0.15);
         const oxygenAeration = aerationRate * (8.5 - state.DO);
 
-        const photosynthesisO2 = state.algae < 45
-          ? state.algae * 0.018
-          : 45 * 0.018 - (state.algae - 45) * 0.012;
+        const photosynthesisO2 =
+          state.algae < 45
+            ? state.algae * 0.018
+            : 45 * 0.018 - (state.algae - 45) * 0.012;
 
         const bacterialO2Consumption = state.BOD * 0.09;
         const fishO2Consumption =
@@ -534,7 +540,6 @@ export default function SimulasiEutrofikasi() {
         if (inputHujan > 1 && Math.random() < inputPupuk * 0.3) {
           runoffParticlesRef.current.push(new RunoffParticle(inputPupuk));
         }
-
       }
 
       // --- UPDATE GRAFIK & DATA HUD LANGSUNG (60 FPS PERFORMANCE BYPASS) ---
@@ -581,8 +586,7 @@ export default function SimulasiEutrofikasi() {
       if (txtWarnaRef.current) {
         if (state.algae < 20) {
           txtWarnaRef.current.innerText = "Biru Jernih";
-          txtWarnaRef.current.className =
-            "text-[10px] font-bold text-sky-500";
+          txtWarnaRef.current.className = "text-[10px] font-bold text-sky-500";
         } else if (state.algae < 55) {
           txtWarnaRef.current.innerText = "Hijau Muda Keruh";
           txtWarnaRef.current.className =
@@ -801,10 +805,10 @@ export default function SimulasiEutrofikasi() {
           <FaWater className="text-emerald-500 text-lg animate-pulse" />
           <div>
             <h1 className="text-sm font-bold tracking-tight text-slate-900">
-              Simulasi Eutrofikasi Interaktif
+              Simulasi Eutrofikasi (Ledakan Alga)
             </h1>
             <p className="text-[10px] text-slate-500 leading-none">
-              Dampak Akumulasi Nutrien Pertanian terhadap Ekosistem Air
+              Dampak Pupuk Berlebih terhadap Ekosistem Air
             </p>
           </div>
         </div>
@@ -836,14 +840,14 @@ export default function SimulasiEutrofikasi() {
         <section className="col-span-3 bg-white border border-slate-200 rounded-2xl p-4 flex flex-col justify-between h-full overflow-y-auto shadow-sm">
           <div className="space-y-4">
             <h2 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5 border-b border-slate-100 pb-2">
-              <FaSliders className="text-emerald-500" /> Kontrol Skenario
+              <FaSliders className="text-emerald-500" /> Pengaturan Kondisi
             </h2>
 
             {/* Input Dosis Pupuk */}
             <div className="space-y-2">
               <label className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
-                <FaSeedling className="text-amber-500" /> Dosis Pupuk (Nutrien
-                N/P)
+                <FaSeedling className="text-amber-500" /> Jumlah Pupuk
+                (Nitrogen/Fosfor)
               </label>
               <div className="grid grid-cols-3 gap-1 bg-slate-100 p-1 rounded-xl">
                 {[
@@ -895,7 +899,8 @@ export default function SimulasiEutrofikasi() {
                 ))}
               </div>
               <p className="text-[9px] text-slate-400 italic">
-                Hujan mencuci pupuk (runoff) masuk ke badan air.
+                Hujan mencuci pupuk (Air hujan mengalirkan pupuk) masuk ke badan
+                air.
               </p>
             </div>
           </div>
@@ -916,7 +921,7 @@ export default function SimulasiEutrofikasi() {
                 onClick={handlePurify}
                 className="flex-1 py-2 bg-sky-50 hover:bg-sky-100 active:scale-95 text-sky-600 text-[10px] font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 border border-sky-100"
               >
-                <FaPumpMedical /> Restorasi Air
+                <FaPumpMedical /> Perbaiki Kondisi Air
               </button>
             </div>
           </div>
@@ -928,14 +933,13 @@ export default function SimulasiEutrofikasi() {
             <div className="flex justify-between items-center shrink-0">
               <h3 className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
                 <FaBinoculars className="text-emerald-500" /> Ekosistem Danau
-                Real-Time
               </h3>
               <div
                 ref={airStatusBadgeRef}
                 className="px-2.5 py-0.5 rounded-full text-[9px] font-bold border flex items-center gap-1 bg-blue-50 text-blue-700 border-blue-200"
               >
                 <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>
-                Oligotrofik (Sangat Sehat)
+                Kondisi Danau (Sangat Sehat)
               </div>
             </div>
 
@@ -946,7 +950,9 @@ export default function SimulasiEutrofikasi() {
               <button
                 onClick={openHud}
                 className={`absolute bottom-2 left-2 w-5 h-5 bg-white/95 text-slate-700 hover:text-slate-900 border border-slate-200/80 rounded-full flex items-center justify-center font-serif font-bold italic text-[10px] shadow-md hover:scale-105 active:scale-95 cursor-pointer z-20 select-none backdrop-blur-sm transition-all duration-300 ${
-                  isHudExpanded ? "scale-0 opacity-0 pointer-events-none" : "scale-100 opacity-100"
+                  isHudExpanded
+                    ? "scale-0 opacity-0 pointer-events-none"
+                    : "scale-100 opacity-100"
                 }`}
                 title="Tampilkan Info"
               >
@@ -1055,7 +1061,7 @@ export default function SimulasiEutrofikasi() {
             </div>
             <div className="p-1.5 bg-slate-50 rounded-xl border border-slate-100 flex flex-col justify-center items-center min-h-[46px]">
               <span className="block text-[8px] text-slate-400 uppercase font-bold leading-none mb-0.5">
-                Kehidupan Biota
+                Kondisi Makhluk Hidup
               </span>
               <div className="leading-[1.15] text-center w-full">
                 <span
@@ -1073,7 +1079,7 @@ export default function SimulasiEutrofikasi() {
         <section className="col-span-4 bg-white border border-slate-200 rounded-2xl p-4 flex flex-col h-full shadow-sm">
           <h2 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex justify-between items-center shrink-0 mb-4 border-b border-slate-100 pb-2">
             <span>
-              <FaChartLine className="text-emerald-500" /> Metrik Ekologis
+              <FaChartLine className="text-emerald-500" /> Kondisi Ekosistem
             </span>
             <span className="text-[8px] text-slate-400 font-mono bg-slate-100 px-1.5 py-0.5 rounded-md">
               REAL-TIME
@@ -1109,7 +1115,7 @@ export default function SimulasiEutrofikasi() {
                   ></div>
                 </div>
                 <span className="text-[9px] font-bold text-slate-600 mt-2">
-                  Nutrien
+                  Nutrien (Nitrat/Fosfat)
                 </span>
                 <span className="text-[7px] text-slate-400 font-bold tracking-tight">
                   Nitrat/Fosfat
@@ -1157,7 +1163,7 @@ export default function SimulasiEutrofikasi() {
                   ></div>
                 </div>
                 <span className="text-[9px] font-bold text-slate-600 mt-2">
-                  DO
+                  DO (Oksigen Terlarut)
                 </span>
                 <span className="text-[7px] text-slate-400 font-bold tracking-tight">
                   Oksigen Terl.
@@ -1181,7 +1187,7 @@ export default function SimulasiEutrofikasi() {
                   ></div>
                 </div>
                 <span className="text-[9px] font-bold text-slate-600 mt-2">
-                  BOD
+                  BOD (Kebutuhan Oksigen)
                 </span>
                 <span className="text-[7px] text-slate-400 font-bold tracking-tight">
                   Kebutuhan Oks.

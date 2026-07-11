@@ -69,7 +69,10 @@ export default function SimulasiPencemaranUdara() {
           try {
             await ScreenOrientation.unlock();
           } catch (unlockErr) {
-            console.warn("ScreenOrientation unlock/portrait lock failed:", unlockErr);
+            console.warn(
+              "ScreenOrientation unlock/portrait lock failed:",
+              unlockErr,
+            );
           }
         }
       };
@@ -133,7 +136,13 @@ export default function SimulasiPencemaranUdara() {
 
   // --- ENGINE ENGINE LOGIC REFS ---
   const simStateRef = useRef<SimState>({ ...INITIAL_VALUES });
-  const barHeightsRef = useRef<{ AQI: number; PM25: number; CO2: number; CO: number; O2: number }>({
+  const barHeightsRef = useRef<{
+    AQI: number;
+    PM25: number;
+    CO2: number;
+    CO: number;
+    O2: number;
+  }>({
     AQI: (INITIAL_VALUES.AQI / 400) * 100,
     PM25: (INITIAL_VALUES.PM25 / 250) * 100,
     CO2: (INITIAL_VALUES.CO2 / 1000) * 100,
@@ -686,7 +695,10 @@ export default function SimulasiPencemaranUdara() {
       if (hudCoughingRef.current)
         hudCoughingRef.current.innerText = String(coughingWarga);
       if (hudSmogRef.current)
-        hudSmogRef.current.innerText = `${Math.min(100, (state.AQI / 400) * 100).toFixed(0)}%`;
+        hudSmogRef.current.innerText = `${Math.min(
+          100,
+          (state.AQI / 400) * 100,
+        ).toFixed(0)}%`;
 
       if (hudMaskWarningRef.current) {
         hudMaskWarningRef.current.className = `absolute top-2 right-2 flex items-center gap-1 bg-red-100 text-red-700 border border-red-200 text-[8px] px-1.5 py-0.5 rounded font-extrabold shadow-sm transition-all duration-300 ${
@@ -697,14 +709,13 @@ export default function SimulasiPencemaranUdara() {
       if (txtWarnaRef.current) {
         if (state.AQI < 50) {
           txtWarnaRef.current.innerText = "Udara Bersih";
-          txtWarnaRef.current.className =
-            "text-[10px] font-bold text-sky-600";
+          txtWarnaRef.current.className = "text-[10px] font-bold text-sky-600";
         } else if (state.AQI < 150) {
           txtWarnaRef.current.innerText = "Kabut Ringan";
           txtWarnaRef.current.className =
             "text-[10px] font-bold text-slate-500";
         } else {
-          txtWarnaRef.current.innerText = "Pekat Bahaya";
+          txtWarnaRef.current.innerText = "Pekat dan Berbahaya";
           txtWarnaRef.current.className =
             "text-[10px] font-bold text-amber-700 animate-pulse";
         }
@@ -856,7 +867,7 @@ export default function SimulasiPencemaranUdara() {
           <FaWind className="text-sky-500 text-lg animate-pulse" />
           <div>
             <h1 className="text-sm font-bold tracking-tight text-slate-900">
-              Eko-Simulasi Udara
+              Simulasi Pencemaran Udara
             </h1>
             <p className="text-[10px] text-slate-500 leading-none">
               Interaktif Kualitas Udara & Dampak Kesehatan
@@ -1000,13 +1011,13 @@ export default function SimulasiPencemaranUdara() {
               </span>
               <div className="space-y-0.5">
                 <div className="flex justify-between text-[10px] text-slate-500">
-                  <span>Kapasitas Emisi</span>
+                  <span>Jumlah Emisi</span>
                   <span className="font-mono font-bold text-rose-600 animate-pulse">
                     {slideAsap === 1
                       ? "Sedikit"
                       : slideAsap === 2
-                        ? "Sedang"
-                        : "Banyak"}
+                      ? "Sedang"
+                      : "Banyak"}
                   </span>
                 </div>
                 <input
@@ -1026,7 +1037,7 @@ export default function SimulasiPencemaranUdara() {
             {/* Kecepatan Angin */}
             <div className="bg-slate-50 p-2 rounded-lg border border-slate-100">
               <span className="text-[10px] font-bold text-emerald-600 block mb-1">
-                <FaWind /> Kecepatan Angin / Dispersi
+                <FaWind /> Kecepatan Angin / Penyebaran Asap
               </span>
               <div className="space-y-0.5">
                 <div className="flex justify-between text-[10px] text-slate-500">
@@ -1035,8 +1046,8 @@ export default function SimulasiPencemaranUdara() {
                     {slideAngin <= 3
                       ? "Tenang"
                       : slideAngin <= 7
-                        ? "Normal"
-                        : "Kencang"}
+                      ? "Normal"
+                      : "Kencang"}
                   </span>
                 </div>
                 <input
@@ -1072,7 +1083,7 @@ export default function SimulasiPencemaranUdara() {
           <div className="flex-1 flex flex-col gap-2 min-h-0">
             <div className="flex justify-between items-center shrink-0">
               <h3 className="text-xs font-bold text-slate-700 flex items-center gap-1">
-                <FaCity className="text-sky-500" /> Atmosfer Kota Interaktif
+                <FaCity className="text-sky-500" /> Simulasi Udara Kota
               </h3>
               <div
                 ref={airStatusBadgeRef}
@@ -1090,7 +1101,9 @@ export default function SimulasiPencemaranUdara() {
               <button
                 onClick={openHud}
                 className={`absolute bottom-2 left-2 w-5 h-5 bg-white/95 text-slate-700 hover:text-slate-900 border border-slate-200/80 rounded-full flex items-center justify-center font-serif font-bold italic text-[10px] shadow-md hover:scale-105 active:scale-95 cursor-pointer z-20 select-none backdrop-blur-sm transition-all duration-300 ${
-                  isHudExpanded ? "scale-0 opacity-0 pointer-events-none" : "scale-100 opacity-100"
+                  isHudExpanded
+                    ? "scale-0 opacity-0 pointer-events-none"
+                    : "scale-100 opacity-100"
                 }`}
                 title="Tampilkan Info"
               >
@@ -1173,7 +1186,7 @@ export default function SimulasiPencemaranUdara() {
             </div>
             <div className="p-1 bg-slate-50 rounded border border-slate-100 flex flex-col justify-center items-center min-h-[42px]">
               <span className="block text-[8px] text-slate-400 uppercase font-bold leading-none mb-0.5">
-                Kondisi Fisik
+                Kondisi Kesehatan
               </span>
               <div className="leading-[1.15] text-center w-full">
                 <span
@@ -1204,7 +1217,7 @@ export default function SimulasiPencemaranUdara() {
         <section className="col-span-4 bg-white border border-slate-200 rounded-xl p-3 flex flex-col h-full overflow-hidden">
           <h2 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex justify-between items-center shrink-0 mb-4">
             <span>
-              <FaChartBar className="text-sky-500" /> Grafik Parameter Udara
+              <FaChartBar className="text-sky-500" /> Grafik Kualitas Udara
             </span>
             <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest bg-slate-100 px-1.5 py-0.5 rounded">
               Real-Time
@@ -1240,7 +1253,7 @@ export default function SimulasiPencemaranUdara() {
                   ></div>
                 </div>
                 <span className="text-[9px] font-bold text-slate-600 mt-1.5 uppercase">
-                  AQI
+                  Indeks Kualitas Udara (AQI)
                 </span>
                 <span className="text-[7px] text-slate-400 font-bold tracking-tight">
                   indeks
@@ -1264,7 +1277,7 @@ export default function SimulasiPencemaranUdara() {
                   ></div>
                 </div>
                 <span className="text-[9px] font-bold text-slate-600 mt-1.5 uppercase">
-                  PM2.5
+                  Debu Halus (PM2.5)
                 </span>
                 <span className="text-[7px] text-slate-400 font-bold tracking-tight">
                   µg/m³

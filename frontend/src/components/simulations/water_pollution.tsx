@@ -558,7 +558,6 @@ export default function SimulasiPencemaranAir() {
             new WasteParticle("domestik", slideDomestik),
           );
         }
-
       }
 
       // --- UPDATE ELEMEN DOM SECARA LANGSUNG (60FPS PERFORMANCE BOOST) ---
@@ -566,10 +565,7 @@ export default function SimulasiPencemaranAir() {
       const pctPH = Math.min(100, Math.max(0, (state.pH / 14) * 100));
       const pctBOD = Math.min(100, Math.max(0, (state.BOD / 150) * 100));
       const pctCOD = Math.min(100, Math.max(0, (state.COD / 150) * 100));
-      const pctPol = Math.min(
-        100,
-        Math.max(0, (state.pollutant / 100) * 100),
-      );
+      const pctPol = Math.min(100, Math.max(0, (state.pollutant / 100) * 100));
 
       if (barDoRef.current) barDoRef.current.style.height = `${pctDO}%`;
       if (barPhRef.current) barPhRef.current.style.height = `${pctPH}%`;
@@ -602,14 +598,11 @@ export default function SimulasiPencemaranAir() {
         (f) => f.state !== "dead",
       ).length;
       const deadFish = fishArrayRef.current.length - aliveFish;
-      if (hudFishRef.current)
-        hudFishRef.current.innerText = String(aliveFish);
+      if (hudFishRef.current) hudFishRef.current.innerText = String(aliveFish);
       if (hudDeadFishRef.current)
         hudDeadFishRef.current.innerText = String(deadFish);
 
-      const transparency = Math.max(0, 100 - state.pollutant * 1.3).toFixed(
-        0,
-      );
+      const transparency = Math.max(0, 100 - state.pollutant * 1.3).toFixed(0);
       if (hudTransparencyRef.current)
         hudTransparencyRef.current.innerText = `${transparency}%`;
 
@@ -617,8 +610,7 @@ export default function SimulasiPencemaranAir() {
       if (txtWarnaRef.current) {
         if (state.pollutant < 10) {
           txtWarnaRef.current.innerText = "Jernih";
-          txtWarnaRef.current.className =
-            "text-[10px] font-bold text-sky-600";
+          txtWarnaRef.current.className = "text-[10px] font-bold text-sky-600";
         } else if (state.pollutant < 40) {
           txtWarnaRef.current.innerText = "Mulai Keruh";
           txtWarnaRef.current.className =
@@ -805,10 +797,10 @@ export default function SimulasiPencemaranAir() {
           <FaDroplet className="text-sky-500 text-lg animate-pulse" />
           <div>
             <h1 className="text-sm font-bold tracking-tight text-slate-900">
-              Eko-Simulasi Air
+              Simulasi Pencemaran Air
             </h1>
             <p className="text-[10px] text-slate-500 leading-none">
-              Interaktif Kualitas Air & Biota
+              Simulasi Kualitas Air dan Makhluk Hidup
             </p>
           </div>
         </div>
@@ -840,7 +832,7 @@ export default function SimulasiPencemaranAir() {
         <section className="col-span-3 bg-white border border-slate-200 rounded-xl p-3 flex flex-col justify-between h-full overflow-y-auto overflow-x-hidden">
           <div className="space-y-2.5">
             <h2 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-              <FaSliders className="text-sky-500" /> Sumber Polusi
+              <FaSliders className="text-sky-500" /> Sumber Pencemar
             </h2>
 
             {/* Input Industri */}
@@ -876,7 +868,7 @@ export default function SimulasiPencemaranAir() {
               </div>
               <div className="space-y-0.5">
                 <div className="flex justify-between text-[10px] text-slate-500">
-                  <span>Debit Aliran</span>
+                  <span>debit limbah</span>
                   <span className="font-mono font-bold text-amber-600">
                     {slideIndustri}%
                   </span>
@@ -944,7 +936,7 @@ export default function SimulasiPencemaranAir() {
             {/* Arus Air */}
             <div className="bg-slate-50 p-2 rounded-lg border border-slate-100">
               <span className="text-[10px] font-bold text-emerald-600 block mb-1">
-                <FaWind /> Kecepatan Alir Sungai
+                <FaWind /> Kecepatan Aliran Sungai
               </span>
               <div className="space-y-0.5">
                 <div className="flex justify-between text-[10px] text-slate-500">
@@ -953,8 +945,8 @@ export default function SimulasiPencemaranAir() {
                     {slideAliran <= 3
                       ? "Lambat"
                       : slideAliran <= 7
-                        ? "Normal"
-                        : "Deras"}
+                      ? "Normal"
+                      : "Deras"}
                   </span>
                 </div>
                 <input
@@ -980,7 +972,7 @@ export default function SimulasiPencemaranAir() {
               onClick={handlePurifikasi}
               className="flex-1 py-1.5 bg-emerald-50 hover:bg-emerald-100 active:scale-95 text-emerald-600 text-[10px] font-bold rounded-md transition-all flex items-center justify-center gap-1 border border-emerald-100"
             >
-              <IoSparkles /> Purifikasi
+              <IoSparkles /> Pembersihan Air
             </button>
           </div>
         </section>
@@ -1008,7 +1000,9 @@ export default function SimulasiPencemaranAir() {
               <button
                 onClick={openHud}
                 className={`absolute bottom-2 left-2 w-5 h-5 bg-white/95 text-slate-700 hover:text-slate-900 border border-slate-200/80 rounded-full flex items-center justify-center font-serif font-bold italic text-[10px] shadow-md hover:scale-105 active:scale-95 cursor-pointer z-20 select-none backdrop-blur-sm transition-all duration-300 ${
-                  isHudExpanded ? "scale-0 opacity-0 pointer-events-none" : "scale-100 opacity-100"
+                  isHudExpanded
+                    ? "scale-0 opacity-0 pointer-events-none"
+                    : "scale-100 opacity-100"
                 }`}
                 title="Tampilkan Info"
               >
@@ -1104,7 +1098,7 @@ export default function SimulasiPencemaranAir() {
             </div>
             <div className="p-1 bg-slate-50 rounded border border-slate-100 flex flex-col justify-center items-center min-h-[42px]">
               <span className="block text-[8px] text-slate-400 uppercase font-bold leading-none mb-0.5">
-                Tingkat Toksik
+                Tingkat Pencemaran
               </span>
               <div className="leading-[1.15] text-center w-full">
                 <span
@@ -1122,7 +1116,7 @@ export default function SimulasiPencemaranAir() {
         <section className="col-span-4 bg-white border border-slate-200 rounded-xl p-3 flex flex-col h-full overflow-hidden">
           <h2 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex justify-between items-center shrink-0 mb-4">
             <span>
-              <FaChartBar className="text-sky-500" /> Grafik Parameter Air
+              <FaChartBar className="text-sky-500" /> Grafik Kualitas Air
             </span>
             <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest bg-slate-100 px-1.5 py-0.5 rounded">
               Real-Time

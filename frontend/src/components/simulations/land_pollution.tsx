@@ -30,10 +30,11 @@ type TrashType = "organik" | "anorganik";
 type FishState = "alive" | "struggling" | "dead";
 
 interface WasteSprite {
-  emoji: string;
+  subtype: string;
   x: number;
   y: number;
   size: number;
+  rotation: number;
 }
 
 const INITIAL_VALUES: SimState = {
@@ -82,7 +83,10 @@ export default function SimulasiPencemaranTanah() {
           try {
             await ScreenOrientation.unlock();
           } catch (unlockErr) {
-            console.warn("ScreenOrientation unlock/portrait lock failed:", unlockErr);
+            console.warn(
+              "ScreenOrientation unlock/portrait lock failed:",
+              unlockErr,
+            );
           }
         }
       };
@@ -419,16 +423,17 @@ export default function SimulasiPencemaranTanah() {
   ) => {
     const sprites: WasteSprite[] = [];
     const count = Math.floor(countValue / 10);
-    const listOrganik = ["🍎", "🍌", "🍂", "🍉"];
-    const listAnorganik = ["🧴", "🥫", "🥤", "🔋"];
+    const listOrganik = ["apple", "banana", "leaf", "watermelon"];
+    const listAnorganik = ["bottle", "can", "cup", "battery"];
     const currentList = type === "organik" ? listOrganik : listAnorganik;
 
     for (let i = 0; i < count; i++) {
       sprites.push({
-        emoji: currentList[Math.floor(Math.random() * currentList.length)],
+        subtype: currentList[Math.floor(Math.random() * currentList.length)],
         x: Math.random() * (width * 0.45) + 20,
-        y: 100 + (Math.random() - 0.5) * 8,
-        size: Math.random() * 4 + 12,
+        y: 95 + Math.random() * 40,
+        size: Math.random() * 6 + 18, // slightly larger for detailed vector drawings
+        rotation: (Math.random() - 0.5) * Math.PI * 0.6,
       });
     }
     wasteSpritesRef.current = sprites;
@@ -445,49 +450,918 @@ export default function SimulasiPencemaranTanah() {
   };
 
   // Render aset tanaman dinamis
+  // --- RENDERING HELPERS FOR ORGANIC & INORGANIC WASTE ---
+  const drawAppleCore = (ctx: CanvasRenderingContext2D, size: number) => {
+    ctx.save();
+    // Stem (brown)
+    ctx.strokeStyle = "#5c4033";
+    ctx.lineWidth = size * 0.08;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(0, -size * 0.3);
+    ctx.quadraticCurveTo(size * 0.1, -size * 0.5, size * 0.2, -size * 0.45);
+    ctx.stroke();
+
+    // Leaf (green)
+    ctx.fillStyle = "#22c55e";
+    ctx.beginPath();
+    ctx.ellipse(
+      size * 0.1,
+      -size * 0.4,
+      size * 0.15,
+      size * 0.08,
+      Math.PI / 4,
+      0,
+      Math.PI * 2,
+    );
+    ctx.fill();
+
+    // Top cap skin (red)
+    ctx.fillStyle = "#ef4444";
+    ctx.beginPath();
+    ctx.arc(0, -size * 0.2, size * 0.3, Math.PI, 0, false);
+    ctx.fill();
+
+    // Bottom cap skin (red)
+    ctx.beginPath();
+    ctx.arc(0, size * 0.2, size * 0.3, 0, Math.PI, false);
+    ctx.fill();
+
+    // Top/Bottom flesh (cream/yellowish)
+    ctx.fillStyle = "#fef08a";
+    ctx.beginPath();
+    ctx.ellipse(0, -size * 0.18, size * 0.28, size * 0.08, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(0, size * 0.18, size * 0.28, size * 0.08, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Core shaft (eaten inside)
+    ctx.beginPath();
+    ctx.moveTo(-size * 0.1, -size * 0.18);
+    ctx.bezierCurveTo(
+      -size * 0.04,
+      -size * 0.05,
+      -size * 0.04,
+      size * 0.05,
+      -size * 0.1,
+      size * 0.18,
+    );
+    ctx.lineTo(size * 0.1, size * 0.18);
+    ctx.bezierCurveTo(
+      size * 0.04,
+      size * 0.05,
+      size * 0.04,
+      -size * 0.05,
+      size * 0.1,
+      -size * 0.18,
+    );
+    ctx.closePath();
+    ctx.fill();
+
+    // Seeds (dark brown)
+    ctx.fillStyle = "#451a03";
+    ctx.beginPath();
+    ctx.ellipse(
+      -size * 0.03,
+      -size * 0.02,
+      size * 0.03,
+      size * 0.05,
+      -Math.PI / 8,
+      0,
+      Math.PI * 2,
+    );
+    ctx.ellipse(
+      size * 0.03,
+      size * 0.02,
+      size * 0.03,
+      size * 0.05,
+      Math.PI / 8,
+      0,
+      Math.PI * 2,
+    );
+    ctx.fill();
+    ctx.restore();
+  };
+
+  const drawBananaPeel = (ctx: CanvasRenderingContext2D, size: number) => {
+    ctx.save();
+    ctx.fillStyle = "#eab308";
+    ctx.strokeStyle = "#ca8a04";
+    ctx.lineWidth = size * 0.04;
+    ctx.lineJoin = "round";
+
+    // Left peel
+    ctx.beginPath();
+    ctx.moveTo(0, size * 0.2);
+    ctx.bezierCurveTo(
+      -size * 0.3,
+      size * 0.2,
+      -size * 0.5,
+      0,
+      -size * 0.5,
+      -size * 0.2,
+    );
+    ctx.bezierCurveTo(
+      -size * 0.35,
+      -size * 0.1,
+      -size * 0.15,
+      size * 0.1,
+      0,
+      size * 0.2,
+    );
+    ctx.fill();
+    ctx.stroke();
+
+    // Right peel
+    ctx.beginPath();
+    ctx.moveTo(0, size * 0.2);
+    ctx.bezierCurveTo(
+      size * 0.3,
+      size * 0.2,
+      size * 0.5,
+      0,
+      size * 0.5,
+      -size * 0.2,
+    );
+    ctx.bezierCurveTo(
+      size * 0.35,
+      -size * 0.1,
+      size * 0.15,
+      size * 0.1,
+      0,
+      size * 0.2,
+    );
+    ctx.fill();
+    ctx.stroke();
+
+    // Center peel
+    ctx.beginPath();
+    ctx.moveTo(-size * 0.1, size * 0.2);
+    ctx.bezierCurveTo(
+      -size * 0.15,
+      -size * 0.1,
+      -size * 0.05,
+      -size * 0.4,
+      0,
+      -size * 0.45,
+    );
+    ctx.bezierCurveTo(
+      size * 0.05,
+      -size * 0.4,
+      size * 0.15,
+      -size * 0.1,
+      size * 0.1,
+      size * 0.2,
+    );
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Brown tips/spots
+    ctx.fillStyle = "#713f12";
+    ctx.beginPath();
+    ctx.moveTo(-size * 0.05, -size * 0.38);
+    ctx.bezierCurveTo(0, -size * 0.42, 0, -size * 0.45, 0, -size * 0.45);
+    ctx.bezierCurveTo(
+      0,
+      -size * 0.45,
+      size * 0.02,
+      -size * 0.42,
+      size * 0.05,
+      -size * 0.38,
+    );
+    ctx.closePath();
+    ctx.fill();
+
+    // Left/Right tips
+    ctx.beginPath();
+    ctx.moveTo(-size * 0.42, -size * 0.15);
+    ctx.lineTo(-size * 0.5, -size * 0.2);
+    ctx.lineTo(-size * 0.45, -size * 0.1);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(size * 0.42, size * -0.15);
+    ctx.lineTo(size * 0.5, size * -0.2);
+    ctx.lineTo(size * 0.45, size * -0.1);
+    ctx.closePath();
+    ctx.fill();
+
+    // Crown/stem base
+    ctx.fillStyle = "#451a03";
+    ctx.beginPath();
+    ctx.arc(0, size * 0.2, size * 0.1, 0, Math.PI, false);
+    ctx.fill();
+    ctx.restore();
+  };
+
+  const drawWitheredLeaf = (ctx: CanvasRenderingContext2D, size: number) => {
+    ctx.save();
+    const grad = ctx.createLinearGradient(
+      -size * 0.3,
+      -size * 0.3,
+      size * 0.3,
+      size * 0.3,
+    );
+    grad.addColorStop(0, "#a16207");
+    grad.addColorStop(1, "#713f12");
+
+    ctx.fillStyle = grad;
+    ctx.strokeStyle = "#451a03";
+    ctx.lineWidth = size * 0.03;
+
+    ctx.beginPath();
+    ctx.moveTo(-size * 0.4, 0);
+    ctx.quadraticCurveTo(-size * 0.2, -size * 0.3, -size * 0.1, -size * 0.2);
+    ctx.lineTo(-size * 0.05, -size * 0.35);
+    ctx.lineTo(size * 0.1, -size * 0.2);
+    ctx.lineTo(size * 0.2, -size * 0.35);
+    ctx.quadraticCurveTo(size * 0.3, -size * 0.1, size * 0.5, 0);
+    ctx.quadraticCurveTo(size * 0.3, size * 0.1, size * 0.2, size * 0.35);
+    ctx.lineTo(size * 0.1, size * 0.2);
+    ctx.lineTo(-size * 0.05, size * 0.35);
+    ctx.lineTo(-size * 0.1, size * 0.2);
+    ctx.quadraticCurveTo(-size * 0.2, size * 0.3, -size * 0.4, 0);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Main vein
+    ctx.strokeStyle = "#451a03";
+    ctx.lineWidth = size * 0.04;
+    ctx.beginPath();
+    ctx.moveTo(-size * 0.5, 0);
+    ctx.lineTo(size * 0.45, 0);
+    ctx.stroke();
+
+    // Side veins
+    ctx.lineWidth = size * 0.02;
+    ctx.beginPath();
+    ctx.moveTo(-size * 0.2, 0);
+    ctx.lineTo(-size * 0.1, -size * 0.15);
+    ctx.moveTo(-size * 0.2, 0);
+    ctx.lineTo(-size * 0.1, size * 0.15);
+    ctx.moveTo(0, 0);
+    ctx.lineTo(size * 0.12, -size * 0.18);
+    ctx.moveTo(0, 0);
+    ctx.lineTo(size * 0.12, size * 0.18);
+    ctx.moveTo(size * 0.2, 0);
+    ctx.lineTo(size * 0.3, -size * 0.12);
+    ctx.moveTo(size * 0.2, 0);
+    ctx.lineTo(size * 0.3, size * 0.12);
+    ctx.stroke();
+    ctx.restore();
+  };
+
+  const drawWatermelonSlice = (ctx: CanvasRenderingContext2D, size: number) => {
+    ctx.save();
+    // Outer rind
+    ctx.fillStyle = "#15803d";
+    ctx.beginPath();
+    ctx.arc(0, -size * 0.2, size * 0.5, 0, Math.PI, false);
+    ctx.closePath();
+    ctx.fill();
+
+    // Inner rind
+    ctx.fillStyle = "#bbf7d0";
+    ctx.beginPath();
+    ctx.arc(0, -size * 0.2, size * 0.44, 0, Math.PI, false);
+    ctx.closePath();
+    ctx.fill();
+
+    // Red flesh
+    ctx.fillStyle = "#ef4444";
+    ctx.beginPath();
+    ctx.arc(0, -size * 0.2, size * 0.38, 0, Math.PI, false);
+    ctx.closePath();
+    ctx.fill();
+
+    // Straight edge cut
+    ctx.fillStyle = "#ef4444";
+    ctx.fillRect(-size * 0.5, -size * 0.22, size, size * 0.05);
+
+    // Seeds
+    ctx.fillStyle = "#1e293b";
+    const seedPositions = [
+      { x: -size * 0.2, y: size * 0.02, rot: -Math.PI / 4 },
+      { x: -size * 0.07, y: size * 0.12, rot: -Math.PI / 12 },
+      { x: size * 0.07, y: size * 0.12, rot: Math.PI / 12 },
+      { x: size * 0.2, y: size * 0.02, rot: Math.PI / 4 },
+    ];
+    for (const pos of seedPositions) {
+      ctx.save();
+      ctx.translate(pos.x, pos.y);
+      ctx.rotate(pos.rot);
+      ctx.beginPath();
+      ctx.ellipse(0, 0, size * 0.02, size * 0.035, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+    ctx.restore();
+  };
+
+  const drawPlasticBottle = (ctx: CanvasRenderingContext2D, size: number) => {
+    ctx.save();
+    ctx.fillStyle = "rgba(186, 230, 253, 0.65)";
+    ctx.strokeStyle = "#0284c7";
+    ctx.lineWidth = size * 0.03;
+    ctx.lineJoin = "round";
+
+    ctx.beginPath();
+    ctx.moveTo(-size * 0.12, -size * 0.4);
+    ctx.lineTo(size * 0.12, -size * 0.4);
+    ctx.lineTo(size * 0.2, -size * 0.25);
+    ctx.bezierCurveTo(
+      size * 0.18,
+      -size * 0.1,
+      size * 0.1,
+      -size * 0.05,
+      size * 0.16,
+      size * 0.15,
+    );
+    ctx.lineTo(size * 0.2, size * 0.4);
+    ctx.bezierCurveTo(
+      size * 0.1,
+      size * 0.45,
+      -size * 0.1,
+      size * 0.45,
+      -size * 0.2,
+      size * 0.4,
+    );
+    ctx.lineTo(-size * 0.16, size * 0.15);
+    ctx.bezierCurveTo(
+      -size * 0.1,
+      -size * 0.05,
+      -size * 0.18,
+      -size * 0.1,
+      -size * 0.2,
+      -size * 0.25,
+    );
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Cap
+    ctx.fillStyle = "#0284c7";
+    ctx.fillRect(-size * 0.14, -size * 0.48, size * 0.28, size * 0.08);
+
+    // Label
+    ctx.fillStyle = "rgba(255, 255, 255, 0.85)";
+    ctx.beginPath();
+    ctx.moveTo(-size * 0.14, -size * 0.1);
+    ctx.lineTo(size * 0.14, -size * 0.1);
+    ctx.lineTo(size * 0.15, size * 0.1);
+    ctx.lineTo(-size * 0.15, size * 0.1);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Folds
+    ctx.strokeStyle = "rgba(2, 132, 199, 0.5)";
+    ctx.lineWidth = size * 0.02;
+    ctx.beginPath();
+    ctx.moveTo(-size * 0.16, -size * 0.2);
+    ctx.quadraticCurveTo(0, -size * 0.12, size * 0.18, -size * 0.2);
+    ctx.moveTo(-size * 0.13, -size * 0.02);
+    ctx.quadraticCurveTo(0, size * 0.04, size * 0.14, -size * 0.03);
+    ctx.moveTo(-size * 0.16, size * 0.2);
+    ctx.quadraticCurveTo(0, size * 0.26, size * 0.18, size * 0.16);
+    ctx.stroke();
+    ctx.restore();
+  };
+
+  const drawTinCan = (ctx: CanvasRenderingContext2D, size: number) => {
+    ctx.save();
+    const metalGrad = ctx.createLinearGradient(-size * 0.25, 0, size * 0.25, 0);
+    metalGrad.addColorStop(0, "#94a3b8");
+    metalGrad.addColorStop(0.3, "#cbd5e1");
+    metalGrad.addColorStop(0.7, "#cbd5e1");
+    metalGrad.addColorStop(1, "#64748b");
+
+    ctx.fillStyle = metalGrad;
+    ctx.strokeStyle = "#475569";
+    ctx.lineWidth = size * 0.03;
+    ctx.lineJoin = "round";
+
+    ctx.beginPath();
+    ctx.moveTo(-size * 0.2, -size * 0.35);
+    ctx.lineTo(size * 0.2, -size * 0.35);
+    ctx.bezierCurveTo(
+      size * 0.22,
+      -size * 0.15,
+      size * 0.05,
+      0,
+      size * 0.18,
+      size * 0.15,
+    );
+    ctx.lineTo(size * 0.2, size * 0.35);
+    ctx.bezierCurveTo(
+      size * 0.1,
+      size * 0.4,
+      -size * 0.1,
+      size * 0.4,
+      -size * 0.2,
+      size * 0.35,
+    );
+    ctx.bezierCurveTo(
+      -size * 0.05,
+      0,
+      -size * 0.22,
+      -size * 0.15,
+      -size * 0.2,
+      -size * 0.35,
+    );
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Lid
+    ctx.fillStyle = "#64748b";
+    ctx.beginPath();
+    ctx.ellipse(0, -size * 0.35, size * 0.2, size * 0.06, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Tab hole
+    ctx.fillStyle = "#1e293b";
+    ctx.beginPath();
+    ctx.ellipse(
+      -size * 0.04,
+      -size * 0.35,
+      size * 0.06,
+      size * 0.02,
+      0,
+      0,
+      Math.PI * 2,
+    );
+    ctx.fill();
+
+    // Ridges
+    ctx.strokeStyle = "#475569";
+    ctx.lineWidth = size * 0.02;
+    ctx.beginPath();
+    ctx.moveTo(-size * 0.2, -size * 0.22);
+    ctx.quadraticCurveTo(0, -size * 0.18, size * 0.21, -size * 0.23);
+    ctx.moveTo(-size * 0.19, size * 0.22);
+    ctx.quadraticCurveTo(0, size * 0.26, size * 0.19, size * 0.23);
+    ctx.stroke();
+
+    // Crushes
+    ctx.strokeStyle = "#334155";
+    ctx.lineWidth = size * 0.03;
+    ctx.beginPath();
+    ctx.moveTo(-size * 0.21, -size * 0.02);
+    ctx.lineTo(size * 0.1, -size * 0.08);
+    ctx.lineTo(-size * 0.08, size * 0.08);
+    ctx.lineTo(size * 0.18, size * 0.05);
+    ctx.stroke();
+    ctx.restore();
+  };
+
+  const drawPlasticCup = (ctx: CanvasRenderingContext2D, size: number) => {
+    ctx.save();
+    // Red/White Straw
+    ctx.strokeStyle = "#ef4444";
+    ctx.lineWidth = size * 0.05;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(-size * 0.05, size * 0.2);
+    ctx.lineTo(size * 0.1, -size * 0.35);
+    ctx.lineTo(size * 0.25, -size * 0.45);
+    ctx.stroke();
+
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = size * 0.05;
+    ctx.setLineDash([size * 0.06, size * 0.06]);
+    ctx.beginPath();
+    ctx.moveTo(-size * 0.05, size * 0.2);
+    ctx.lineTo(size * 0.1, -size * 0.35);
+    ctx.lineTo(size * 0.25, -size * 0.45);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Translucent Cup
+    ctx.fillStyle = "rgba(241, 245, 249, 0.45)";
+    ctx.strokeStyle = "#94a3b8";
+    ctx.lineWidth = size * 0.025;
+    ctx.lineJoin = "round";
+
+    ctx.beginPath();
+    ctx.ellipse(0, -size * 0.25, size * 0.25, size * 0.05, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(-size * 0.25, -size * 0.25);
+    ctx.bezierCurveTo(
+      -size * 0.2,
+      -size * 0.05,
+      -size * 0.1,
+      size * 0.1,
+      -size * 0.14,
+      size * 0.35,
+    );
+    ctx.lineTo(size * 0.14, size * 0.35);
+    ctx.bezierCurveTo(
+      size * 0.1,
+      size * 0.1,
+      size * 0.2,
+      -size * 0.05,
+      size * 0.25,
+      -size * 0.25,
+    );
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.ellipse(0, size * 0.35, size * 0.14, size * 0.03, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Ridges
+    ctx.strokeStyle = "rgba(148, 163, 184, 0.6)";
+    ctx.lineWidth = size * 0.015;
+    ctx.beginPath();
+    ctx.moveTo(-size * 0.22, -size * 0.15);
+    ctx.lineTo(size * 0.22, -size * 0.15);
+    ctx.moveTo(-size * 0.18, -size * 0.02);
+    ctx.lineTo(size * 0.18, -size * 0.02);
+    ctx.moveTo(-size * 0.15, size * 0.12);
+    ctx.lineTo(size * 0.15, size * 0.12);
+    ctx.stroke();
+    ctx.restore();
+  };
+
+  const drawBattery = (ctx: CanvasRenderingContext2D, size: number) => {
+    ctx.save();
+    ctx.strokeStyle = "#1e293b";
+    ctx.lineWidth = size * 0.03;
+    ctx.lineJoin = "round";
+
+    // Main dark body
+    ctx.fillStyle = "#1e293b";
+    ctx.beginPath();
+    ctx.moveTo(-size * 0.16, -size * 0.1);
+    ctx.lineTo(size * 0.16, -size * 0.1);
+    ctx.lineTo(size * 0.16, size * 0.35);
+    ctx.lineTo(-size * 0.16, size * 0.35);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Copper band
+    ctx.fillStyle = "#b45309";
+    ctx.beginPath();
+    ctx.moveTo(-size * 0.16, -size * 0.35);
+    ctx.lineTo(size * 0.16, -size * 0.35);
+    ctx.lineTo(size * 0.16, -size * 0.1);
+    ctx.lineTo(-size * 0.16, -size * 0.1);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Positive metal bump
+    ctx.fillStyle = "#94a3b8";
+    ctx.beginPath();
+    ctx.rect(-size * 0.05, -size * 0.42, size * 0.1, size * 0.07);
+    ctx.fill();
+    ctx.stroke();
+
+    // White text label
+    ctx.fillStyle = "#ffffff";
+    ctx.font = `bold ${size * 0.14}px sans-serif`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("AA", 0, size * 0.02);
+
+    // Symbols
+    ctx.fillStyle = "#fef08a";
+    ctx.font = `bold ${size * 0.15}px sans-serif`;
+    ctx.fillText("+", 0, -size * 0.22);
+
+    ctx.fillStyle = "#94a3b8";
+    ctx.font = `bold ${size * 0.15}px sans-serif`;
+    ctx.fillText("-", 0, size * 0.24);
+
+    // Corroded green acid leakage
+    ctx.fillStyle = "#22c55e";
+    ctx.beginPath();
+    ctx.arc(-size * 0.12, size * 0.1, size * 0.04, 0, Math.PI * 2);
+    ctx.arc(size * 0.14, size * 0.28, size * 0.03, 0, Math.PI * 2);
+    ctx.arc(-size * 0.04, size * 0.34, size * 0.05, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  };
+
+  // --- RENDERING HELPERS FOR DYNAMIC NATURAL PLANT ---
+  const drawRealisticLeaf = (
+    ctx: CanvasRenderingContext2D,
+    length: number,
+    width: number,
+    health: number,
+  ) => {
+    ctx.save();
+    let leafColor = "#22c55e";
+    let veinColor = "#16a34a";
+
+    if (health <= 20) {
+      leafColor = "#78716c";
+      veinColor = "#44403c";
+    } else if (health <= 40) {
+      leafColor = "#a16207";
+      veinColor = "#713f12";
+    } else if (health <= 70) {
+      leafColor = "#eab308";
+      veinColor = "#ca8a04";
+    }
+
+    ctx.fillStyle = leafColor;
+    ctx.strokeStyle = veinColor;
+    ctx.lineWidth = length * 0.04;
+
+    // Leaf body
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.bezierCurveTo(
+      -width * 0.6,
+      -length * 0.3,
+      -width * 0.4,
+      -length * 0.8,
+      0,
+      -length,
+    );
+    ctx.bezierCurveTo(
+      width * 0.4,
+      -length * 0.8,
+      width * 0.6,
+      -length * 0.3,
+      0,
+      0,
+    );
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Central vein
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(0, -length * 0.9);
+    ctx.stroke();
+
+    // Side veins
+    ctx.lineWidth = length * 0.02;
+    ctx.beginPath();
+    ctx.moveTo(0, -length * 0.25);
+    ctx.lineTo(-width * 0.3, -length * 0.45);
+    ctx.moveTo(0, -length * 0.5);
+    ctx.lineTo(-width * 0.35, -length * 0.7);
+    ctx.moveTo(0, -length * 0.25);
+    ctx.lineTo(width * 0.3, -length * 0.45);
+    ctx.moveTo(0, -length * 0.5);
+    ctx.lineTo(width * 0.35, -length * 0.7);
+    ctx.stroke();
+    ctx.restore();
+  };
+
+  const drawRealisticRoot = (
+    ctx: CanvasRenderingContext2D,
+    startX: number,
+    startY: number,
+    length: number,
+    angle: number,
+    depth: number,
+    health: number,
+  ) => {
+    if (depth <= 0) return;
+    ctx.save();
+    ctx.translate(startX, startY);
+    ctx.rotate(angle);
+
+    let rootColor = "#fef08a";
+    if (health <= 40) {
+      rootColor = "#334155";
+    } else if (health <= 75) {
+      rootColor = "#d97706";
+    }
+
+    ctx.strokeStyle = rootColor;
+    ctx.lineWidth = depth * 1.2;
+    ctx.lineCap = "round";
+
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    const midY = length * 0.5;
+    const wiggleX = Math.sin(startY * 0.05 + depth) * length * 0.15;
+    ctx.quadraticCurveTo(wiggleX, midY, 0, length);
+    ctx.stroke();
+
+    if (depth > 1) {
+      drawRealisticRoot(
+        ctx,
+        wiggleX * 0.5,
+        midY,
+        length * 0.7,
+        -Math.PI / 6 + Math.sin(startY * 0.1) * 0.1,
+        depth - 1,
+        health,
+      );
+      drawRealisticRoot(
+        ctx,
+        wiggleX * 0.5,
+        midY,
+        length * 0.7,
+        Math.PI / 6 + Math.cos(startY * 0.1) * 0.1,
+        depth - 1,
+        health,
+      );
+    } else if (health > 60) {
+      ctx.lineWidth = 0.5;
+      ctx.beginPath();
+      ctx.moveTo(0, length);
+      ctx.lineTo(-length * 0.3, length + length * 0.2);
+      ctx.moveTo(0, length);
+      ctx.lineTo(length * 0.3, length + length * 0.2);
+      ctx.stroke();
+    }
+    ctx.restore();
+  };
+
   const drawPlant = (
     ctx: CanvasRenderingContext2D,
-    width: number,
+    plantX: number,
+    scale: number,
+    phase: number,
     rootHealth: number,
   ) => {
-    const plantX = width * 0.28;
     const groundY = 100;
+    const time = simTimeRef.current;
+
+    const windSpeed = 0.04;
+    const swayAmount = 4 * scale;
+    const sway = Math.sin(time * windSpeed + phase) * swayAmount;
+
+    const droop = Math.max(0, (100 - rootHealth) / 100);
+    const plantHeight = (55 + ((phase * 10) % 15)) * scale * (1 - droop * 0.15);
 
     ctx.save();
-    ctx.lineWidth = 1.5;
-    if (rootHealth > 75) ctx.strokeStyle = "#fef08a";
-    else if (rootHealth > 40) ctx.strokeStyle = "#d97706";
-    else ctx.strokeStyle = "#1e293b";
+
+    // 1. Draw organic root branches
+    drawRealisticRoot(ctx, plantX, groundY, 15 * scale, 0, 3, rootHealth);
+    drawRealisticRoot(
+      ctx,
+      plantX - 2 * scale,
+      groundY,
+      12 * scale,
+      -Math.PI / 5,
+      3,
+      rootHealth,
+    );
+    drawRealisticRoot(
+      ctx,
+      plantX + 2 * scale,
+      groundY,
+      12 * scale,
+      Math.PI / 5,
+      3,
+      rootHealth,
+    );
+
+    // 2. Draw stems
+    ctx.lineWidth = 3.5 * scale;
+    let stemColor = "#15803d";
+    if (rootHealth <= 20) {
+      stemColor = "#57534e";
+    } else if (rootHealth <= 40) {
+      stemColor = "#854d0e";
+    } else if (rootHealth <= 75) {
+      stemColor = "#16a34a";
+    }
+    ctx.strokeStyle = stemColor;
+    ctx.lineCap = "round";
+
+    const tipX = plantX + sway - droop * 15 * scale;
+    const tipY = groundY - plantHeight;
+    const midX = plantX + sway * 0.6 - droop * 8 * scale;
+    const midY = groundY - plantHeight * 0.55;
 
     ctx.beginPath();
     ctx.moveTo(plantX, groundY);
-    ctx.quadraticCurveTo(plantX - 5, groundY + 30, plantX - 10, groundY + 50);
-    ctx.moveTo(plantX, groundY);
-    ctx.quadraticCurveTo(plantX + 8, groundY + 25, plantX + 15, groundY + 45);
-    ctx.moveTo(plantX - 6, groundY + 15);
-    ctx.lineTo(plantX - 25, groundY + 30);
-    ctx.moveTo(plantX + 4, groundY + 12);
-    ctx.lineTo(plantX + 22, groundY + 28);
+    ctx.quadraticCurveTo(midX, midY, tipX, tipY);
     ctx.stroke();
 
-    ctx.lineWidth = 2.5;
-    ctx.strokeStyle = rootHealth > 45 ? "#15803d" : "#854d0e";
+    // Side branch left
+    const branchStartX = midX;
+    const branchStartY = midY;
+    const branchTipX = branchStartX - 15 * scale + sway * 0.3;
+    const branchTipY = branchStartY - 12 * scale + droop * 12 * scale;
+    ctx.lineWidth = 2.2 * scale;
     ctx.beginPath();
-    ctx.moveTo(plantX, groundY);
-    ctx.quadraticCurveTo(plantX - 2, groundY - 25, plantX - 5, groundY - 45);
+    ctx.moveTo(branchStartX, branchStartY);
+    ctx.quadraticCurveTo(
+      (branchStartX + branchTipX) / 2 - 3 * scale,
+      (branchStartY + branchTipY) / 2,
+      branchTipX,
+      branchTipY,
+    );
     ctx.stroke();
 
-    const leafColor =
-      rootHealth > 70 ? "#22c55e" : rootHealth > 35 ? "#eab308" : "#78716c";
-    ctx.fillStyle = leafColor;
-    const droop = rootHealth > 50 ? 0 : 8;
+    // Side branch right
+    const branch2StartX = midX + (tipX - midX) * 0.3;
+    const branch2StartY = midY - (midY - tipY) * 0.3;
+    const branch2TipX = branch2StartX + 12 * scale + sway * 0.3;
+    const branch2TipY = branch2StartY - 8 * scale + droop * 8 * scale;
+    ctx.lineWidth = 1.8 * scale;
+    ctx.beginPath();
+    ctx.moveTo(branch2StartX, branch2StartY);
+    ctx.quadraticCurveTo(
+      (branch2StartX + branch2TipX) / 2 + 2 * scale,
+      (branch2StartY + branch2TipY) / 2,
+      branch2TipX,
+      branch2TipY,
+    );
+    ctx.stroke();
 
-    ctx.beginPath();
-    ctx.ellipse(plantX - 12, groundY - 30 + droop, 8, 4, -0.3, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.ellipse(plantX + 4, groundY - 38 + droop, 7, 3.5, 0.2, 0, Math.PI * 2);
-    ctx.fill();
+    // 3. Draw realistic leaves
+    // Top
+    ctx.save();
+    ctx.translate(tipX, tipY);
+    const topAngle = Math.atan2(tipY - midY, tipX - midX) + Math.PI / 2;
+    ctx.rotate(topAngle + (droop * Math.PI) / 4);
+    drawRealisticLeaf(ctx, 14 * scale, 8 * scale, rootHealth);
+    ctx.restore();
+
+    // Left branch leaf
+    ctx.save();
+    ctx.translate(branchTipX, branchTipY);
+    ctx.rotate(-Math.PI / 3 - (droop * Math.PI) / 6);
+    drawRealisticLeaf(ctx, 12 * scale, 7 * scale, rootHealth);
+    ctx.restore();
+
+    // Right branch leaf
+    ctx.save();
+    ctx.translate(branch2TipX, branch2TipY);
+    ctx.rotate(Math.PI / 3 + (droop * Math.PI) / 6);
+    drawRealisticLeaf(ctx, 10 * scale, 6 * scale, rootHealth);
+    ctx.restore();
+
+    // Middle stem leaf
+    ctx.save();
+    ctx.translate(midX, midY);
+    ctx.rotate(-Math.PI / 2 + (droop * Math.PI) / 4);
+    drawRealisticLeaf(ctx, 11 * scale, 6 * scale, rootHealth);
+    ctx.restore();
+
+    // 4. Draw flower/fruit representing yield
+    const flowerX = tipX + 5 * scale;
+    const flowerY = tipY + 2 * scale;
+    if (rootHealth > 40) {
+      ctx.save();
+      ctx.translate(flowerX, flowerY);
+      if (rootHealth > 75) {
+        // Red fruit
+        const fruitSize = Math.max(1, 4 * scale * (rootHealth / 100));
+        ctx.fillStyle = "#ef4444";
+        ctx.strokeStyle = "#b91c1c";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(0, 0, fruitSize, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = "#16a34a";
+        ctx.beginPath();
+        ctx.moveTo(-2 * scale, -fruitSize * 0.8);
+        ctx.lineTo(2 * scale, -fruitSize * 0.8);
+        ctx.lineTo(0, -fruitSize * 1.2);
+        ctx.closePath();
+        ctx.fill();
+      } else {
+        // Yellow flower
+        const petalSize = 2.5 * scale;
+        ctx.fillStyle = "#eab308";
+        for (let i = 0; i < 5; i++) {
+          ctx.rotate((Math.PI * 2) / 5);
+          ctx.beginPath();
+          ctx.ellipse(
+            petalSize,
+            0,
+            petalSize,
+            petalSize * 0.5,
+            0,
+            0,
+            Math.PI * 2,
+          );
+          ctx.fill();
+        }
+        ctx.fillStyle = "#ca8a04";
+        ctx.beginPath();
+        ctx.arc(0, 0, petalSize * 0.4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
     ctx.restore();
   };
 
@@ -517,10 +1391,14 @@ export default function SimulasiPencemaranTanah() {
       if (toxic < 15) return "rgba(14, 165, 233, 0.45)";
       if (toxic < 50) {
         const ratio = (toxic - 15) / 35;
-        return `rgba(${Math.round(14 + (115 - 14) * ratio)}, ${Math.round(165 + (115 - 165) * ratio)}, ${Math.round(233 + (95 - 233) * ratio)}, 0.55)`;
+        return `rgba(${Math.round(14 + (115 - 14) * ratio)}, ${Math.round(
+          165 + (115 - 165) * ratio,
+        )}, ${Math.round(233 + (95 - 233) * ratio)}, 0.55)`;
       }
       const ratio = Math.min(1.0, (toxic - 50) / 50);
-      return `rgba(${Math.round(115 + (69 - 115) * ratio)}, ${Math.round(115 + (50 - 115) * ratio)}, ${Math.round(95 + (30 - 95) * ratio)}, 0.75)`;
+      return `rgba(${Math.round(115 + (69 - 115) * ratio)}, ${Math.round(
+        115 + (50 - 115) * ratio,
+      )}, ${Math.round(95 + (30 - 95) * ratio)}, 0.75)`;
     };
 
     const loop = () => {
@@ -583,7 +1461,6 @@ export default function SimulasiPencemaranTanah() {
         if (intensity === 0 && state.toxicity > 0) {
           state.toxicity = Math.max(0, state.toxicity - 0.05);
         }
-
       }
 
       // --- MANIPULASI ELEMENT DOM DIREK (60 FPS STABLE OVERPASS) ---
@@ -603,19 +1480,31 @@ export default function SimulasiPencemaranTanah() {
         barPhValRef.current.innerText = state.pH.toFixed(1);
       }
       if (barSuburValRef.current) {
-        barSuburValRef.current.style.bottom = `calc(${Math.min(100, state.fertility)}% + 4px)`;
+        barSuburValRef.current.style.bottom = `calc(${Math.min(
+          100,
+          state.fertility,
+        )}% + 4px)`;
         barSuburValRef.current.innerText = `${state.fertility.toFixed(0)}%`;
       }
       if (barAkarValRef.current) {
-        barAkarValRef.current.style.bottom = `calc(${Math.min(100, state.rootHealth)}% + 4px)`;
+        barAkarValRef.current.style.bottom = `calc(${Math.min(
+          100,
+          state.rootHealth,
+        )}% + 4px)`;
         barAkarValRef.current.innerText = `${state.rootHealth.toFixed(0)}%`;
       }
       if (barRacunValRef.current) {
-        barRacunValRef.current.style.bottom = `calc(${Math.min(100, state.toxicity)}% + 4px)`;
+        barRacunValRef.current.style.bottom = `calc(${Math.min(
+          100,
+          state.toxicity,
+        )}% + 4px)`;
         barRacunValRef.current.innerText = `${state.toxicity.toFixed(0)}%`;
       }
       if (barPanenValRef.current) {
-        barPanenValRef.current.style.bottom = `calc(${Math.min(100, state.yield)}% + 4px)`;
+        barPanenValRef.current.style.bottom = `calc(${Math.min(
+          100,
+          state.yield,
+        )}% + 4px)`;
         barPanenValRef.current.innerText = `${state.yield.toFixed(0)}%`;
       }
 
@@ -650,8 +1539,7 @@ export default function SimulasiPencemaranTanah() {
       if (txtWarnaRef.current) {
         if (state.toxicity < 15) {
           txtWarnaRef.current.innerText = "Biru Jernih";
-          txtWarnaRef.current.className =
-            "text-[10px] font-bold text-sky-600";
+          txtWarnaRef.current.className = "text-[10px] font-bold text-sky-600";
         } else if (state.toxicity < 50) {
           txtWarnaRef.current.innerText = "Mulai Keruh";
           txtWarnaRef.current.className =
@@ -690,8 +1578,7 @@ export default function SimulasiPencemaranTanah() {
             "text-[10px] font-bold text-amber-500";
         } else if (state.yield > 2) {
           txtPanenRef.current.innerText = "Hampir Gagal";
-          txtPanenRef.current.className =
-            "text-[10px] font-bold text-rose-400";
+          txtPanenRef.current.className = "text-[10px] font-bold text-rose-400";
         } else {
           txtPanenRef.current.innerText = "Gagal Panen";
           txtPanenRef.current.className =
@@ -761,10 +1648,61 @@ export default function SimulasiPencemaranTanah() {
       ctx.fillRect(0, 96, pondStartX, 4);
 
       // Gambar Tanaman & Sampah Visual
-      drawPlant(ctx, canvas.width, state.rootHealth);
+      const plantPositions = [
+        { pctX: 0.08, scale: 0.9, phase: 0 },
+        { pctX: 0.18, scale: 1.1, phase: 1.5 },
+        { pctX: 0.28, scale: 1.0, phase: 3.0 },
+        { pctX: 0.38, scale: 1.2, phase: 4.5 },
+        { pctX: 0.48, scale: 0.85, phase: 6.0 },
+      ];
+
+      for (const p of plantPositions) {
+        drawPlant(
+          ctx,
+          canvas.width * p.pctX,
+          p.scale,
+          p.phase,
+          state.rootHealth,
+        );
+      }
+
       for (const item of wasteSpritesRef.current) {
-        ctx.font = `${item.size}px Arial`;
-        ctx.fillText(item.emoji, item.x, item.y);
+        ctx.save();
+        ctx.translate(item.x, item.y);
+        ctx.rotate(item.rotation);
+
+        switch (item.subtype) {
+          case "apple":
+            drawAppleCore(ctx, item.size);
+            break;
+          case "banana":
+            drawBananaPeel(ctx, item.size);
+            break;
+          case "leaf":
+            drawWitheredLeaf(ctx, item.size);
+            break;
+          case "watermelon":
+            drawWatermelonSlice(ctx, item.size);
+            break;
+          case "bottle":
+            drawPlasticBottle(ctx, item.size);
+            break;
+          case "can":
+            drawTinCan(ctx, item.size);
+            break;
+          case "cup":
+            drawPlasticCup(ctx, item.size);
+            break;
+          case "battery":
+            drawBattery(ctx, item.size);
+            break;
+          default:
+            ctx.fillStyle = "#475569";
+            ctx.beginPath();
+            ctx.arc(0, 0, item.size * 0.4, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        ctx.restore();
       }
 
       // Render Partikel Air Hujan
@@ -878,10 +1816,10 @@ export default function SimulasiPencemaranTanah() {
           <FaSeedling className="text-emerald-500 text-lg" />
           <div>
             <h1 className="text-sm font-bold tracking-tight text-slate-900">
-              Eko-Simulasi Tanah
+              Simulasi Pencemaran Tanah
             </h1>
             <p className="text-[10px] text-slate-500 leading-none">
-              Interaktif Dampak Polusi Tanah & Air
+              Dampak Pencemaran Tanah
             </p>
           </div>
         </div>
@@ -967,13 +1905,13 @@ export default function SimulasiPencemaranTanah() {
                   {jumlahSampah <= 33
                     ? "Sedikit"
                     : jumlahSampah <= 66
-                      ? "Sedang"
-                      : "Banyak"}
+                    ? "Sedang"
+                    : "Banyak"}
                 </span>
               </div>
               <div className="space-y-0.5">
                 <div className="flex justify-between text-[10px] text-slate-400">
-                  <span>Volume Polutan</span>
+                  <span>Jumlah Sampah</span>
                   <span className="font-mono font-bold">{jumlahSampah}%</span>
                 </div>
                 <input
@@ -990,7 +1928,7 @@ export default function SimulasiPencemaranTanah() {
             {/* Curah Hujan */}
             <div className="bg-slate-50 p-2 rounded-lg border border-slate-100">
               <span className="text-[10px] font-bold text-sky-600 block mb-1">
-                <FaCloudShowersHeavy /> Curah Hujan (Pencucian)
+                <FaCloudShowersHeavy /> Curah Hujan (Aliran Air)
               </span>
               <div className="space-y-0.5">
                 <div className="flex justify-between text-[10px] text-slate-500">
@@ -999,10 +1937,10 @@ export default function SimulasiPencemaranTanah() {
                     {hujan === 0
                       ? "Kering"
                       : hujan <= 3
-                        ? "Gerimis"
-                        : hujan <= 7
-                          ? "Sedang"
-                          : "Lebat"}
+                      ? "Gerimis"
+                      : hujan <= 7
+                      ? "Sedang"
+                      : "Lebat"}
                   </span>
                 </div>
                 <input
@@ -1038,7 +1976,7 @@ export default function SimulasiPencemaranTanah() {
           <div className="flex-1 flex flex-col gap-2 min-h-0">
             <div className="flex justify-between items-center shrink-0">
               <h3 className="text-xs font-bold text-slate-700 flex items-center gap-1">
-                <FaMountainSun className="text-emerald-600" /> Profil Tanah &
+                <FaMountainSun className="text-emerald-600" /> Kondisi Tanah dan
                 Kolam
               </h3>
               <div
@@ -1057,7 +1995,9 @@ export default function SimulasiPencemaranTanah() {
               <button
                 onClick={openHud}
                 className={`absolute bottom-2 left-2 w-5 h-5 bg-white/95 text-slate-700 hover:text-slate-900 border border-slate-200/80 rounded-full flex items-center justify-center font-serif font-bold italic text-[10px] shadow-md hover:scale-105 active:scale-95 cursor-pointer z-20 select-none backdrop-blur-sm transition-all duration-300 ${
-                  isHudExpanded ? "scale-0 opacity-0 pointer-events-none" : "scale-100 opacity-100"
+                  isHudExpanded
+                    ? "scale-0 opacity-0 pointer-events-none"
+                    : "scale-100 opacity-100"
                 }`}
                 title="Tampilkan Info"
               >
@@ -1128,7 +2068,7 @@ export default function SimulasiPencemaranTanah() {
                   Area Tanah
                 </span>
                 <span className="bg-sky-100/90 text-sky-800 border border-sky-200 text-[8px] px-1 rounded font-bold w-max">
-                  Pond / Air Tanah
+                  Kolam Air
                 </span>
               </div>
             </div>
@@ -1150,7 +2090,7 @@ export default function SimulasiPencemaranTanah() {
             </div>
             <div className="p-1 bg-slate-50 rounded border border-slate-100 flex flex-col justify-center items-center min-h-[42px]">
               <span className="block text-[8px] text-slate-400 uppercase font-bold leading-none mb-0.5">
-                Biota Akar
+                Kondisi Akar
               </span>
               <div className="leading-[1.15] text-center w-full">
                 <span
@@ -1181,7 +2121,7 @@ export default function SimulasiPencemaranTanah() {
         <section className="col-span-4 bg-white border border-slate-200 rounded-xl p-3 flex flex-col h-full overflow-hidden">
           <h2 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex justify-between items-center shrink-0 mb-4">
             <span>
-              <FaChartBar className="text-emerald-600" /> Parameter Tanah & Air
+              <FaChartBar className="text-emerald-600" /> Kondisi Tanah dan Air
             </span>
             <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest bg-slate-100 px-1.5 py-0.5 rounded">
               Real-Time
@@ -1241,7 +2181,7 @@ export default function SimulasiPencemaranTanah() {
                   ></div>
                 </div>
                 <span className="text-[9px] font-bold text-slate-600 mt-1.5 uppercase">
-                  SBR
+                  Kesuburan Tanah
                 </span>
                 <span className="text-[7px] text-slate-400 font-bold tracking-tight">
                   Subur
@@ -1265,7 +2205,7 @@ export default function SimulasiPencemaranTanah() {
                   ></div>
                 </div>
                 <span className="text-[9px] font-bold text-slate-600 mt-1.5 uppercase">
-                  AKR
+                  Kondisi Akar
                 </span>
                 <span className="text-[7px] text-slate-400 font-bold tracking-tight">
                   Akar
@@ -1289,7 +2229,7 @@ export default function SimulasiPencemaranTanah() {
                   ></div>
                 </div>
                 <span className="text-[9px] font-bold text-slate-600 mt-1.5 uppercase">
-                  TOX
+                  Tingkat Racun
                 </span>
                 <span className="text-[7px] text-slate-400 font-bold tracking-tight">
                   Racun
@@ -1313,7 +2253,7 @@ export default function SimulasiPencemaranTanah() {
                   ></div>
                 </div>
                 <span className="text-[9px] font-bold text-slate-600 mt-1.5 uppercase">
-                  PAN
+                  Hasil Panen
                 </span>
                 <span className="text-[7px] text-slate-400 font-bold tracking-tight">
                   Panen
