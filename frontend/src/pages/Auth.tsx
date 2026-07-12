@@ -23,43 +23,50 @@ export default function Auth() {
   if (user) return null; // Avoid rendering login/register briefly before redirecting
 
   return (
-    <div className="w-full min-h-screen bg-[#FAF9FF] flex justify-center items-center text-[#2B2927] font-sans overflow-hidden relative">
-      {/* Decorative Shapes for premium aesthetic */}
+    <div className="w-full h-screen bg-[#FAF9FF] flex justify-center items-center text-[#2B2927] font-sans overflow-hidden relative">
+      {/* Decorative Shapes for premium outer aesthetic */}
       <div className="absolute top-[-5%] left-[-15%] w-[250px] h-[250px] bg-[#E9E4FF] rounded-full filter blur-2xl opacity-65"></div>
       <div className="absolute bottom-[-10%] right-[-10%] w-[220px] h-[220px] bg-[#FFEAEA] rounded-full filter blur-xl opacity-50"></div>
 
       {/* Container Mobile Portrait */}
-      <div className="w-full max-w-[430px] min-h-screen flex flex-col justify-between px-6 py-6 z-10 relative">
-        {/* Top Header Row */}
-        <div className="w-full flex justify-between items-center mt-2 mb-2 z-20">
-          <div>
-            <p className="text-[10px] uppercase tracking-widest text-[#9C98A6] font-bold">
-              Media Pembelajaran
-            </p>
-            <h1 className="text-xl font-extrabold text-[#8C66FF] leading-tight mt-0.5">
-              SI-ZAT
-            </h1>
+      <div className="w-full max-w-[430px] h-screen bg-gradient-to-b from-[#18113C] to-[#0A071E] flex flex-col justify-between overflow-hidden relative shadow-[0_0_40px_rgba(0,0,0,0.08)]">
+        {/* Top Header Row & Title */}
+        <div className="w-full px-8 pt-10 pb-8 flex flex-col gap-4 z-20">
+          <div className="w-full flex justify-between items-center">
+            <div>
+              <p className="text-[9px] uppercase tracking-widest text-white/55 font-extrabold">
+                Media Pembelajaran
+              </p>
+              <h1 className="text-2xl font-black text-white leading-tight mt-0.5 tracking-wide">
+                SI-ZAT
+              </h1>
+            </div>
+            {/* Logo UNS Card */}
+            <div className="h-10 px-3 bg-white rounded-xl flex items-center justify-center shadow-sm border border-[#F0EDFF]">
+              <img
+                src={unsLogo}
+                alt="UNS Logo"
+                className="h-6 w-auto object-contain"
+              />
+            </div>
           </div>
-          {/* Logo UNS Card */}
-          <div className="h-12 px-4 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-[#F0EDFF]">
-            <img
-              src={unsLogo}
-              alt="UNS Logo"
-              className="h-8 w-auto object-contain"
-            />
-          </div>
+
+          <p className="text-xs font-semibold text-white/60 leading-relaxed pr-4">
+            Silakan masuk ke akun Anda atau daftarkan akun baru untuk mulai menggunakan modul pembelajaran interaktif.
+          </p>
         </div>
 
-        <div className="w-full bg-white rounded-[32px] px-6 py-8 shadow-[0_12px_40px_rgba(0,0,0,0.08)] flex flex-col gap-5 relative z-10 my-auto">
-          {/* Segment Control / Tabs (matches Storage/Cloudes in mockup) */}
-          <div className="flex bg-[#F5F3FF] p-1 rounded-full w-full mb-1">
+        {/* Bottom Card Section (Full vertical height remaining) */}
+        <div className="w-full flex-grow bg-white rounded-t-[40px] px-8 pt-8 pb-8 shadow-[0_-12px_40px_rgba(0,0,0,0.15)] flex flex-col gap-6 relative z-20 overflow-hidden">
+          {/* Segment Control / Tabs */}
+          <div className="flex bg-[#F5F3FF] p-1.5 rounded-full w-full">
             <button
               type="button"
               onClick={() => setMode("login")}
-              className={`flex-1 text-center py-2.5 text-xs font-extrabold rounded-full cursor-pointer transition-none ${
+              className={`flex-1 text-center py-2.5 text-xs font-extrabold rounded-full cursor-pointer transition-all duration-200 ${
                 mode === "login"
-                  ? "bg-[#FF5E8C] text-white shadow-sm"
-                  : "text-[#9C98A6]"
+                  ? "bg-[#FF5E8C] text-white shadow-md shadow-pink-100"
+                  : "text-[#9C98A6] hover:text-[#8C66FF]"
               }`}
             >
               MASUK
@@ -67,28 +74,30 @@ export default function Auth() {
             <button
               type="button"
               onClick={() => setMode("register")}
-              className={`flex-1 text-center py-2.5 text-xs font-extrabold rounded-full cursor-pointer transition-none ${
+              className={`flex-1 text-center py-2.5 text-xs font-extrabold rounded-full cursor-pointer transition-all duration-200 ${
                 mode === "register"
-                  ? "bg-[#FF5E8C] text-white shadow-sm"
-                  : "text-[#9C98A6]"
+                  ? "bg-[#FF5E8C] text-white shadow-md shadow-pink-100"
+                  : "text-[#9C98A6] hover:text-[#8C66FF]"
               }`}
             >
               DAFTAR
             </button>
           </div>
 
-          {/* Render Form */}
-          {mode === "login" ? (
-            <Login
-              onSuccess={handleAuthSuccess}
-              onSwitchToRegister={() => setMode("register")}
-            />
-          ) : (
-            <Register
-              onSuccess={handleAuthSuccess}
-              onSwitchToLogin={() => setMode("login")}
-            />
-          )}
+          {/* Form Container (Scrollable) */}
+          <div className="flex-grow overflow-y-auto pr-1 select-text">
+            {mode === "login" ? (
+              <Login
+                onSuccess={handleAuthSuccess}
+                onSwitchToRegister={() => setMode("register")}
+              />
+            ) : (
+              <Register
+                onSuccess={handleAuthSuccess}
+                onSwitchToLogin={() => setMode("login")}
+              />
+            )}
+          </div>
         </div>
       </div>
     </div>

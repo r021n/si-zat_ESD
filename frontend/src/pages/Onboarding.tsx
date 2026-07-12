@@ -1,19 +1,21 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 import {
   LuGlobe,
   LuLeaf,
-  LuApple,
-  LuBookOpen,
   LuGamepad,
-  LuPenTool,
-  LuChartBar,
+  LuGraduationCap,
+  LuBookOpen,
+  LuAward,
 } from "react-icons/lu";
 import unsLogo from "../assets/uns_logo.webp";
 
 export default function Onboarding() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
+  const [currentStep, setCurrentStep] = useState(0);
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
   const handleStart = () => {
     if (user) {
@@ -23,127 +25,183 @@ export default function Onboarding() {
     }
   };
 
+  const handleNext = () => {
+    if (currentStep < 2) {
+      setIsTransitioning(true);
+      setTimeout(() => {
+        setCurrentStep((prev) => prev + 1);
+        setIsTransitioning(false);
+      }, 250);
+    } else {
+      handleStart();
+    }
+  };
+
+  const handleSkip = () => {
+    handleStart();
+  };
+
+  const steps = [
+    {
+      title: "Pahami Lingkungan Kita",
+      description: "Pelajari konsep pencemaran zat dan dampaknya bagi ekosistem sekitar kita untuk mewujudkan bumi yang lebih berkelanjutan.",
+      icon: LuGlobe,
+      iconColor: "text-[#66E0FF]", // cyan
+      glowColor: "bg-[#66E0FF]/15",
+      extra: (
+        <div className="absolute -top-3 -right-3 bg-white/10 backdrop-blur-md p-3 rounded-full border border-white/20 shadow-lg animate-float-delayed">
+          <LuLeaf className="text-xl text-[#FFD066]" />
+        </div>
+      )
+    },
+    {
+      title: "Simulasi Interaktif",
+      description: "Lakukan eksperimen virtual pencemaran air dan tanah secara langsung untuk melihat penyebaran zat secara dinamis.",
+      icon: LuGamepad,
+      iconColor: "text-[#FFD066]", // gold
+      glowColor: "bg-[#FFD066]/15",
+      extra: (
+        <div className="absolute -bottom-2 -left-2 bg-white/10 backdrop-blur-md p-3.5 rounded-2xl border border-white/20 shadow-lg animate-float">
+          <LuLeaf className="text-xl text-[#66E0FF]" />
+        </div>
+      )
+    },
+    {
+      title: "Uji Kemampuanmu",
+      description: "Evaluasi hasil belajarmu dengan kuis berpikir sistem serta dapatkan laporan analisis perkembangan belajarmu.",
+      icon: LuGraduationCap,
+      iconColor: "text-[#FF85A2]", // pink
+      glowColor: "bg-[#FF85A2]/15",
+      extra: (
+        <>
+          <div className="absolute -top-4 -left-4 bg-white/10 backdrop-blur-md p-3 rounded-full border border-white/20 shadow-lg animate-float">
+            <LuAward className="text-xl text-[#FF85A2]" />
+          </div>
+          <div className="absolute -bottom-2 -right-3 bg-white/10 backdrop-blur-md p-3 rounded-full border border-white/20 shadow-lg animate-float-delayed">
+            <LuBookOpen className="text-xl text-[#66E0FF]" />
+          </div>
+        </>
+      )
+    }
+  ];
+
+  const ActiveIcon = steps[currentStep].icon;
+
   return (
-    <div className="w-full min-h-screen bg-[#FAF9FF] flex justify-center items-center text-[#2B2927] font-sans select-none overflow-hidden relative">
-      {/* Decorative Shapes for premium aesthetic */}
+    <div className="w-full h-screen bg-[#FAF9FF] flex justify-center items-center text-[#2B2927] font-sans select-none overflow-hidden relative">
+      <style>{`
+        @keyframes float {
+          0%, 100% { transform: translateY(0px) rotate(0deg); }
+          50% { transform: translateY(-8px) rotate(4deg); }
+        }
+        @keyframes float-delayed {
+          0%, 100% { transform: translateY(0px) rotate(0deg); }
+          50% { transform: translateY(8px) rotate(-4deg); }
+        }
+        @keyframes pulse-glow {
+          0%, 100% { transform: scale(1); opacity: 0.15; }
+          50% { transform: scale(1.15); opacity: 0.25; }
+        }
+        .animate-float {
+          animation: float 4s ease-in-out infinite;
+        }
+        .animate-float-delayed {
+          animation: float-delayed 4.5s ease-in-out infinite;
+          animation-delay: 1.5s;
+        }
+        .animate-pulse-glow {
+          animation: pulse-glow 3s ease-in-out infinite;
+        }
+        .animate-spin-slow {
+          animation: spin 20s linear infinite;
+        }
+      `}</style>
+
+      {/* Decorative Shapes for premium outer aesthetic */}
       <div className="absolute top-[-5%] left-[-15%] w-[250px] h-[250px] bg-[#E9E4FF] rounded-full filter blur-2xl opacity-65"></div>
-      <div className="absolute top-[40%] right-[-20%] w-[200px] h-[200px] bg-[#FFF0E0] rounded-full filter blur-3xl opacity-50"></div>
-      <div className="absolute bottom-[-10%] left-[-10%] w-[180px] h-[180px] bg-[#FFEAEA] rounded-full filter blur-2xl opacity-60"></div>
+      <div className="absolute bottom-[-10%] right-[-10%] w-[220px] h-[220px] bg-[#FFEAEA] rounded-full filter blur-xl opacity-50"></div>
 
       {/* Container Mobile Portrait */}
-      <div className="w-full max-w-[430px] min-h-screen flex flex-col justify-between px-6 py-6 z-10 relative">
-        {/* Top Header Row */}
-        <div className="w-full flex justify-between items-center mt-2 mb-2 z-20">
-          <div>
-            <p className="text-[10px] uppercase tracking-widest text-[#9C98A6] font-bold">
-              Media Pembelajaran
-            </p>
-            <h1 className="text-xl font-extrabold text-[#8C66FF] leading-tight mt-0.5">
-              SI-ZAT
-            </h1>
+      <div className="w-full max-w-[430px] h-screen bg-gradient-to-b from-[#18113C] to-[#0A071E] flex flex-col justify-between overflow-hidden relative shadow-[0_0_40px_rgba(0,0,0,0.08)]">
+        {/* Top Header Row (Step Indicators + Skip Button) */}
+        <div className="w-full flex justify-between items-center px-6 pt-6 pb-2 z-20">
+          {/* Step Indicators */}
+          <div className="flex gap-2 items-center">
+            {[0, 1, 2].map((step) => (
+              <div
+                key={step}
+                className={`h-2 rounded-full transition-all duration-300 ${
+                  currentStep === step ? "w-6 bg-[#FF5E8C]" : "w-2 bg-white/30"
+                }`}
+              />
+            ))}
           </div>
-          {/* Logo UNS Card */}
-          <div className="h-12 px-4 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-[#F0EDFF]">
-            <img
-              src={unsLogo}
-              alt="UNS Logo"
-              className="h-8 w-auto object-contain"
-            />
+
+          {/* UNS Logo (Standard colored card) */}
+          <div className="h-9 px-3 bg-white rounded-xl flex items-center justify-center shadow-sm border border-[#F0EDFF]">
+            <img src={unsLogo} alt="UNS" className="h-6 w-auto object-contain" />
           </div>
+
+          {/* Skip Button */}
+          {currentStep < 2 ? (
+            <button
+              onClick={handleSkip}
+              className="text-xs font-extrabold text-white/70 hover:text-white transition-colors cursor-pointer"
+            >
+              Skip
+            </button>
+          ) : (
+            <div className="w-8" /> // spacing
+          )}
         </div>
 
         {/* Top Illustration Section */}
-        <div className="w-full flex-grow flex flex-col items-center justify-center my-6">
-          {/* Mockup Folder / School items illustration using CSS */}
-          <div className="relative w-52 h-44 flex items-center justify-center">
-            {/* Background elements */}
-            <div className="absolute top-2 right-4 w-12 h-12 bg-white/20 rounded-full blur-md"></div>
-            <div className="absolute bottom-2 left-6 w-8 h-8 bg-white/10 rounded-full blur-sm"></div>
+        <div className="w-full flex-grow flex flex-col items-center justify-center px-8 relative z-10">
+          <div
+            className={`relative w-64 h-64 flex items-center justify-center transition-all duration-300 ${
+              isTransitioning ? "opacity-0 scale-90" : "opacity-100 scale-100"
+            }`}
+          >
+            {/* Pulsing Glow Background */}
+            <div className={`absolute w-52 h-52 rounded-full filter blur-3xl animate-pulse-glow ${steps[currentStep].glowColor}`} />
 
-            {/* The main Folder Container */}
-            <div className="w-44 h-32 bg-[#FFD066] rounded-[24px] relative shadow-lg flex items-center justify-center">
-              {/* Folder tab */}
-              <div className="absolute -top-3 left-4 w-16 h-4 bg-[#FFD066] rounded-t-xl"></div>
+            {/* Orbit Circle Ring */}
+            <div className="absolute w-48 h-48 rounded-full border border-dashed border-white/10 animate-spin-slow" />
+            <div className="absolute w-36 h-36 rounded-full border border-white/5" />
 
-              {/* Inserted documents */}
-              <div className="absolute -top-6 left-8 w-24 h-12 bg-[#FF85A2] rounded-t-lg transform -rotate-6 shadow-sm flex items-end justify-center pb-2 text-[9px] text-white font-bold uppercase tracking-wider">
-                SI-ZAT
-              </div>
-              <div className="absolute -top-4 right-10 w-20 h-10 bg-[#66E0FF] rounded-t-lg transform rotate-3 shadow-sm"></div>
-
-              {/* Foreground detail - clean folder front */}
-              <div className="absolute inset-0 bg-[#FFC33A] rounded-[24px] shadow-inner flex flex-col items-center justify-center p-4">
-                <LuGlobe className="text-4xl text-[#735100]" />
-                <div className="mt-2 text-[10px] font-extrabold text-[#735100] tracking-widest uppercase bg-white/40 px-2 py-0.5 rounded-full">
-                  ESD MEDIA
-                </div>
-              </div>
+            {/* Main Center Floating Card */}
+            <div className="w-32 h-32 bg-white/5 backdrop-blur-xl rounded-[32px] border border-white/10 shadow-[0_12px_40px_rgba(0,0,0,0.3)] flex items-center justify-center animate-float relative z-10">
+              <ActiveIcon className={`text-6xl ${steps[currentStep].iconColor}`} />
             </div>
 
-            {/* Small decorative plant container */}
-            <div className="absolute -bottom-2 -left-2 bg-white p-2.5 rounded-2xl shadow-md flex items-center justify-center transform -rotate-12">
-              <LuLeaf className="text-xl text-[#2C8578]" />
-            </div>
-
-            {/* Small floating apple or flower */}
-            <div className="absolute -top-4 -right-1 bg-white p-2.5 rounded-full shadow-md flex items-center justify-center transform rotate-12">
-              <LuApple className="text-xl text-[#D95276]" />
-            </div>
+            {/* Extra Floating Items */}
+            {steps[currentStep].extra}
           </div>
         </div>
 
         {/* Bottom Content Card */}
-        <div className="w-full bg-white rounded-[36px] px-6 py-6 shadow-[0_-8px_30px_rgba(0,0,0,0.06)] flex flex-col gap-5 text-center">
-          {/* Logo / Header inside the card */}
-          <div>
-            <h1 className="text-3xl font-black text-[#8C66FF] uppercase tracking-wider">
-              SI-ZAT
+        <div className="w-full bg-white rounded-t-[40px] px-8 pt-8 pb-8 shadow-[0_-12px_40px_rgba(0,0,0,0.15)] flex flex-col gap-6 relative z-20 min-h-[320px]">
+          {/* Text Content with Transition */}
+          <div
+            className={`flex-grow flex flex-col justify-center transition-all duration-300 ${
+              isTransitioning ? "opacity-0 translate-y-2" : "opacity-100 translate-y-0"
+            }`}
+          >
+            <h1 className="text-2xl font-black text-[#2C2B30] text-center leading-tight tracking-wide">
+              {steps[currentStep].title}
             </h1>
-            <p className="text-[9px] font-bold uppercase tracking-widest text-[#9C98A6] mt-1">
-              Education for Sustainable Development
+            <p className="text-xs font-semibold text-[#9C98A6] text-center mt-3.5 leading-relaxed px-1">
+              {steps[currentStep].description}
             </p>
           </div>
 
-          <p className="text-xs text-[#7E7A8A] px-2 leading-relaxed">
-            Media pembelajaran interaktif untuk memahami dampak zat pencemar di
-            sekitar kita demi bumi yang berkelanjutan.
-          </p>
-
-          {/* Grid list of contents */}
-          <div className="grid grid-cols-2 gap-3 my-1">
-            <div className="p-3 bg-[#F3EFFF] text-[#6B52D9] rounded-2xl flex flex-col items-center justify-center shadow-sm">
-              <LuBookOpen className="text-xl mb-1" />
-              <span className="text-[10px] font-bold uppercase tracking-wider">
-                Materi
-              </span>
-            </div>
-            <div className="p-3 bg-[#E6F8F6] text-[#2C8578] rounded-2xl flex flex-col items-center justify-center shadow-sm">
-              <LuGamepad className="text-xl mb-1" />
-              <span className="text-[10px] font-bold uppercase tracking-wider">
-                Simulasi
-              </span>
-            </div>
-            <div className="p-3 bg-[#FFEBF0] text-[#D95276] rounded-2xl flex flex-col items-center justify-center shadow-sm">
-              <LuPenTool className="text-xl mb-1" />
-              <span className="text-[10px] font-bold uppercase tracking-wider">
-                Kuis
-              </span>
-            </div>
-            <div className="p-3 bg-[#FFF5EC] text-[#D97724] rounded-2xl flex flex-col items-center justify-center shadow-sm">
-              <LuChartBar className="text-xl mb-1" />
-              <span className="text-[10px] font-bold uppercase tracking-wider">
-                Laporan
-              </span>
-            </div>
-          </div>
-
           {/* Action Button Section */}
-          <div className="w-full mt-1">
+          <div className="w-full">
             <button
-              onClick={handleStart}
-              className="w-full py-4 bg-[#FF5E8C] text-white font-extrabold uppercase tracking-wider text-xs rounded-full shadow-[0_8px_20px_rgba(255,94,140,0.3)] cursor-pointer flex items-center justify-center gap-2"
+              onClick={handleNext}
+              className="w-full py-4 bg-[#FF5E8C] text-white font-extrabold uppercase tracking-widest text-xs rounded-full shadow-[0_8px_24px_rgba(255,94,140,0.35)] hover:bg-[#ff4d7e] active:scale-[0.98] transition-all cursor-pointer flex items-center justify-center gap-2"
             >
-              <span>Mulai Belajar</span>
+              <span>{currentStep === 2 ? "Mulai Belajar" : "Lanjut"}</span>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 20 20"

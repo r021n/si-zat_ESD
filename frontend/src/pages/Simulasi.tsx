@@ -2,19 +2,20 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 import {
-  LuGamepad,
   LuDroplets,
   LuFish,
   LuSprout,
   LuWind,
 } from "react-icons/lu";
-import { FiArrowLeft } from "react-icons/fi";
+import { FiArrowLeft, FiHelpCircle } from "react-icons/fi";
 import { useAppBack } from "../hooks/useAppBack";
+import { useCustomDialog } from "../components/CustomDialog";
 
 export default function Simulasi() {
   const navigate = useNavigate();
   const goBack = useAppBack();
   const { user } = useAuthStore();
+  const { showAlert } = useCustomDialog();
 
   useEffect(() => {
     // Clear all simulation reload flags when entering the menu
@@ -71,6 +72,25 @@ export default function Simulasi() {
     navigate(`/simulasi/${id}`);
   };
 
+  const showGuide = () => {
+    showAlert(
+      <div className="text-left w-full mt-2">
+        <ol className="list-decimal pl-4 text-xs font-medium text-[#2C2B30] space-y-2.5 leading-relaxed">
+          <li>Pilih topik simulasi, misalnya Pencemaran Air, Eutrofikasi, Pencemaran Tanah, atau Pencemaran Udara.</li>
+          <li><strong>Amati kondisi awal</strong> pada simulasi, seperti warna air, jumlah ikan, kondisi tanah, atau kualitas udara.</li>
+          <li><strong>Atur variabel</strong> yang tersedia dengan <strong>menggeser <em>slider</em></strong> atau <strong>menekan tombol ON/OFF</strong>.</li>
+          <li>Tekan tombol "Mulai" di pojok kanan atas untuk menjalankan simulasi.</li>
+          <li>Perhatikan perubahan yang terjadi pada gambar simulasi dan grafik parameter di sebelah kanan.</li>
+          <li>Bandingkan hasil sebelum dan sesudah variabel diubah.</li>
+          <li>Coba ubah variabel lain untuk melihat apakah hasil simulasi juga berubah.</li>
+          <li>Gunakan fitur pemulihan lingkungan <strong>(seperti fitur purifikasi, restorasi air, bersihkan, atau hujan buatan)</strong> sesuai jenis simulasi, kemudian amati perubahan yang terjadi.</li>
+          <li>Diskusikan hasil pengamatan bersama kelompok dan tuliskan kesimpulan pada LKPD.</li>
+        </ol>
+      </div>,
+      "Petunjuk Simulator"
+    );
+  };
+
   if (!user) return null;
 
   return (
@@ -100,10 +120,14 @@ export default function Simulasi() {
                 </h1>
               </div>
             </div>
-            {/* Header Icon */}
-            <div className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-[#F0EDFF] text-[#8C66FF] flex-shrink-0">
-              <LuGamepad className="text-xl" />
-            </div>
+            {/* Help/Guide Button */}
+            <button
+              onClick={showGuide}
+              className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-[#F0EDFF] text-[#8C66FF] cursor-pointer active:bg-neutral-50 transition-none flex-shrink-0"
+              title="Petunjuk Penggunaan"
+            >
+              <FiHelpCircle size={20} />
+            </button>
           </div>
           <p className="text-xs text-[#9C98A6] mb-6">
             Pilih salah satu topik simulasi interaktif di bawah ini untuk

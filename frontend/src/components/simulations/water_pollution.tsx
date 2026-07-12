@@ -917,7 +917,7 @@ export default function SimulasiPencemaranAir() {
               </div>
               <div className="space-y-0.5">
                 <div className="flex justify-between text-[10px] text-slate-500">
-                  <span>Debit Aliran</span>
+                  <span>Debit Limbah</span>
                   <span className="font-mono font-bold text-cyan-600">
                     {slideDomestik}%
                   </span>
