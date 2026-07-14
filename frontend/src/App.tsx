@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   HashRouter as Router,
   Routes,
@@ -6,6 +6,7 @@ import {
   Navigate,
   useLocation,
   useNavigate,
+  Outlet,
 } from "react-router-dom";
 import { App as CapApp } from "@capacitor/app";
 import { Capacitor } from "@capacitor/core";
@@ -20,7 +21,7 @@ import SimulasiEutrofikasi from "./components/simulations/eutrophication";
 import SimulasiPencemaranTanah from "./components/simulations/land_pollution";
 import SimulasiPencemaranUdara from "./components/simulations/air_pollution";
 import { useAuthStore } from "./store/authStore";
-import { recordOpenApi, recordUsageApi, recordMenuClickApi } from "./api/api";
+import { recordOpenApi, recordUsageApi, recordMenuClickApi, getAccessStatusApi } from "./api/api";
 import KuisMenu from "./pages/KuisMenu";
 import PenilaianBerpikirSistem from "./pages/PenilaianBerpikirSistem";
 import AdminMenu from "./pages/AdminMenu";
@@ -30,6 +31,8 @@ import MateriDetail from "./pages/MateriDetail";
 import MateriEditor from "./pages/MateriEditor";
 import AdminChangePassword from "./pages/AdminChangePassword";
 import ProfilPengembang from "./pages/ProfilPengembang";
+import AdminAccessControl from "./pages/AdminAccessControl";
+import Locked from "./pages/Locked";
 
 
 
@@ -129,6 +132,64 @@ function LoadingScreen() {
   );
 }
 
+function AccessGuard({ children }: { children: React.ReactNode }) {
+  const { user } = useAuthStore();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [checking, setChecking] = useState(true);
+
+  useEffect(() => {
+    const checkAccess = async () => {
+      // Admins bypass access control locks
+      if (user) {
+        const isAdmin =
+          user.status.toLowerCase() === "admin" ||
+          user.email.toLowerCase().includes("admin");
+        if (isAdmin) {
+          setChecking(false);
+          return;
+        }
+      }
+
+      try {
+        const res = await getAccessStatusApi();
+        if (res.isLocked) {
+          navigate("/locked", { replace: true });
+        } else {
+          setChecking(false);
+        }
+      } catch (err) {
+        console.error("Gagal memeriksa status akses:", err);
+        // Fail open on network/server error to avoid lockouts
+        setChecking(false);
+      }
+    };
+
+    const path = location.pathname;
+    if (path === "/" || path === "/auth" || path === "/locked") {
+      setChecking(false);
+      return;
+    }
+
+    checkAccess();
+  }, [location.pathname, user, navigate]);
+
+  if (checking) {
+    return <LoadingScreen />;
+  }
+
+  return <>{children}</>;
+}
+
+function AccessLayout() {
+  return (
+    <AccessGuard>
+      <Outlet />
+    </AccessGuard>
+  );
+}
+
+
 function AppContent() {
   const { checkAuth, initialized, user, token } = useAuthStore();
 
@@ -202,45 +263,51 @@ function AppContent() {
         {/* Auth Route (Login & Register switcher) */}
         <Route path="/auth" element={<Auth />} />
 
-        {/* Main Menu Route */}
-        <Route path="/menu" element={<MainMenu />} />
+        {/* Locked Route */}
+        <Route path="/locked" element={<Locked />} />
 
-        {/* Subpages routes */}
-        <Route
-          path="/profile-report"
-          element={<ProfileReport />}
-        />
-        <Route path="/profil-pengembang" element={<ProfilPengembang />} />
-        <Route path="/materi" element={<Materi />} />
-        <Route path="/materi/view/:id" element={<MateriDetail />} />
-        <Route path="/admin/materi/new" element={<MateriEditor />} />
-        <Route path="/admin/materi/edit/:id" element={<MateriEditor />} />
+        {/* Protected Routes (checked by AccessGuard) */}
+        <Route element={<AccessLayout />}>
+          {/* Main Menu Route */}
+          <Route path="/menu" element={<MainMenu />} />
 
-        {/* Simulasi routes */}
-        <Route path="/simulasi" element={<Simulasi />} />
-        <Route
-          path="/simulasi/air"
-          element={<SimulasiPencemaranAir />}
-        />
-        <Route
-          path="/simulasi/eutrofikasi"
-          element={<SimulasiEutrofikasi />}
-        />
-        <Route
-          path="/simulasi/tanah"
-          element={<SimulasiPencemaranTanah />}
-        />
-        <Route
-          path="/simulasi/udara"
-          element={<SimulasiPencemaranUdara />}
-        />
+          {/* Subpages routes */}
+          <Route
+            path="/profile-report"
+            element={<ProfileReport />}
+          />
+          <Route path="/profil-pengembang" element={<ProfilPengembang />} />
+          <Route path="/materi" element={<Materi />} />
+          <Route path="/materi/view/:id" element={<MateriDetail />} />
+          <Route path="/admin/materi/new" element={<MateriEditor />} />
+          <Route path="/admin/materi/edit/:id" element={<MateriEditor />} />
 
-        <Route path="/kuis" element={<KuisMenu />} />
-        <Route path="/kuis/berpikir-sistem" element={<PenilaianBerpikirSistem />} />
-        <Route path="/admin" element={<AdminMenu />} />
-        <Route path="/admin/kuis" element={<AdminKuis />} />
-        <Route path="/admin/change-password" element={<AdminChangePassword />} />
+          {/* Simulasi routes */}
+          <Route path="/simulasi" element={<Simulasi />} />
+          <Route
+            path="/simulasi/air"
+            element={<SimulasiPencemaranAir />}
+          />
+          <Route
+            path="/simulasi/eutrofikasi"
+            element={<SimulasiEutrofikasi />}
+          />
+          <Route
+            path="/simulasi/tanah"
+            element={<SimulasiPencemaranTanah />}
+          />
+          <Route
+            path="/simulasi/udara"
+            element={<SimulasiPencemaranUdara />}
+          />
 
+          <Route path="/kuis" element={<KuisMenu />} />
+          <Route path="/kuis/berpikir-sistem" element={<PenilaianBerpikirSistem />} />
+          <Route path="/admin" element={<AdminMenu />} />
+          <Route path="/admin/kuis" element={<AdminKuis />} />
+          <Route path="/admin/change-password" element={<AdminChangePassword />} />
+          <Route path="/admin/access-control" element={<AdminAccessControl />} />
+        </Route>
 
         {/* Fallback route */}
         <Route path="*" element={<Navigate to="/auth" replace />} />

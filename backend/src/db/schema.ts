@@ -89,5 +89,13 @@ export const menuClicks = sqliteTable('menu_clicks', {
   count: integer('count').default(0).notNull(),
 })
 
+export const accessControls = sqliteTable('access_controls', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  isLocked: integer('is_locked').default(0).notNull(), // 0 = false, 1 = true
+  isScheduleEnabled: integer('is_schedule_enabled').default(0).notNull(), // 0 = false, 1 = true
+  schedules: text('schedules').default('[]').notNull(), // JSON string representing ScheduleItem[]
+})
+
+
 
 

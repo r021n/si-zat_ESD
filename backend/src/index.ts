@@ -7,6 +7,12 @@ import quizRoute from './routes/quiz.js'
 import materiRoute from './routes/materi.js'
 import tasksRoute from './routes/tasks.js'
 import analyticsRoute from './routes/analytics.js'
+import accessRoute, { getSettings, checkIsLocked } from './routes/access.js'
+import { verify } from 'hono/jwt'
+import { db } from './db/index.js'
+import { users } from './db/schema.js'
+import { eq } from 'drizzle-orm'
+
 
 
 const app = new Hono()
@@ -41,12 +47,68 @@ app.use('*', cors({
 
 app.get('/api/health', (c) => c.json({ status: 'ok', version: 'hono-4.12.23' }))
 
+// Intercept requests if application is locked
+app.use('/api/*', async (c, next) => {
+  const path = c.req.path
+  
+  // Public paths bypass access lock check
+  if (
+    path === '/api/health' ||
+    path === '/api/auth/login' ||
+    path === '/api/auth/register' ||
+    path === '/api/auth/me' ||
+    path === '/api/access/status'
+  ) {
+    return await next()
+  }
+
+  try {
+    const settings = await getSettings()
+    const isLocked = checkIsLocked(settings)
+    
+    if (isLocked) {
+      // If locked, only admin users can access
+      const authHeader = c.req.header('Authorization')
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return c.json({ error: 'Aplikasi sedang dinonaktifkan oleh administrator.' }, 403)
+      }
+
+      const token = authHeader.split(' ')[1]
+      try {
+        const payload = await verify(token, process.env.JWT_SECRET || 'sizatesdsecret', 'HS256')
+        const [user] = await db.select({
+          id: users.id,
+          email: users.email,
+          status: users.status
+        }).from(users).where(eq(users.id, payload.id as number)).limit(1)
+
+        if (!user) {
+          return c.json({ error: 'Aplikasi sedang dinonaktifkan oleh administrator.' }, 403)
+        }
+
+        const isAdmin = (user.status || '').toLowerCase() === 'admin' || user.email.toLowerCase().includes('admin')
+        if (!isAdmin) {
+          return c.json({ error: 'Aplikasi sedang dinonaktifkan oleh administrator.' }, 403)
+        }
+      } catch (err) {
+        return c.json({ error: 'Aplikasi sedang dinonaktifkan oleh administrator.' }, 403)
+      }
+    }
+  } catch (err) {
+    console.error('Error during access lock verification:', err)
+  }
+
+  await next()
+})
+
 // Mount separate routing modules
 app.route('/api/auth', authRoute)
 app.route('/api/quiz', quizRoute)
 app.route('/api/materi', materiRoute)
 app.route('/api/tasks', tasksRoute)
 app.route('/api/analytics', analyticsRoute)
+app.route('/api/access', accessRoute)
+
 
 
 

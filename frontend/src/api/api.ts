@@ -455,5 +455,47 @@ export async function getSiswaAnalyticsApi(token: string, userId: number) {
   return data;
 }
 
+export async function getAccessStatusApi() {
+  const response = await fetch(`${API_URL}/api/access/status`, {
+    method: "GET",
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || "Gagal mengambil status akses aplikasi");
+  }
+  return data;
+}
+
+export async function getAccessSettingsApi(token: string) {
+  const response = await fetch(`${API_URL}/api/access/settings`, {
+    method: "GET",
+    headers: {
+      "Authorization": `Bearer ${token}`
+    }
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || "Gagal mengambil konfigurasi akses");
+  }
+  return data;
+}
+
+export async function updateAccessSettingsApi(token: string, settingsData: { isLocked: boolean; isScheduleEnabled: boolean; schedules: any[] }) {
+  const response = await fetch(`${API_URL}/api/access/settings`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    },
+    body: JSON.stringify(settingsData)
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || "Gagal menyimpan konfigurasi akses");
+  }
+  return data;
+}
+
+
 
 

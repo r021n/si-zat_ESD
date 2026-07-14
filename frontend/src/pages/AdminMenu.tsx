@@ -9,7 +9,9 @@ import {
   LuChartBar,
   LuClock,
   LuEye,
+  LuSettings,
 } from "react-icons/lu";
+
 import { FiArrowLeft } from "react-icons/fi";
 import { getSiswaUsersApi, getSiswaAnalyticsApi } from "../api/api";
 
@@ -140,6 +142,15 @@ export default function AdminMenu() {
       bgIcon: "bg-[#F0ECFF]",
       textIcon: "text-[#8C66FF]",
       path: "/admin/change-password",
+    },
+    {
+      id: "access-control",
+      label: "Kontrol Akses",
+      desc: "Atur status kunci manual dan jadwal aktif aplikasi",
+      icon: <LuSettings className="text-xl" />,
+      bgIcon: "bg-[#FFF9E6]",
+      textIcon: "text-[#FFC107]",
+      path: "/admin/access-control",
     },
     {
       id: "siswa-insights",
