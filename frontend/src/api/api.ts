@@ -32,6 +32,22 @@ export async function registerApi(email: string, kelas: string, password: string
   return data;
 }
 
+export async function loginWithGoogleApi(idToken: string, kelas?: string) {
+  const response = await fetch(`${API_URL}/api/auth/google`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ idToken, kelas }),
+  });
+
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || "Gagal autentikasi Google");
+  }
+  return data;
+}
+
 export async function getMeApi(token: string) {
   const response = await fetch(`${API_URL}/api/auth/me`, {
     method: "GET",

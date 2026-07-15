@@ -124,3 +124,6 @@ Desktop.ini
 *.sw?
 *.bak
 *.tmp
+
+# Cloudflare Pages deployment guide
+DEPLOY_CLOUDFLARE_PAGES.md

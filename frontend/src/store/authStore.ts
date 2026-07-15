@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { loginApi, registerApi, getMeApi, updateProfileApi } from "../api/api";
+import { loginApi, registerApi, getMeApi, updateProfileApi, loginWithGoogleApi } from "../api/api";
 
 export interface User {
   id: number;
@@ -20,6 +20,7 @@ interface AuthState {
   error: string | null;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, kelas: string, password: string) => Promise<void>;
+  loginWithGoogle: (idToken: string, kelas?: string) => Promise<{ registered: boolean; email?: string; nama?: string }>;
   logout: () => void;
   checkAuth: () => Promise<void>;
   updateProfile: (kelas: string, nama: string) => Promise<void>;
@@ -52,6 +53,24 @@ export const useAuthStore = create<AuthState>((set) => ({
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
       set({ user: data.user, token: data.token, loading: false });
+    } catch (err: any) {
+      set({ error: err.message, loading: false });
+      throw err;
+    }
+  },
+
+  loginWithGoogle: async (idToken, kelas) => {
+    set({ loading: true, error: null });
+    try {
+      const data = await loginWithGoogleApi(idToken, kelas);
+      if (data.registered && data.token && data.user) {
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("user", JSON.stringify(data.user));
+        set({ user: data.user, token: data.token, loading: false });
+      } else {
+        set({ loading: false });
+      }
+      return data;
     } catch (err: any) {
       set({ error: err.message, loading: false });
       throw err;

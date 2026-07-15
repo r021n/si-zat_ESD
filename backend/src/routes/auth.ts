@@ -396,5 +396,96 @@ auth.post('/users/:id/change-password', async (c) => {
   }
 })
 
+auth.post('/google', async (c) => {
+  try {
+    const { idToken, kelas } = await c.req.json()
+
+    if (!idToken) {
+      return c.json({ error: 'ID Token tidak boleh kosong.' }, 400)
+    }
+
+    // Verify token with Google API
+    const response = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${idToken}`)
+    if (!response.ok) {
+      return c.json({ error: 'Token Google tidak valid.' }, 400)
+    }
+
+    const payload = (await response.json()) as {
+      email: string
+      name?: string
+      aud?: string
+      email_verified?: string | boolean
+    }
+
+    // Optional: Check client ID if configured
+    const clientId = process.env.GOOGLE_CLIENT_ID
+    if (clientId && clientId !== 'your-google-client-id.apps.googleusercontent.com' && payload.aud !== clientId) {
+      return c.json({ error: 'Token Google tidak valid (aud mismatch).' }, 400)
+    }
+
+    const email = payload.email
+    if (!email) {
+      return c.json({ error: 'Token tidak berisi informasi email.' }, 400)
+    }
+
+    // Check if email already exists
+    let [user] = await db.select().from(users).where(eq(users.email, email)).limit(1)
+
+    if (!user) {
+      // If user does not exist and kelas is not provided, return registered: false
+      if (!kelas) {
+        return c.json({
+          status: 'success',
+          registered: false,
+          email,
+          nama: payload.name || ''
+        })
+      }
+
+      // If user does not exist and kelas IS provided, register them!
+      const hashedPassword = await bcrypt.hash(`google-oauth-${Math.random()}`, 10)
+      const [newUser] = await db.insert(users).values({
+        email,
+        kelas,
+        password: hashedPassword,
+        nama: payload.name || '',
+        status: 'siswa'
+      }).returning()
+
+      user = newUser
+    }
+
+    // Generate JWT token
+    const token = await sign(
+      {
+        id: user.id,
+        email: user.email,
+        exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7 // 7 Days
+      },
+      getJwtSecret()
+    )
+
+    return c.json({
+      status: 'success',
+      registered: true,
+      token,
+      user: {
+        id: user.id,
+        email: user.email,
+        kelas: user.kelas,
+        nama: user.nama,
+        status: user.status,
+        createdAt: user.createdAt,
+        openCount: user.openCount,
+        totalUsageTime: user.totalUsageTime
+      }
+    })
+  } catch (error: any) {
+    console.error('Error during Google authentication:', error)
+    return c.json({ error: 'Terjadi kesalahan pada server saat autentikasi Google.' }, 500)
+  }
+})
+
 export default auth
+
 
