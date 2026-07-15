@@ -11,7 +11,7 @@ export default defineConfig(({ mode }) => {
       react(),
       tailwindcss(),
     ],
-    base: isCapacitor ? '/' : (process.env.NODE_ENV === 'production' ? '/si-zat_ESD/' : '/'),
+    base: isCapacitor ? '/' : (process.env.CF_PAGES === '1' || process.env.VERCEL === '1' ? '/' : (process.env.NODE_ENV === 'production' ? '/si-zat_ESD/' : '/')),
     server: {
       host: true,
       port: 5173,
