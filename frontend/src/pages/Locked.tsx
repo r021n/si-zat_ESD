@@ -110,7 +110,7 @@ export default function Locked() {
         {/* Footer */}
         <div>
           <p className="text-[10px] text-[#9C98A6] font-semibold tracking-wide uppercase">
-            Sistem Informasi Zat Interaktif (SI-ZAT)
+            Sistem Informasi Zat Interaktif (SiZat-ESD)
           </p>
         </div>
       </div>

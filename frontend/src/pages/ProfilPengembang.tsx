@@ -136,12 +136,12 @@ export default function ProfilPengembang() {
                 <LuAward className="w-4 h-4" />
               </div>
               <p className="text-[10px] font-black uppercase tracking-widest text-[#9C98A6]">
-                Tentang SI-ZAT
+                Tentang SiZat-ESD
               </p>
             </div>
 
             <p className="text-xs text-[#555555] font-medium leading-relaxed">
-              SI-ZAT merupakan media pembelajaran interaktif berbasis web yang
+              SiZat-ESD merupakan media pembelajaran interaktif berbasis web yang
               dikembangkan untuk mendukung pembelajaran mandiri mengenai konsep
               pencemaran lingkungan.
             </p>

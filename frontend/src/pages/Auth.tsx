@@ -146,7 +146,7 @@ export default function Auth() {
                 Media Pembelajaran
               </p>
               <h1 className="text-2xl font-black text-white leading-tight mt-0.5 tracking-wide">
-                SI-ZAT
+                SiZat-ESD
               </h1>
             </div>
             {/* Logo UNS Card */}

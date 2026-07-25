@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">si-zat_ESD</string>
-    <string name="title_activity_main">si-zat_ESD</string>
+    <string name="app_name">SiZat-ESD</string>
+    <string name="title_activity_main">SiZat-ESD</string>
     <string name="package_name">com.sizat.esd</string>
     <string name="custom_url_scheme">com.sizat.esd</string>
 </resources>

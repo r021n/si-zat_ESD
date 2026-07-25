@@ -84,7 +84,7 @@ export default function MainMenu({ onNavigate }: MainMenuProps) {
       setStatsDetailModal({
         isOpen: true,
         title: "Detail Kunjungan",
-        message: `Aplikasi SI-ZAT ini telah dibuka sebanyak ${user.openCount ?? 0} kali oleh akun Anda.`,
+        message: `Aplikasi SiZat-ESD ini telah dibuka sebanyak ${user.openCount ?? 0} kali oleh akun Anda.`,
       });
     } else {
       setStatsDetailModal({
@@ -227,7 +227,7 @@ export default function MainMenu({ onNavigate }: MainMenuProps) {
 
             <div>
               <p className="text-[10px] text-purple-200 uppercase tracking-widest font-extrabold">
-                SI-ZAT Portal
+                SiZat-ESD Portal
               </p>
               <h2 className="text-lg font-black text-white leading-tight mt-1 truncate">
                 Media Belajar Mandiri
@@ -333,7 +333,7 @@ export default function MainMenu({ onNavigate }: MainMenuProps) {
                 Keluar Sesi
               </h3>
               <p className="text-xs text-[#9C98A6] font-medium mt-2 leading-relaxed">
-                Apakah Anda yakin ingin keluar dari aplikasi SI-ZAT?
+                Apakah Anda yakin ingin keluar dari aplikasi SiZat-ESD?
               </p>
             </div>
             <div className="flex gap-2.5 mt-2">

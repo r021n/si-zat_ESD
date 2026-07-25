@@ -457,7 +457,7 @@ export default function MateriDetail() {
 
                                 {/* Page Footer */}
                                 <div className="border-t border-[#F0EDFF]/50 pt-2 mt-3 flex justify-between items-center text-[10px] text-[#9C98A6] font-bold uppercase tracking-wider">
-                                  <span>SI-ZAT ESD</span>
+                                  <span>SiZat-ESD</span>
                                   <span>•</span>
                                 </div>
                               </div>
