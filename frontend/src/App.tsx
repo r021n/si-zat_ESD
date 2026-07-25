@@ -21,7 +21,12 @@ import SimulasiEutrofikasi from "./components/simulations/eutrophication";
 import SimulasiPencemaranTanah from "./components/simulations/land_pollution";
 import SimulasiPencemaranUdara from "./components/simulations/air_pollution";
 import { useAuthStore } from "./store/authStore";
-import { recordOpenApi, recordUsageApi, recordMenuClickApi, getAccessStatusApi } from "./api/api";
+import {
+  recordOpenApi,
+  recordUsageApi,
+  recordMenuClickApi,
+  getAccessStatusApi,
+} from "./api/api";
 import KuisMenu from "./pages/KuisMenu";
 import PenilaianBerpikirSistem from "./pages/PenilaianBerpikirSistem";
 import AdminMenu from "./pages/AdminMenu";
@@ -33,8 +38,6 @@ import AdminChangePassword from "./pages/AdminChangePassword";
 import ProfilPengembang from "./pages/ProfilPengembang";
 import AdminAccessControl from "./pages/AdminAccessControl";
 import Locked from "./pages/Locked";
-
-
 
 function RouteTracker() {
   const location = useLocation();
@@ -88,27 +91,36 @@ function BackButtonHandler() {
 
     let isDialogActive = false;
 
-    const backButtonHandler = CapApp.addListener("backButton", async (data: any) => {
-      const currentPath = location.pathname;
+    const backButtonHandler = CapApp.addListener(
+      "backButton",
+      async (data: any) => {
+        const currentPath = location.pathname;
 
-      if (currentPath === "/menu" || currentPath === "/" || currentPath === "/auth") {
-        if (isDialogActive) return;
-        isDialogActive = true;
+        if (
+          currentPath === "/menu" ||
+          currentPath === "/" ||
+          currentPath === "/auth"
+        ) {
+          if (isDialogActive) return;
+          isDialogActive = true;
 
-        const confirmExit = await showConfirm("Apakah Anda yakin ingin keluar dari aplikasi?");
-        isDialogActive = false;
+          const confirmExit = await showConfirm(
+            "Apakah Anda yakin ingin keluar dari aplikasi?",
+          );
+          isDialogActive = false;
 
-        if (confirmExit) {
-          CapApp.exitApp();
-        }
-      } else {
-        if (data.canGoBack) {
-          window.history.back();
+          if (confirmExit) {
+            CapApp.exitApp();
+          }
         } else {
-          navigate("/menu");
+          if (data.canGoBack) {
+            window.history.back();
+          } else {
+            navigate("/menu");
+          }
         }
-      }
-    });
+      },
+    );
 
     return () => {
       backButtonHandler.then((listener: any) => listener.remove());
@@ -121,7 +133,7 @@ function BackButtonHandler() {
 function LoadingScreen() {
   return (
     <div className="w-full min-h-screen bg-white flex justify-center items-center text-black font-sans select-none">
-      <div className="w-full max-w-[430px] min-h-screen flex flex-col justify-center items-center px-6 py-8 gap-4 text-center">
+      <div className="w-full max-w-107.5 min-h-screen flex flex-col justify-center items-center px-6 py-8 gap-4 text-center">
         {/* Retro minimalist spinner */}
         <div className="w-8 h-8 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
         <p className="text-[10px] uppercase font-bold tracking-widest text-neutral-500 animate-pulse">
@@ -189,7 +201,6 @@ function AccessLayout() {
   );
 }
 
-
 function AppContent() {
   const { checkAuth, initialized, user, token } = useAuthStore();
 
@@ -239,7 +250,7 @@ function AppContent() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({ seconds: elapsedSeconds }),
           keepalive: true,
@@ -272,10 +283,7 @@ function AppContent() {
           <Route path="/menu" element={<MainMenu />} />
 
           {/* Subpages routes */}
-          <Route
-            path="/profile-report"
-            element={<ProfileReport />}
-          />
+          <Route path="/profile-report" element={<ProfileReport />} />
           <Route path="/profil-pengembang" element={<ProfilPengembang />} />
           <Route path="/materi" element={<Materi />} />
           <Route path="/materi/view/:id" element={<MateriDetail />} />
@@ -284,29 +292,29 @@ function AppContent() {
 
           {/* Simulasi routes */}
           <Route path="/simulasi" element={<Simulasi />} />
-          <Route
-            path="/simulasi/air"
-            element={<SimulasiPencemaranAir />}
-          />
+          <Route path="/simulasi/air" element={<SimulasiPencemaranAir />} />
           <Route
             path="/simulasi/eutrofikasi"
             element={<SimulasiEutrofikasi />}
           />
-          <Route
-            path="/simulasi/tanah"
-            element={<SimulasiPencemaranTanah />}
-          />
-          <Route
-            path="/simulasi/udara"
-            element={<SimulasiPencemaranUdara />}
-          />
+          <Route path="/simulasi/tanah" element={<SimulasiPencemaranTanah />} />
+          <Route path="/simulasi/udara" element={<SimulasiPencemaranUdara />} />
 
           <Route path="/kuis" element={<KuisMenu />} />
-          <Route path="/kuis/berpikir-sistem" element={<PenilaianBerpikirSistem />} />
+          <Route
+            path="/kuis/berpikir-sistem"
+            element={<PenilaianBerpikirSistem />}
+          />
           <Route path="/admin" element={<AdminMenu />} />
           <Route path="/admin/kuis" element={<AdminKuis />} />
-          <Route path="/admin/change-password" element={<AdminChangePassword />} />
-          <Route path="/admin/access-control" element={<AdminAccessControl />} />
+          <Route
+            path="/admin/change-password"
+            element={<AdminChangePassword />}
+          />
+          <Route
+            path="/admin/access-control"
+            element={<AdminAccessControl />}
+          />
         </Route>
 
         {/* Fallback route */}

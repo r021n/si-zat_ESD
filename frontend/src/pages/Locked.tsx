@@ -54,17 +54,17 @@ export default function Locked() {
   return (
     <div className="w-full min-h-screen bg-[#FAF9FF] flex justify-center items-center text-[#2C2B30] font-sans select-none overflow-hidden relative">
       {/* Background blobs for premium feeling */}
-      <div className="absolute top-[-10%] right-[-10%] w-[200px] h-[200px] bg-[#FFEBF0] rounded-full filter blur-2xl opacity-65"></div>
-      <div className="absolute bottom-[-10%] left-[-10%] w-[200px] h-[200px] bg-[#E9E4FF] rounded-full filter blur-2xl opacity-65"></div>
+      <div className="absolute top-[-10%] right-[-10%] w-50 h-50 bg-[#FFEBF0] rounded-full filter blur-2xl opacity-65"></div>
+      <div className="absolute bottom-[-10%] left-[-10%] w-50 h-50 bg-[#E9E4FF] rounded-full filter blur-2xl opacity-65"></div>
 
-      <div className="w-full max-w-[430px] min-h-screen flex flex-col justify-between px-6 py-12 z-10 text-center">
+      <div className="w-full max-w-107.5 min-h-screen flex flex-col justify-between px-6 py-12 z-10 text-center">
         {/* Top Spacer */}
         <div></div>
 
         {/* Main Content Card */}
-        <div className="bg-white rounded-[32px] p-8 shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-[#F0EDFF] flex flex-col items-center gap-6">
+        <div className="bg-white rounded-4xl p-8 shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-[#F0EDFF] flex flex-col items-center gap-6">
           {/* Locked Icon Wrapper */}
-          <div className="w-20 h-20 bg-[#FFEBF0] text-[#D95276] rounded-[24px] flex items-center justify-center shadow-inner animate-pulse">
+          <div className="w-20 h-20 bg-[#FFEBF0] text-[#D95276] rounded-3xl flex items-center justify-center shadow-inner animate-pulse">
             <LuLock size={36} />
           </div>
 
@@ -73,7 +73,8 @@ export default function Locked() {
               Akses Dibatasi
             </h1>
             <p className="text-xs text-[#9C98A6] font-medium leading-relaxed px-2">
-              Maaf, saat ini aplikasi sedang dinonaktifkan atau berada di luar jadwal akses yang ditentukan oleh Administrator.
+              Maaf, saat ini aplikasi sedang dinonaktifkan atau berada di luar
+              jadwal akses yang ditentukan oleh Administrator.
             </p>
           </div>
 
@@ -90,7 +91,9 @@ export default function Locked() {
               disabled={checking}
               className="w-full py-3.5 bg-[#8C66FF] text-white font-extrabold uppercase tracking-wider text-[10px] rounded-full shadow-md shadow-purple-100 cursor-pointer active:scale-95 transition-all flex items-center justify-center gap-2 hover:bg-[#7b55f0] disabled:opacity-70 disabled:cursor-not-allowed"
             >
-              <LuRefreshCw className={`text-xs ${checking ? "animate-spin" : ""}`} />
+              <LuRefreshCw
+                className={`text-xs ${checking ? "animate-spin" : ""}`}
+              />
               <span>{checking ? "Memeriksa..." : "Periksa Akses"}</span>
             </button>
 

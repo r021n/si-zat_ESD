@@ -108,7 +108,9 @@ export default function AdminMenu() {
     if (seconds < 3600) {
       const minutes = seconds / 60;
       const formatted = minutes.toFixed(1).replace(".", ",");
-      return `${formatted.endsWith(",0") ? Math.round(minutes) : formatted} menit`;
+      return `${
+        formatted.endsWith(",0") ? Math.round(minutes) : formatted
+      } menit`;
     }
     const hours = seconds / 3600;
     const formatted = hours.toFixed(1).replace(".", ",");
@@ -165,15 +167,15 @@ export default function AdminMenu() {
 
   return (
     <div className="w-full min-h-screen bg-[#FAF9FF] flex justify-center items-center text-[#2C2B30] font-sans select-none overflow-hidden relative">
-      <div className="absolute top-[-10%] right-[-10%] w-[200px] h-[200px] bg-[#E9E4FF] rounded-full filter blur-2xl opacity-50"></div>
+      <div className="absolute top-[-10%] right-[-10%] w-50 h-50 bg-[#E9E4FF] rounded-full filter blur-2xl opacity-50"></div>
 
-      <div className="w-full max-w-[430px] min-h-screen flex flex-col justify-between px-6 py-6 z-10">
+      <div className="w-full max-w-107.5 min-h-screen flex flex-col justify-between px-6 py-6 z-10">
         {!showSiswaInsights ? (
           <>
             <div className="w-full flex items-center gap-3 mt-6">
               <button
                 onClick={() => goBack("/menu")}
-                className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-[#F0EDFF] text-[#8C66FF] cursor-pointer active:bg-neutral-50 transition-none flex-shrink-0"
+                className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-[#F0EDFF] text-[#8C66FF] cursor-pointer active:bg-neutral-50 transition-none shrink-0"
                 title="Kembali"
               >
                 <FiArrowLeft size={20} />
@@ -199,7 +201,7 @@ export default function AdminMenu() {
                       navigate(menu.path);
                     }
                   }}
-                  className="w-full bg-white rounded-[24px] p-4 flex items-center justify-between shadow-[0_4px_12px_rgba(0,0,0,0.02)] border border-[#F0EDFF] cursor-pointer text-left transition-none"
+                  className="w-full bg-white rounded-3xl p-4 flex items-center justify-between shadow-[0_4px_12px_rgba(0,0,0,0.02)] border border-[#F0EDFF] cursor-pointer text-left transition-none"
                 >
                   <div className="flex items-center gap-4">
                     {/* Rounded icon box */}
@@ -241,7 +243,7 @@ export default function AdminMenu() {
             <div className="w-full flex items-center gap-3 mt-6 mb-4">
               <button
                 onClick={() => setShowSiswaInsights(false)}
-                className="w-10 h-10 bg-white border border-[#F0EDFF] text-[#8C66FF] rounded-2xl flex items-center justify-center shadow-sm cursor-pointer transition-none active:bg-neutral-50 flex-shrink-0"
+                className="w-10 h-10 bg-white border border-[#F0EDFF] text-[#8C66FF] rounded-2xl flex items-center justify-center shadow-sm cursor-pointer transition-none active:bg-neutral-50 shrink-0"
                 title="Kembali"
               >
                 <FiArrowLeft className="text-lg" />
@@ -341,7 +343,7 @@ export default function AdminMenu() {
       {/* Analytics Modal similar to ProfileReport.tsx */}
       {isAnalyticsModalOpen && selectedSiswa && (
         <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50 p-6 backdrop-blur-xs">
-          <div className="w-full max-w-[340px] bg-white rounded-[28px] p-6 shadow-xl border border-[#F0EDFF] flex flex-col gap-4 animate-none select-none text-left">
+          <div className="w-full max-w-85 bg-white rounded-[28px] p-6 shadow-xl border border-[#F0EDFF] flex flex-col gap-4 animate-none select-none text-left">
             <div>
               <h3 className="text-sm font-extrabold text-[#2C2B30] tracking-wide uppercase flex items-center gap-2">
                 <LuChartBar className="text-[#8C66FF]" />
@@ -355,7 +357,7 @@ export default function AdminMenu() {
               </p>
             </div>
 
-            <div className="max-h-[220px] overflow-y-auto pr-1 flex flex-col gap-2.5 my-1 no-scrollbar">
+            <div className="max-h-55 overflow-y-auto pr-1 flex flex-col gap-2.5 my-1 no-scrollbar">
               {loadingAnalytics ? (
                 <div className="py-8 flex flex-col items-center justify-center gap-2 text-center">
                   <div className="w-6 h-6 border-2 border-[#8C66FF] border-t-transparent rounded-full animate-spin"></div>

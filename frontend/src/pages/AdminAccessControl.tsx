@@ -4,7 +4,14 @@ import { useAuthStore } from "../store/authStore";
 import { useAppBack } from "../hooks/useAppBack";
 import { getAccessSettingsApi, updateAccessSettingsApi } from "../api/api";
 import { FiArrowLeft, FiPlus, FiTrash2 } from "react-icons/fi";
-import { LuLock, LuLockOpen, LuCalendar, LuClock, LuSave, LuShieldAlert } from "react-icons/lu";
+import {
+  LuLock,
+  LuLockOpen,
+  LuCalendar,
+  LuClock,
+  LuSave,
+  LuShieldAlert,
+} from "react-icons/lu";
 import { useCustomDialog } from "../components/CustomDialog";
 
 interface ScheduleItem {
@@ -128,7 +135,7 @@ export default function AdminAccessControl() {
 
   const handleDeleteSchedule = async (id: string) => {
     const confirmDelete = await showConfirm(
-      "Apakah Anda yakin ingin menghapus jadwal ini?"
+      "Apakah Anda yakin ingin menghapus jadwal ini?",
     );
     if (confirmDelete) {
       setSchedules(schedules.filter((s) => s.id !== id));
@@ -166,10 +173,7 @@ export default function AdminAccessControl() {
     ) {
       return "Senin - Jumat";
     }
-    if (
-      days.length === 2 &&
-      [0, 6].every((val) => days.includes(val))
-    ) {
+    if (days.length === 2 && [0, 6].every((val) => days.includes(val))) {
       return "Sabtu & Minggu";
     }
 
@@ -194,15 +198,15 @@ export default function AdminAccessControl() {
 
   return (
     <div className="w-full min-h-screen bg-[#FAF9FF] flex justify-center items-center text-[#2C2B30] font-sans select-none overflow-hidden relative">
-      <div className="absolute top-[-10%] right-[-10%] w-[200px] h-[200px] bg-[#E9E4FF] rounded-full filter blur-2xl opacity-50"></div>
+      <div className="absolute top-[-10%] right-[-10%] w-50 h-50 bg-[#E9E4FF] rounded-full filter blur-2xl opacity-50"></div>
 
-      <div className="w-full max-w-[430px] min-h-screen flex flex-col justify-between px-6 py-6 z-10">
+      <div className="w-full max-w-107.5 min-h-screen flex flex-col justify-between px-6 py-6 z-10">
         <div>
           {/* Header */}
           <div className="w-full flex items-center gap-3 mt-6 mb-6">
             <button
               onClick={() => goBack("/admin")}
-              className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-[#F0EDFF] text-[#8C66FF] cursor-pointer active:bg-neutral-50 transition-none flex-shrink-0"
+              className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-[#F0EDFF] text-[#8C66FF] cursor-pointer active:bg-neutral-50 transition-none shrink-0"
               title="Kembali"
             >
               <FiArrowLeft size={20} />
@@ -234,7 +238,13 @@ export default function AdminAccessControl() {
             <div className="w-full bg-white rounded-[28px] p-5 shadow-[0_4px_12px_rgba(0,0,0,0.02)] border border-[#F0EDFF] flex flex-col gap-4">
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-inner ${isLocked ? "bg-[#FFEBF0] text-[#D95276]" : "bg-[#E6F8F6] text-[#2C8578]"}`}>
+                  <div
+                    className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-inner ${
+                      isLocked
+                        ? "bg-[#FFEBF0] text-[#D95276]"
+                        : "bg-[#E6F8F6] text-[#2C8578]"
+                    }`}
+                  >
                     {isLocked ? <LuLock size={18} /> : <LuLockOpen size={18} />}
                   </div>
                   <div>
@@ -250,19 +260,28 @@ export default function AdminAccessControl() {
                 {/* Custom iOS-like switch toggle */}
                 <button
                   onClick={() => setIsLocked(!isLocked)}
-                  className={`w-12 h-6.5 rounded-full p-1 transition-all duration-300 cursor-pointer ${isLocked ? "bg-[#D95276]" : "bg-neutral-200"}`}
+                  className={`w-12 h-6.5 rounded-full p-1 transition-all duration-300 cursor-pointer ${
+                    isLocked ? "bg-[#D95276]" : "bg-neutral-200"
+                  }`}
                 >
                   <div
-                    className={`bg-white w-4.5 h-4.5 rounded-full shadow-md transition-all duration-300 transform ${isLocked ? "translate-x-5.5" : "translate-x-0"}`}
+                    className={`bg-white w-4.5 h-4.5 rounded-full shadow-md transition-all duration-300 transform ${
+                      isLocked ? "translate-x-5.5" : "translate-x-0"
+                    }`}
                   ></div>
                 </button>
               </div>
 
               {isLocked && (
                 <div className="bg-[#FFEBF0]/50 border border-[#FFEBF0]/70 rounded-xl p-3 flex gap-2.5 items-start">
-                  <LuShieldAlert className="text-[#D95276] mt-0.5 shrink-0" size={16} />
+                  <LuShieldAlert
+                    className="text-[#D95276] mt-0.5 shrink-0"
+                    size={16}
+                  />
                   <p className="text-[9px] text-[#D95276] font-bold leading-normal">
-                    Aplikasi saat ini terkunci. Semua siswa yang masuk atau sedang membuka aplikasi akan langsung diarahkan ke layar blokir.
+                    Aplikasi saat ini terkunci. Semua siswa yang masuk atau
+                    sedang membuka aplikasi akan langsung diarahkan ke layar
+                    blokir.
                   </p>
                 </div>
               )}
@@ -272,7 +291,13 @@ export default function AdminAccessControl() {
             <div className="w-full bg-white rounded-[28px] p-5 shadow-[0_4px_12px_rgba(0,0,0,0.02)] border border-[#F0EDFF] flex flex-col gap-4">
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-inner ${isScheduleEnabled ? "bg-[#F0ECFF] text-[#8C66FF]" : "bg-neutral-100 text-neutral-400"}`}>
+                  <div
+                    className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-inner ${
+                      isScheduleEnabled
+                        ? "bg-[#F0ECFF] text-[#8C66FF]"
+                        : "bg-neutral-100 text-neutral-400"
+                    }`}
+                  >
                     <LuCalendar size={18} />
                   </div>
                   <div>
@@ -288,10 +313,14 @@ export default function AdminAccessControl() {
                 {/* Custom switch toggle */}
                 <button
                   onClick={() => setIsScheduleEnabled(!isScheduleEnabled)}
-                  className={`w-12 h-6.5 rounded-full p-1 transition-all duration-300 cursor-pointer ${isScheduleEnabled ? "bg-[#8C66FF]" : "bg-neutral-200"}`}
+                  className={`w-12 h-6.5 rounded-full p-1 transition-all duration-300 cursor-pointer ${
+                    isScheduleEnabled ? "bg-[#8C66FF]" : "bg-neutral-200"
+                  }`}
                 >
                   <div
-                    className={`bg-white w-4.5 h-4.5 rounded-full shadow-md transition-all duration-300 transform ${isScheduleEnabled ? "translate-x-5.5" : "translate-x-0"}`}
+                    className={`bg-white w-4.5 h-4.5 rounded-full shadow-md transition-all duration-300 transform ${
+                      isScheduleEnabled ? "translate-x-5.5" : "translate-x-0"
+                    }`}
                   ></div>
                 </button>
               </div>
@@ -354,7 +383,11 @@ export default function AdminAccessControl() {
                                 key={day.value}
                                 type="button"
                                 onClick={() => handleToggleDay(day.value)}
-                                className={`w-8 h-8 rounded-full text-xs font-bold transition-all cursor-pointer flex items-center justify-center ${active ? "bg-[#8C66FF] text-white shadow-md shadow-purple-100" : "bg-white border border-[#F0EDFF] text-[#9C98A6]"}`}
+                                className={`w-8 h-8 rounded-full text-xs font-bold transition-all cursor-pointer flex items-center justify-center ${
+                                  active
+                                    ? "bg-[#8C66FF] text-white shadow-md shadow-purple-100"
+                                    : "bg-white border border-[#F0EDFF] text-[#9C98A6]"
+                                }`}
                                 title={day.fullName}
                               >
                                 {day.label}
@@ -399,14 +432,22 @@ export default function AdminAccessControl() {
                           <button
                             type="button"
                             onClick={() => setRuleType("allow")}
-                            className={`py-2 text-[9px] font-extrabold uppercase tracking-wider rounded-xl transition-all cursor-pointer ${ruleType === "allow" ? "bg-[#E6F8F6] text-[#2C8578] border border-[#2C8578]" : "bg-white border border-[#F0EDFF] text-[#9C98A6]"}`}
+                            className={`py-2 text-[9px] font-extrabold uppercase tracking-wider rounded-xl transition-all cursor-pointer ${
+                              ruleType === "allow"
+                                ? "bg-[#E6F8F6] text-[#2C8578] border border-[#2C8578]"
+                                : "bg-white border border-[#F0EDFF] text-[#9C98A6]"
+                            }`}
                           >
                             Bisa Diakses
                           </button>
                           <button
                             type="button"
                             onClick={() => setRuleType("block")}
-                            className={`py-2 text-[9px] font-extrabold uppercase tracking-wider rounded-xl transition-all cursor-pointer ${ruleType === "block" ? "bg-[#FFEBF0] text-[#D95276] border border-[#D95276]" : "bg-white border border-[#F0EDFF] text-[#9C98A6]"}`}
+                            className={`py-2 text-[9px] font-extrabold uppercase tracking-wider rounded-xl transition-all cursor-pointer ${
+                              ruleType === "block"
+                                ? "bg-[#FFEBF0] text-[#D95276] border border-[#D95276]"
+                                : "bg-white border border-[#F0EDFF] text-[#9C98A6]"
+                            }`}
                           >
                             Tidak Bisa Diakses
                           </button>
@@ -426,7 +467,8 @@ export default function AdminAccessControl() {
                   <div className="flex flex-col gap-2.5">
                     {schedules.length === 0 ? (
                       <p className="text-[10px] text-[#9C98A6] font-semibold text-center py-6 bg-[#FAF9FF] border border-dashed border-[#F0EDFF] rounded-2xl leading-relaxed px-4">
-                        Belum ada aturan jadwal yang dikonfigurasi. Klik "+ Tambah" di atas untuk membuat jadwal baru.
+                        Belum ada aturan jadwal yang dikonfigurasi. Klik "+
+                        Tambah" di atas untuk membuat jadwal baru.
                       </p>
                     ) : (
                       schedules.map((item) => (
@@ -446,7 +488,11 @@ export default function AdminAccessControl() {
 
                           <div className="flex items-center gap-2.5 shrink-0">
                             <span
-                              className={`text-[8px] font-extrabold uppercase px-2.5 py-1 rounded-full ${item.type === "allow" ? "bg-[#E6F8F6] text-[#2C8578]" : "bg-[#FFEBF0] text-[#D95276]"}`}
+                              className={`text-[8px] font-extrabold uppercase px-2.5 py-1 rounded-full ${
+                                item.type === "allow"
+                                  ? "bg-[#E6F8F6] text-[#2C8578]"
+                                  : "bg-[#FFEBF0] text-[#D95276]"
+                              }`}
                             >
                               {item.type === "allow" ? "Bisa" : "Kunci"}
                             </span>

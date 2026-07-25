@@ -44,7 +44,8 @@ export default function Onboarding() {
   const steps = [
     {
       title: "Pahami Lingkungan Kita",
-      description: "Pelajari konsep pencemaran zat dan dampaknya bagi ekosistem sekitar kita untuk mewujudkan bumi yang lebih berkelanjutan.",
+      description:
+        "Pelajari konsep pencemaran zat dan dampaknya bagi ekosistem sekitar kita untuk mewujudkan bumi yang lebih berkelanjutan.",
       icon: LuGlobe,
       iconColor: "text-[#66E0FF]", // cyan
       glowColor: "bg-[#66E0FF]/15",
@@ -52,11 +53,12 @@ export default function Onboarding() {
         <div className="absolute -top-3 -right-3 bg-white/10 backdrop-blur-md p-3 rounded-full border border-white/20 shadow-lg animate-float-delayed">
           <LuLeaf className="text-xl text-[#FFD066]" />
         </div>
-      )
+      ),
     },
     {
       title: "Simulasi Interaktif",
-      description: "Lakukan eksperimen virtual pencemaran air dan tanah secara langsung untuk melihat penyebaran zat secara dinamis.",
+      description:
+        "Lakukan eksperimen virtual pencemaran air dan tanah secara langsung untuk melihat penyebaran zat secara dinamis.",
       icon: LuGamepad,
       iconColor: "text-[#FFD066]", // gold
       glowColor: "bg-[#FFD066]/15",
@@ -64,11 +66,12 @@ export default function Onboarding() {
         <div className="absolute -bottom-2 -left-2 bg-white/10 backdrop-blur-md p-3.5 rounded-2xl border border-white/20 shadow-lg animate-float">
           <LuLeaf className="text-xl text-[#66E0FF]" />
         </div>
-      )
+      ),
     },
     {
       title: "Uji Kemampuanmu",
-      description: "Evaluasi hasil belajarmu dengan kuis berpikir sistem serta dapatkan laporan analisis perkembangan belajarmu.",
+      description:
+        "Evaluasi hasil belajarmu dengan kuis berpikir sistem serta dapatkan laporan analisis perkembangan belajarmu.",
       icon: LuGraduationCap,
       iconColor: "text-[#FF85A2]", // pink
       glowColor: "bg-[#FF85A2]/15",
@@ -81,8 +84,8 @@ export default function Onboarding() {
             <LuBookOpen className="text-xl text-[#66E0FF]" />
           </div>
         </>
-      )
-    }
+      ),
+    },
   ];
 
   const ActiveIcon = steps[currentStep].icon;
@@ -118,11 +121,11 @@ export default function Onboarding() {
       `}</style>
 
       {/* Decorative Shapes for premium outer aesthetic */}
-      <div className="absolute top-[-5%] left-[-15%] w-[250px] h-[250px] bg-[#E9E4FF] rounded-full filter blur-2xl opacity-65"></div>
-      <div className="absolute bottom-[-10%] right-[-10%] w-[220px] h-[220px] bg-[#FFEAEA] rounded-full filter blur-xl opacity-50"></div>
+      <div className="absolute top-[-5%] left-[-15%] w-62.5 h-62.5 bg-[#E9E4FF] rounded-full filter blur-2xl opacity-65"></div>
+      <div className="absolute bottom-[-10%] right-[-10%] w-55 h-55 bg-[#FFEAEA] rounded-full filter blur-xl opacity-50"></div>
 
       {/* Container Mobile Portrait */}
-      <div className="w-full max-w-[430px] h-screen bg-gradient-to-b from-[#18113C] to-[#0A071E] flex flex-col justify-between overflow-hidden relative shadow-[0_0_40px_rgba(0,0,0,0.08)]">
+      <div className="w-full max-w-107.5 h-screen bg-linear-to-b from-[#18113C] to-[#0A071E] flex flex-col justify-between overflow-hidden relative shadow-[0_0_40px_rgba(0,0,0,0.08)]">
         {/* Top Header Row (Step Indicators + Skip Button) */}
         <div className="w-full flex justify-between items-center px-6 pt-6 pb-2 z-20">
           {/* Step Indicators */}
@@ -139,7 +142,11 @@ export default function Onboarding() {
 
           {/* UNS Logo (Standard colored card) */}
           <div className="h-9 px-3 bg-white rounded-xl flex items-center justify-center shadow-sm border border-[#F0EDFF]">
-            <img src={unsLogo} alt="UNS" className="h-6 w-auto object-contain" />
+            <img
+              src={unsLogo}
+              alt="UNS"
+              className="h-6 w-auto object-contain"
+            />
           </div>
 
           {/* Skip Button */}
@@ -156,22 +163,26 @@ export default function Onboarding() {
         </div>
 
         {/* Top Illustration Section */}
-        <div className="w-full flex-grow flex flex-col items-center justify-center px-8 relative z-10">
+        <div className="w-full grow flex-col items-center justify-center px-8 relative z-10">
           <div
             className={`relative w-64 h-64 flex items-center justify-center transition-all duration-300 ${
               isTransitioning ? "opacity-0 scale-90" : "opacity-100 scale-100"
             }`}
           >
             {/* Pulsing Glow Background */}
-            <div className={`absolute w-52 h-52 rounded-full filter blur-3xl animate-pulse-glow ${steps[currentStep].glowColor}`} />
+            <div
+              className={`absolute w-52 h-52 rounded-full filter blur-3xl animate-pulse-glow ${steps[currentStep].glowColor}`}
+            />
 
             {/* Orbit Circle Ring */}
             <div className="absolute w-48 h-48 rounded-full border border-dashed border-white/10 animate-spin-slow" />
             <div className="absolute w-36 h-36 rounded-full border border-white/5" />
 
             {/* Main Center Floating Card */}
-            <div className="w-32 h-32 bg-white/5 backdrop-blur-xl rounded-[32px] border border-white/10 shadow-[0_12px_40px_rgba(0,0,0,0.3)] flex items-center justify-center animate-float relative z-10">
-              <ActiveIcon className={`text-6xl ${steps[currentStep].iconColor}`} />
+            <div className="w-32 h-32 bg-white/5 backdrop-blur-xl rounded-4xl border border-white/10 shadow-[0_12px_40px_rgba(0,0,0,0.3)] flex items-center justify-center animate-float relative z-10">
+              <ActiveIcon
+                className={`text-6xl ${steps[currentStep].iconColor}`}
+              />
             </div>
 
             {/* Extra Floating Items */}
@@ -180,11 +191,13 @@ export default function Onboarding() {
         </div>
 
         {/* Bottom Content Card */}
-        <div className="w-full bg-white rounded-t-[40px] px-8 pt-8 pb-8 shadow-[0_-12px_40px_rgba(0,0,0,0.15)] flex flex-col gap-6 relative z-20 min-h-[320px]">
+        <div className="w-full bg-white rounded-t-[40px] px-8 pt-8 pb-8 shadow-[0_-12px_40px_rgba(0,0,0,0.15)] flex flex-col gap-6 relative z-20 min-h-80">
           {/* Text Content with Transition */}
           <div
-            className={`flex-grow flex flex-col justify-center transition-all duration-300 ${
-              isTransitioning ? "opacity-0 translate-y-2" : "opacity-100 translate-y-0"
+            className={`grow flex flex-col justify-center transition-all duration-300 ${
+              isTransitioning
+                ? "opacity-0 translate-y-2"
+                : "opacity-100 translate-y-0"
             }`}
           >
             <h1 className="text-2xl font-black text-[#2C2B30] text-center leading-tight tracking-wide">
