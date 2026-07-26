@@ -754,7 +754,7 @@ export default function MateriEditor() {
                 />
 
                 {/* Blocks List */}
-                <div className="flex flex-col gap-5 max-h-[500px] overflow-y-auto pr-1">
+                <div className="flex flex-col gap-5 max-h-125 overflow-y-auto pr-1">
                   {blocks.length === 0 ? (
                     <div className="text-center py-10 px-4 bg-white rounded-3xl border border-dashed border-[#F0EDFF] text-[10px] text-[#9C98A6] uppercase font-bold tracking-wider">
                       Konten Kosong. Gunakan tombol di bawah untuk menambah
@@ -1214,7 +1214,7 @@ export default function MateriEditor() {
                                   {block.type === "image" ? "Gambar" : "Audio"}{" "}
                                   terpilih
                                 </p>
-                                <label className="mx-auto px-4 py-2 bg-gradient-to-br from-[#8C66FF] to-[#6039DF] text-white text-[9px] font-extrabold uppercase tracking-wider rounded-full shadow-sm cursor-pointer transition-none">
+                                <label className="mx-auto px-4 py-2 bg-linear-to-br from-[#8C66FF] to-[#6039DF] text-white text-[9px] font-extrabold uppercase tracking-wider rounded-full shadow-sm cursor-pointer transition-none">
                                   Pilih File
                                   <input
                                     type="file"
@@ -1328,7 +1328,7 @@ export default function MateriEditor() {
           <button
             onClick={handleSave}
             disabled={saving || loading}
-            className="w-full py-4 bg-gradient-to-br from-[#8C66FF] to-[#6039DF] text-white font-extrabold uppercase tracking-wider text-xs rounded-full shadow-md shadow-purple-100 cursor-pointer transition-none flex items-center justify-center gap-2 disabled:opacity-50"
+            className="w-full py-4 bg-linear-to-br from-[#8C66FF] to-[#6039DF] text-white font-extrabold uppercase tracking-wider text-xs rounded-full shadow-md shadow-purple-100 cursor-pointer transition-none flex items-center justify-center gap-2 disabled:opacity-50"
           >
             <FiSave /> {saving ? "Menyimpan..." : "Simpan Materi"}
           </button>

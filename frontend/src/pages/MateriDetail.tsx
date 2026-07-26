@@ -12,9 +12,15 @@ import {
   FiAlignLeft,
   FiAward,
 } from "react-icons/fi";
-import QuizMcqComponent, { type McqData } from "../components/quiz/QuizMcqComponent";
-import QuizPuzzleComponent, { type PuzzleData } from "../components/quiz/QuizPuzzleComponent";
-import QuizSequenceComponent, { type SequenceData } from "../components/quiz/QuizSequenceComponent";
+import QuizMcqComponent, {
+  type McqData,
+} from "../components/quiz/QuizMcqComponent";
+import QuizPuzzleComponent, {
+  type PuzzleData,
+} from "../components/quiz/QuizPuzzleComponent";
+import QuizSequenceComponent, {
+  type SequenceData,
+} from "../components/quiz/QuizSequenceComponent";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8787";
 
@@ -105,7 +111,9 @@ export default function MateriDetail() {
   // Flipbook states
   const [viewMode, setViewMode] = useState<"flipbook" | "classic">("flipbook");
   const [currentPage, setCurrentPage] = useState<number>(0);
-  const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
+  const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(
+    null,
+  );
 
   const loadMaterialDetail = async () => {
     if (!token || !id) return;
@@ -186,17 +194,17 @@ export default function MateriDetail() {
   return (
     <div className="w-full min-h-screen bg-[#FAF9FF] flex justify-center items-center text-[#2C2B30] font-sans select-none overflow-hidden relative">
       {/* Decorative Blur Bubble */}
-      <div className="absolute top-[-10%] right-[-10%] w-[200px] h-[200px] bg-[#E9E4FF] rounded-full filter blur-2xl opacity-50"></div>
+      <div className="absolute top-[-10%] right-[-10%] w-50 h-50 bg-[#E9E4FF] rounded-full filter blur-2xl opacity-50"></div>
 
       {/* Container Mobile Portrait */}
-      <div className="w-full max-w-[430px] min-h-screen flex flex-col justify-between px-6 py-6 z-10">
+      <div className="w-full max-w-107.5 min-h-screen flex flex-col justify-between px-6 py-6 z-10">
         <div>
           {/* Header */}
           <div className="w-full flex justify-between items-center mt-4 pb-4 border-b border-[#F0EDFF]/50">
             <div className="flex items-center gap-3 min-w-0 flex-1">
               <button
                 onClick={() => goBack("/materi")}
-                className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-[#F0EDFF] text-[#8C66FF] cursor-pointer active:bg-neutral-50 transition-none flex-shrink-0"
+                className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-[#F0EDFF] text-[#8C66FF] cursor-pointer active:bg-neutral-50 transition-none shrink-0"
                 title="Kembali"
               >
                 <FiArrowLeft size={20} />
@@ -248,7 +256,7 @@ export default function MateriDetail() {
                 </p>
               </div>
             ) : error ? (
-              <div className="text-center py-12 px-4 bg-white rounded-[24px] border border-[#FFEAEA] text-xs text-[#FF5E8C] uppercase font-bold tracking-wider shadow-sm">
+              <div className="text-center py-12 px-4 bg-white rounded-3xl border border-[#FFEAEA] text-xs text-[#FF5E8C] uppercase font-bold tracking-wider shadow-sm">
                 {error}
               </div>
             ) : material ? (
@@ -266,7 +274,7 @@ export default function MateriDetail() {
 
                   {/* 3D Book Container */}
                   <div
-                    className="w-full h-[520px] relative select-none"
+                    className="w-full h-130 relative select-none"
                     style={{ perspective: "1500px" }}
                     onTouchStart={handleTouchStart}
                     onTouchEnd={handleTouchEnd}
@@ -296,7 +304,7 @@ export default function MateriDetail() {
                       return (
                         <div
                           key={index}
-                          className="absolute top-0 left-0 w-full h-full bg-white border border-[#F0EDFF] overflow-hidden rounded-[24px] shadow-[0_4px_12px_rgba(0,0,0,0.02)]"
+                          className="absolute top-0 left-0 w-full h-full bg-white border border-[#F0EDFF] overflow-hidden rounded-3xl shadow-[0_4px_12px_rgba(0,0,0,0.02)]"
                           style={{
                             transformOrigin: "left center",
                             transition:
@@ -322,13 +330,13 @@ export default function MateriDetail() {
                                 <h1 className="text-xl font-extrabold uppercase tracking-tight text-[#2C2B30] border-b border-[#F0EDFF] pb-4 mb-4 text-center w-full">
                                   {page.title}
                                 </h1>
-                                <p className="text-xs text-[#9C98A6] max-w-[280px] leading-relaxed mb-8 text-center font-medium">
+                                <p className="text-xs text-[#9C98A6] max-w-70 leading-relaxed mb-8 text-center font-medium">
                                   Gunakan tombol navigasi di bawah atau usap
                                   layar untuk membaca halaman demi halaman.
                                 </p>
                                 <button
                                   onClick={() => setCurrentPage(1)}
-                                  className="px-6 py-3 bg-gradient-to-br from-[#8C66FF] to-[#6039DF] text-white font-extrabold uppercase tracking-wider text-xs rounded-full shadow-md shadow-purple-100 transition-none cursor-pointer"
+                                  className="px-6 py-3 bg-linear-to-br from-[#8C66FF] to-[#6039DF] text-white font-extrabold uppercase tracking-wider text-xs rounded-full shadow-md shadow-purple-100 transition-none cursor-pointer"
                                 >
                                   Mulai Membaca
                                 </button>
@@ -339,7 +347,7 @@ export default function MateriDetail() {
                               <div className="flex flex-col h-full justify-between">
                                 {/* Page Header */}
                                 <div className="flex justify-between items-center border-b border-[#F0EDFF]/50 pb-2 mb-3">
-                                  <span className="text-[9px] uppercase tracking-wider font-extrabold text-[#9C98A6] truncate max-w-[180px]">
+                                  <span className="text-[9px] uppercase tracking-wider font-extrabold text-[#9C98A6] truncate max-w-45">
                                     {material.title}
                                   </span>
                                   <span className="text-[9px] font-extrabold text-[#8C66FF] bg-[#F0ECFF] px-2 py-0.5 rounded-full">
@@ -362,7 +370,7 @@ export default function MateriDetail() {
                                         <img
                                           src={`${API_URL}${page.block.mediaUrl}`}
                                           alt="Visual Pendukung"
-                                          className="max-h-[170px] w-auto object-contain block rounded-lg"
+                                          className="max-h-42.5 w-auto object-contain block rounded-lg"
                                         />
                                       </div>
                                       {page.block.textContent && (
@@ -423,36 +431,70 @@ export default function MateriDetail() {
                                       })()}
                                     </div>
                                   )}
-                                  {page.block.type === "quiz_mcq" && (
-                                    {...(() => {
+                                  {page.block.type === "quiz_mcq" && {
+                                    ...(() => {
                                       try {
-                                        const mcqData: McqData = JSON.parse(page.block.textContent || "{}");
-                                        return <QuizMcqComponent data={mcqData} blockIndex={index} />;
+                                        const mcqData: McqData = JSON.parse(
+                                          page.block.textContent || "{}",
+                                        );
+                                        return (
+                                          <QuizMcqComponent
+                                            data={mcqData}
+                                            blockIndex={index}
+                                          />
+                                        );
                                       } catch {
-                                        return <p className="text-xs text-red-500 font-bold">Kuis tidak dapat dimuat.</p>;
+                                        return (
+                                          <p className="text-xs text-red-500 font-bold">
+                                            Kuis tidak dapat dimuat.
+                                          </p>
+                                        );
                                       }
-                                    })()}
-                                  )}
-                                  {page.block.type === "quiz_puzzle" && (
-                                    {...(() => {
+                                    })(),
+                                  }}
+                                  {page.block.type === "quiz_puzzle" && {
+                                    ...(() => {
                                       try {
-                                        const puzData: PuzzleData = JSON.parse(page.block.textContent || "{}");
-                                        return <QuizPuzzleComponent data={puzData} blockIndex={index} />;
+                                        const puzData: PuzzleData = JSON.parse(
+                                          page.block.textContent || "{}",
+                                        );
+                                        return (
+                                          <QuizPuzzleComponent
+                                            data={puzData}
+                                            blockIndex={index}
+                                          />
+                                        );
                                       } catch {
-                                        return <p className="text-xs text-red-500 font-bold">Kuis puzzle tidak dapat dimuat.</p>;
+                                        return (
+                                          <p className="text-xs text-red-500 font-bold">
+                                            Kuis puzzle tidak dapat dimuat.
+                                          </p>
+                                        );
                                       }
-                                    })()}
-                                  )}
-                                  {page.block.type === "quiz_sequence" && (
-                                    {...(() => {
+                                    })(),
+                                  }}
+                                  {page.block.type === "quiz_sequence" && {
+                                    ...(() => {
                                       try {
-                                        const seqData: SequenceData = JSON.parse(page.block.textContent || "{}");
-                                        return <QuizSequenceComponent data={seqData} blockIndex={index} />;
+                                        const seqData: SequenceData =
+                                          JSON.parse(
+                                            page.block.textContent || "{}",
+                                          );
+                                        return (
+                                          <QuizSequenceComponent
+                                            data={seqData}
+                                            blockIndex={index}
+                                          />
+                                        );
                                       } catch {
-                                        return <p className="text-xs text-red-500 font-bold">Kuis urutan tidak dapat dimuat.</p>;
+                                        return (
+                                          <p className="text-xs text-red-500 font-bold">
+                                            Kuis urutan tidak dapat dimuat.
+                                          </p>
+                                        );
                                       }
-                                    })()}
-                                  )}
+                                    })(),
+                                  }}
                                 </div>
 
                                 {/* Page Footer */}
@@ -474,10 +516,10 @@ export default function MateriDetail() {
                                 <h1 className="text-lg font-black uppercase tracking-tight text-[#2C2B30] mb-2 text-center">
                                   Materi Selesai!
                                 </h1>
-                                <p className="text-xs text-[#9C98A6] max-w-[280px] leading-relaxed mb-8 text-center font-medium">
+                                <p className="text-xs text-[#9C98A6] max-w-70 leading-relaxed mb-8 text-center font-medium">
                                   Anda telah menyelesaikan pembacaan materi.
                                 </p>
-                                <div className="flex flex-col gap-3 w-full max-w-[220px]">
+                                <div className="flex flex-col gap-3 w-full max-w-55">
                                   <button
                                     onClick={() => setCurrentPage(0)}
                                     className="w-full py-3 bg-white border border-[#F0EDFF] text-[#8C66FF] font-extrabold uppercase tracking-wider text-[10px] rounded-full shadow-sm transition-none cursor-pointer flex items-center justify-center gap-1.5"
@@ -540,7 +582,7 @@ export default function MateriDetail() {
                         return (
                           <div
                             key={block.id || idx}
-                            className="bg-white rounded-[24px] p-5 border border-[#F0EDFF] shadow-[0_4px_12px_rgba(0,0,0,0.02)] w-full"
+                            className="bg-white rounded-3xl p-5 border border-[#F0EDFF] shadow-[0_4px_12px_rgba(0,0,0,0.02)] w-full"
                           >
                             <div className="text-xs text-[#2C2B30] font-medium leading-relaxed">
                               {parseFormattedText(block.textContent)}
@@ -551,7 +593,7 @@ export default function MateriDetail() {
                         return (
                           <div
                             key={block.id || idx}
-                            className="w-full border border-[#F0EDFF] p-2 bg-white rounded-[24px] shadow-[0_4px_12px_rgba(0,0,0,0.02)] flex flex-col items-center gap-3"
+                            className="w-full border border-[#F0EDFF] p-2 bg-white rounded-3xl shadow-[0_4px_12px_rgba(0,0,0,0.02)] flex flex-col items-center gap-3"
                           >
                             <img
                               src={`${API_URL}${block.mediaUrl}`}
@@ -569,7 +611,7 @@ export default function MateriDetail() {
                         return (
                           <div
                             key={block.id || idx}
-                            className="w-full border border-[#F0EDFF] p-4 bg-white rounded-[24px] shadow-[0_4px_12px_rgba(0,0,0,0.02)] flex flex-col gap-2.5"
+                            className="w-full border border-[#F0EDFF] p-4 bg-white rounded-3xl shadow-[0_4px_12px_rgba(0,0,0,0.02)] flex flex-col gap-2.5"
                           >
                             <p className="text-[9px] uppercase tracking-widest font-bold text-[#9C98A6]">
                               Audio Penjelasan
@@ -590,7 +632,7 @@ export default function MateriDetail() {
                         return (
                           <div
                             key={block.id || idx}
-                            className="w-full border border-[#F0EDFF] p-2 bg-white rounded-[24px] shadow-[0_4px_12px_rgba(0,0,0,0.02)] flex flex-col items-center gap-3"
+                            className="w-full border border-[#F0EDFF] p-2 bg-white rounded-3xl shadow-[0_4px_12px_rgba(0,0,0,0.02)] flex flex-col items-center gap-3"
                           >
                             {(() => {
                               const ytId = getYoutubeId(block.textContent);
@@ -618,22 +660,46 @@ export default function MateriDetail() {
                         );
                       } else if (block.type === "quiz_mcq") {
                         try {
-                          const mcqData: McqData = JSON.parse(block.textContent || "{}");
-                          return <QuizMcqComponent key={block.id || idx} data={mcqData} blockIndex={idx + 1} />;
+                          const mcqData: McqData = JSON.parse(
+                            block.textContent || "{}",
+                          );
+                          return (
+                            <QuizMcqComponent
+                              key={block.id || idx}
+                              data={mcqData}
+                              blockIndex={idx + 1}
+                            />
+                          );
                         } catch {
                           return null;
                         }
                       } else if (block.type === "quiz_puzzle") {
                         try {
-                          const puzData: PuzzleData = JSON.parse(block.textContent || "{}");
-                          return <QuizPuzzleComponent key={block.id || idx} data={puzData} blockIndex={idx + 1} />;
+                          const puzData: PuzzleData = JSON.parse(
+                            block.textContent || "{}",
+                          );
+                          return (
+                            <QuizPuzzleComponent
+                              key={block.id || idx}
+                              data={puzData}
+                              blockIndex={idx + 1}
+                            />
+                          );
                         } catch {
                           return null;
                         }
                       } else if (block.type === "quiz_sequence") {
                         try {
-                          const seqData: SequenceData = JSON.parse(block.textContent || "{}");
-                          return <QuizSequenceComponent key={block.id || idx} data={seqData} blockIndex={idx + 1} />;
+                          const seqData: SequenceData = JSON.parse(
+                            block.textContent || "{}",
+                          );
+                          return (
+                            <QuizSequenceComponent
+                              key={block.id || idx}
+                              data={seqData}
+                              blockIndex={idx + 1}
+                            />
+                          );
                         } catch {
                           return null;
                         }

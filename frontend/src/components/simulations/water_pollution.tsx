@@ -854,9 +854,9 @@ export default function SimulasiPencemaranAir() {
                     onChange={(e) => setCheckIndustri(e.target.checked)}
                     className="sr-only peer"
                   />
-                  <div className="w-9 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-amber-500 transition-colors border border-slate-300"></div>
+                  <div className="w-9 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-1 after:left-1 after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-amber-500 transition-colors border border-slate-300"></div>
                   <span
-                    className={`text-[9px] font-bold uppercase tracking-wider min-w-[32px] ${
+                    className={`text-[9px] font-bold uppercase tracking-wider min-w-8 ${
                       checkIndustri
                         ? "text-amber-600 font-black animate-pulse"
                         : "text-slate-400"
@@ -903,9 +903,9 @@ export default function SimulasiPencemaranAir() {
                     onChange={(e) => setCheckDomestik(e.target.checked)}
                     className="sr-only peer"
                   />
-                  <div className="w-9 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-cyan-500 transition-colors border border-slate-300"></div>
+                  <div className="w-9 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-1 after:left-1 after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-cyan-500 transition-colors border border-slate-300"></div>
                   <span
-                    className={`text-[9px] font-bold uppercase tracking-wider min-w-[32px] ${
+                    className={`text-[9px] font-bold uppercase tracking-wider min-w-8 ${
                       checkDomestik
                         ? "text-cyan-600 font-black animate-pulse"
                         : "text-slate-400"
@@ -1070,7 +1070,7 @@ export default function SimulasiPencemaranAir() {
           </div>
 
           <div className="grid grid-cols-3 gap-1.5 mt-2 text-center shrink-0">
-            <div className="p-1 bg-slate-50 rounded border border-slate-100 flex flex-col justify-center items-center min-h-[42px]">
+            <div className="p-1 bg-slate-50 rounded border border-slate-100 flex flex-col justify-center items-center min-h-10.5">
               <span className="block text-[8px] text-slate-400 uppercase font-bold leading-none mb-0.5">
                 Warna Air
               </span>
@@ -1083,7 +1083,7 @@ export default function SimulasiPencemaranAir() {
                 </span>
               </div>
             </div>
-            <div className="p-1 bg-slate-50 rounded border border-slate-100 flex flex-col justify-center items-center min-h-[42px]">
+            <div className="p-1 bg-slate-50 rounded border border-slate-100 flex flex-col justify-center items-center min-h-10.5">
               <span className="block text-[8px] text-slate-400 uppercase font-bold leading-none mb-0.5">
                 Biota
               </span>
@@ -1096,7 +1096,7 @@ export default function SimulasiPencemaranAir() {
                 </span>
               </div>
             </div>
-            <div className="p-1 bg-slate-50 rounded border border-slate-100 flex flex-col justify-center items-center min-h-[42px]">
+            <div className="p-1 bg-slate-50 rounded border border-slate-100 flex flex-col justify-center items-center min-h-10.5">
               <span className="block text-[8px] text-slate-400 uppercase font-bold leading-none mb-0.5">
                 Tingkat Pencemaran
               </span>
@@ -1279,7 +1279,7 @@ export default function SimulasiPencemaranAir() {
         <h2 className="text-sm font-bold mb-2 uppercase tracking-wider">
           Mode Lanskap Diperlukan
         </h2>
-        <p className="text-xs text-neutral-400 max-w-[280px] leading-relaxed">
+        <p className="text-xs text-neutral-400 max-w-70 leading-relaxed">
           Silakan putar perangkat Anda ke arah lanskap (menyamping) untuk
           mengakses eko-simulasi kualitas air.
         </p>

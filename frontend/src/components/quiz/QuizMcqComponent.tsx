@@ -1,5 +1,10 @@
 import { useState } from "react";
-import { FiCheckCircle, FiXCircle, FiRefreshCw, FiHelpCircle } from "react-icons/fi";
+import {
+  FiCheckCircle,
+  FiXCircle,
+  FiRefreshCw,
+  FiHelpCircle,
+} from "react-icons/fi";
 
 export interface McqData {
   question: string;
@@ -13,7 +18,10 @@ interface QuizMcqComponentProps {
   blockIndex?: number;
 }
 
-export default function QuizMcqComponent({ data, blockIndex }: QuizMcqComponentProps) {
+export default function QuizMcqComponent({
+  data,
+  blockIndex,
+}: QuizMcqComponentProps) {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [submitted, setSubmitted] = useState(false);
 
@@ -35,7 +43,7 @@ export default function QuizMcqComponent({ data, blockIndex }: QuizMcqComponentP
   };
 
   return (
-    <div className="w-full bg-white rounded-[24px] border border-[#F0EDFF] p-5 shadow-[0_4px_12px_rgba(0,0,0,0.02)] flex flex-col gap-4 text-left select-none">
+    <div className="w-full bg-white rounded-3xl border border-[#F0EDFF] p-5 shadow-[0_4px_12px_rgba(0,0,0,0.02)] flex flex-col gap-4 text-left select-none">
       {/* Header Badge */}
       <div className="flex justify-between items-center pb-2 border-b border-[#F0EDFF]/80">
         <div className="flex items-center gap-2">
@@ -43,7 +51,8 @@ export default function QuizMcqComponent({ data, blockIndex }: QuizMcqComponentP
             ?
           </span>
           <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#8C66FF]">
-            Kuis Pilihan Ganda {blockIndex !== undefined ? `#${blockIndex}` : ""}
+            Kuis Pilihan Ganda{" "}
+            {blockIndex !== undefined ? `#${blockIndex}` : ""}
           </span>
         </div>
         {submitted && (
@@ -82,7 +91,8 @@ export default function QuizMcqComponent({ data, blockIndex }: QuizMcqComponentP
                 "border-[#FF5E8C] bg-[#FFEAEA] text-[#FF5E8C] font-bold";
               badgeStyle = "bg-[#FF5E8C] text-white border-transparent";
             } else {
-              optionStyle = "border-[#F0EDFF] bg-gray-50 opacity-50 text-[#9C98A6]";
+              optionStyle =
+                "border-[#F0EDFF] bg-gray-50 opacity-50 text-[#9C98A6]";
             }
           } else if (selectedIndex === idx) {
             optionStyle =
@@ -106,7 +116,7 @@ export default function QuizMcqComponent({ data, blockIndex }: QuizMcqComponentP
                 >
                   {optionLabels[idx] || idx + 1}
                 </span>
-                <span className="leading-relaxed text-left break-words whitespace-normal font-medium flex-1">
+                <span className="leading-relaxed text-left wrap-break-word whitespace-normal font-medium flex-1">
                   {opt}
                 </span>
               </div>
@@ -127,7 +137,7 @@ export default function QuizMcqComponent({ data, blockIndex }: QuizMcqComponentP
           type="button"
           onClick={handleSubmit}
           disabled={selectedIndex === null}
-          className="w-full py-3 mt-1 bg-gradient-to-br from-[#8C66FF] to-[#6039DF] text-white font-extrabold uppercase tracking-wider text-[10px] rounded-2xl shadow-md shadow-purple-100 disabled:opacity-40 cursor-pointer transition-all flex items-center justify-center gap-2"
+          className="w-full py-3 mt-1 bg-linear-to-br from-[#8C66FF] to-[#6039DF] text-white font-extrabold uppercase tracking-wider text-[10px] rounded-2xl shadow-md shadow-purple-100 disabled:opacity-40 cursor-pointer transition-all flex items-center justify-center gap-2"
         >
           Periksa Jawaban
         </button>

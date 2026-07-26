@@ -1,4 +1,10 @@
-import { FiPlus, FiBarChart2, FiEdit2, FiTrash2, FiArrowLeft } from "react-icons/fi";
+import {
+  FiPlus,
+  FiBarChart2,
+  FiEdit2,
+  FiTrash2,
+  FiArrowLeft,
+} from "react-icons/fi";
 
 interface Question {
   id: string;
@@ -44,7 +50,7 @@ export default function QuizList({
   onOpenAnalysis,
   onEditQuiz,
   onDeleteQuiz,
-  onBack
+  onBack,
 }: QuizListProps) {
   return (
     <div className="w-full flex-1 flex flex-col justify-between">
@@ -54,19 +60,23 @@ export default function QuizList({
           <div className="flex items-center gap-3">
             <button
               onClick={onBack}
-              className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-[#F0EDFF] text-[#8C66FF] cursor-pointer active:bg-neutral-50 transition-none flex-shrink-0"
+              className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-[#F0EDFF] text-[#8C66FF] cursor-pointer active:bg-neutral-50 transition-none shrink-0"
               title="Kembali"
             >
               <FiArrowLeft size={20} />
             </button>
             <div>
-              <p className="text-[10px] uppercase tracking-widest text-[#9C98A6] font-bold">Panel Admin</p>
-              <h1 className="text-xl font-extrabold text-[#2C2B30] leading-tight mt-0.5">Kelola Kuis</h1>
+              <p className="text-[10px] uppercase tracking-widest text-[#9C98A6] font-bold">
+                Panel Admin
+              </p>
+              <h1 className="text-xl font-extrabold text-[#2C2B30] leading-tight mt-0.5">
+                Kelola Kuis
+              </h1>
             </div>
           </div>
           <button
             onClick={onCreateNewQuiz}
-            className="px-4 py-2.5 bg-gradient-to-br from-[#8C66FF] to-[#6039DF] text-white text-[10px] font-extrabold uppercase tracking-wider rounded-full shadow-md shadow-purple-100 cursor-pointer flex items-center gap-1.5 transition-none flex-shrink-0"
+            className="px-4 py-2.5 bg-linear-to-br from-[#8C66FF] to-[#6039DF] text-white text-[10px] font-extrabold uppercase tracking-wider rounded-full shadow-md shadow-purple-100 cursor-pointer flex items-center gap-1.5 transition-none shrink-0"
           >
             <FiPlus className="text-xs" /> Buat Kuis
           </button>
@@ -75,22 +85,32 @@ export default function QuizList({
         {/* List */}
         <div className="mt-6 flex flex-col gap-4">
           {quizzes.length === 0 ? (
-            <div className="text-center py-12 px-4 bg-white rounded-[24px] border border-[#F0EDFF] shadow-[0_4px_12px_rgba(0,0,0,0.02)] text-xs text-[#9C98A6] uppercase font-bold tracking-wider">
+            <div className="text-center py-12 px-4 bg-white rounded-3xl border border-[#F0EDFF] shadow-[0_4px_12px_rgba(0,0,0,0.02)] text-xs text-[#9C98A6] uppercase font-bold tracking-wider">
               Belum ada kuis yang dibuat.
             </div>
           ) : (
-            quizzes.map(quiz => {
-              const subCount = quiz.submissionsCount !== undefined 
-                ? quiz.submissionsCount 
-                : submissions.filter(s => s.quizId === quiz.id).length;
+            quizzes.map((quiz) => {
+              const subCount =
+                quiz.submissionsCount !== undefined
+                  ? quiz.submissionsCount
+                  : submissions.filter((s) => s.quizId === quiz.id).length;
               return (
-                <div key={quiz.id} className="w-full bg-white rounded-[24px] p-5 shadow-[0_4px_12px_rgba(0,0,0,0.02)] border border-[#F0EDFF] flex flex-col gap-4">
+                <div
+                  key={quiz.id}
+                  className="w-full bg-white rounded-3xl p-5 shadow-[0_4px_12px_rgba(0,0,0,0.02)] border border-[#F0EDFF] flex flex-col gap-4"
+                >
                   <div className="flex flex-col gap-1.5">
-                    <h3 className="font-extrabold text-sm text-[#2C2B30] tracking-wide line-clamp-2 leading-snug">{quiz.title}</h3>
+                    <h3 className="font-extrabold text-sm text-[#2C2B30] tracking-wide line-clamp-2 leading-snug">
+                      {quiz.title}
+                    </h3>
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[9px] text-[#9C98A6] font-bold uppercase tracking-wide">
-                      <span className="px-2 py-0.5 bg-[#F0ECFF] text-[#8C66FF] rounded-full">{quiz.questions.length} Soal</span>
+                      <span className="px-2 py-0.5 bg-[#F0ECFF] text-[#8C66FF] rounded-full">
+                        {quiz.questions.length} Soal
+                      </span>
                       <span>&bull;</span>
-                      <span className="px-2 py-0.5 bg-[#FFEBF0] text-[#D95276] rounded-full">{subCount} Respon</span>
+                      <span className="px-2 py-0.5 bg-[#FFEBF0] text-[#D95276] rounded-full">
+                        {subCount} Respon
+                      </span>
                       <span>&bull;</span>
                       <span>Dibuat: {quiz.createdAt}</span>
                     </div>
@@ -104,7 +124,7 @@ export default function QuizList({
                     >
                       <FiBarChart2 />
                     </button>
-                    
+
                     <button
                       onClick={() => onEditQuiz(quiz)}
                       className="w-10 h-10 rounded-xl bg-[#FFF4EB] text-[#FF9D42] active:bg-[#FF9D42] active:text-white cursor-pointer flex items-center justify-center text-sm transition-none"
@@ -130,4 +150,3 @@ export default function QuizList({
     </div>
   );
 }
-

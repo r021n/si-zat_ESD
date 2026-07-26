@@ -14,10 +14,16 @@ interface DialogConfig {
 interface CustomDialogContextType {
   showAlert: (message: ReactNode, title?: string) => Promise<void>;
   showConfirm: (message: ReactNode, title?: string) => Promise<boolean>;
-  showPrompt: (message: ReactNode, defaultValue?: string, title?: string) => Promise<string | null>;
+  showPrompt: (
+    message: ReactNode,
+    defaultValue?: string,
+    title?: string,
+  ) => Promise<string | null>;
 }
 
-const CustomDialogContext = createContext<CustomDialogContextType | undefined>(undefined);
+const CustomDialogContext = createContext<CustomDialogContextType | undefined>(
+  undefined,
+);
 
 export function CustomDialogProvider({ children }: { children: ReactNode }) {
   const [config, setConfig] = useState<DialogConfig | null>(null);
@@ -29,13 +35,20 @@ export function CustomDialogProvider({ children }: { children: ReactNode }) {
     });
   };
 
-  const showConfirm = (message: ReactNode, title?: string): Promise<boolean> => {
+  const showConfirm = (
+    message: ReactNode,
+    title?: string,
+  ): Promise<boolean> => {
     return new Promise((resolve) => {
       setConfig({ type: "confirm", message, title, resolve });
     });
   };
 
-  const showPrompt = (message: ReactNode, defaultValue = "", title?: string): Promise<string | null> => {
+  const showPrompt = (
+    message: ReactNode,
+    defaultValue = "",
+    title?: string,
+  ): Promise<string | null> => {
     setInputValue(defaultValue);
     return new Promise((resolve) => {
       setConfig({ type: "prompt", message, defaultValue, title, resolve });
@@ -51,22 +64,30 @@ export function CustomDialogProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <CustomDialogContext.Provider value={{ showAlert, showConfirm, showPrompt }}>
+    <CustomDialogContext.Provider
+      value={{ showAlert, showConfirm, showPrompt }}
+    >
       {children}
 
       {config && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-fade-in">
-          <div className="w-full max-w-[360px] max-h-[90vh] bg-white rounded-[28px] p-6 shadow-[0_20px_50px_rgba(0,0,0,0.15)] animate-scale-in border border-[#F0EDFF] flex flex-col items-center gap-4 text-center">
+        <div className="fixed inset-0 z-9999 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-fade-in">
+          <div className="w-full max-w-90 max-h-[90vh] bg-white rounded-[28px] p-6 shadow-[0_20px_50px_rgba(0,0,0,0.15)] animate-scale-in border border-[#F0EDFF] flex flex-col items-center gap-4 text-center">
             {/* Icon representation */}
-            <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-[#F5F3FF] flex-shrink-0">
-              {config.type === "alert" && <FiAlertCircle size={28} className="text-[#8C66FF]" />}
-              {config.type === "confirm" && <FiHelpCircle size={28} className="text-[#FF5E8C]" />}
-              {config.type === "prompt" && <FiEdit3 size={28} className="text-[#8C66FF]" />}
+            <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-[#F5F3FF] shrink-0">
+              {config.type === "alert" && (
+                <FiAlertCircle size={28} className="text-[#8C66FF]" />
+              )}
+              {config.type === "confirm" && (
+                <FiHelpCircle size={28} className="text-[#FF5E8C]" />
+              )}
+              {config.type === "prompt" && (
+                <FiEdit3 size={28} className="text-[#8C66FF]" />
+              )}
             </div>
 
             {/* Title / Description */}
             <div className="flex flex-col gap-1.5 w-full min-h-0 flex-1 overflow-hidden">
-              <h3 className="text-sm font-extrabold uppercase tracking-wider text-[#9C98A6] flex-shrink-0">
+              <h3 className="text-sm font-extrabold uppercase tracking-wider text-[#9C98A6] shrink-0">
                 {config.title || (
                   <>
                     {config.type === "alert" && "Pemberitahuan"}
@@ -82,7 +103,7 @@ export function CustomDialogProvider({ children }: { children: ReactNode }) {
 
             {/* Input Field for Prompt */}
             {config.type === "prompt" && (
-               <div className="w-full mt-1 flex-shrink-0">
+              <div className="w-full mt-1 shrink-0">
                 <input
                   type="text"
                   value={inputValue}
@@ -98,7 +119,7 @@ export function CustomDialogProvider({ children }: { children: ReactNode }) {
             )}
 
             {/* Actions Buttons */}
-            <div className="flex gap-3 w-full mt-2 flex-shrink-0">
+            <div className="flex gap-3 w-full mt-2 shrink-0">
               {config.type === "confirm" && (
                 <>
                   <button
@@ -152,7 +173,9 @@ export function CustomDialogProvider({ children }: { children: ReactNode }) {
 export function useCustomDialog() {
   const context = useContext(CustomDialogContext);
   if (!context) {
-    throw new Error("useCustomDialog must be used within a CustomDialogProvider");
+    throw new Error(
+      "useCustomDialog must be used within a CustomDialogProvider",
+    );
   }
   return context;
 }

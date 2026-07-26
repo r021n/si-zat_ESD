@@ -1,5 +1,13 @@
 import { useState, useMemo } from "react";
-import { FiCheckCircle, FiXCircle, FiRefreshCw, FiArrowUp, FiArrowDown, FiHelpCircle, FiList } from "react-icons/fi";
+import {
+  FiCheckCircle,
+  FiXCircle,
+  FiRefreshCw,
+  FiArrowUp,
+  FiArrowDown,
+  FiHelpCircle,
+  FiList,
+} from "react-icons/fi";
 
 export interface SequenceData {
   instruction: string;
@@ -12,13 +20,22 @@ interface QuizSequenceComponentProps {
   blockIndex?: number;
 }
 
-export default function QuizSequenceComponent({ data, blockIndex }: QuizSequenceComponentProps) {
+export default function QuizSequenceComponent({
+  data,
+  blockIndex,
+}: QuizSequenceComponentProps) {
   // Shuffle sequence initially
   const initialShuffledItems = useMemo(() => {
-    const original = data.items.map((text, idx) => ({ originalIdx: idx, text }));
+    const original = data.items.map((text, idx) => ({
+      originalIdx: idx,
+      text,
+    }));
     // If length > 1, shuffle until it's not identical to original
     let shuffled = [...original].sort(() => Math.random() - 0.5);
-    if (data.items.length > 1 && shuffled.every((item, i) => item.originalIdx === i)) {
+    if (
+      data.items.length > 1 &&
+      shuffled.every((item, i) => item.originalIdx === i)
+    ) {
       shuffled = [...shuffled].reverse();
     }
     return shuffled;
@@ -55,11 +72,13 @@ export default function QuizSequenceComponent({ data, blockIndex }: QuizSequence
 
   const handleReset = () => {
     setSubmitted(false);
-    setCurrentSequence([...initialShuffledItems].sort(() => Math.random() - 0.5));
+    setCurrentSequence(
+      [...initialShuffledItems].sort(() => Math.random() - 0.5),
+    );
   };
 
   return (
-    <div className="w-full bg-white rounded-[24px] border border-[#F0EDFF] p-5 shadow-[0_4px_12px_rgba(0,0,0,0.02)] flex flex-col gap-4 text-left select-none">
+    <div className="w-full bg-white rounded-3xl border border-[#F0EDFF] p-5 shadow-[0_4px_12px_rgba(0,0,0,0.02)] flex flex-col gap-4 text-left select-none">
       {/* Header Badge */}
       <div className="flex justify-between items-center pb-2 border-b border-[#F0EDFF]/80">
         <div className="flex items-center gap-2">
@@ -78,7 +97,11 @@ export default function QuizSequenceComponent({ data, blockIndex }: QuizSequence
                 : "bg-[#FFEAEA] text-[#FF5E8C]"
             }`}
           >
-            {isFullyCorrect ? <FiCheckCircle size={12} /> : <FiXCircle size={12} />}
+            {isFullyCorrect ? (
+              <FiCheckCircle size={12} />
+            ) : (
+              <FiXCircle size={12} />
+            )}
             {correctCount} / {data.items.length} Urutan Benar
           </span>
         )}
@@ -101,9 +124,11 @@ export default function QuizSequenceComponent({ data, blockIndex }: QuizSequence
           let borderStyle = "border-[#F0EDFF] bg-[#FAF9FF] text-[#2C2B30]";
           if (submitted) {
             if (isPosCorrect) {
-              borderStyle = "border-[#2C8578] bg-[#E6F8F6] text-[#2C8578] font-bold";
+              borderStyle =
+                "border-[#2C8578] bg-[#E6F8F6] text-[#2C8578] font-bold";
             } else {
-              borderStyle = "border-[#FF5E8C] bg-[#FFEAEA] text-[#FF5E8C] font-bold";
+              borderStyle =
+                "border-[#FF5E8C] bg-[#FFEAEA] text-[#FF5E8C] font-bold";
             }
           }
 
@@ -116,7 +141,7 @@ export default function QuizSequenceComponent({ data, blockIndex }: QuizSequence
                 <span className="w-6 h-6 rounded-lg bg-[#8C66FF] text-white text-[10px] font-black flex items-center justify-center shrink-0 mt-0.5">
                   {idx + 1}
                 </span>
-                <span className="leading-relaxed text-left break-words whitespace-normal font-medium flex-1">
+                <span className="leading-relaxed text-left wrap-break-word whitespace-normal font-medium flex-1">
                   {item.text}
                 </span>
               </div>
@@ -160,7 +185,7 @@ export default function QuizSequenceComponent({ data, blockIndex }: QuizSequence
         <button
           type="button"
           onClick={handleSubmit}
-          className="w-full py-3 mt-1 bg-gradient-to-br from-[#8C66FF] to-[#6039DF] text-white font-extrabold uppercase tracking-wider text-[10px] rounded-2xl shadow-md shadow-purple-100 cursor-pointer transition-all flex items-center justify-center gap-2"
+          className="w-full py-3 mt-1 bg-linear-to-br from-[#8C66FF] to-[#6039DF] text-white font-extrabold uppercase tracking-wider text-[10px] rounded-2xl shadow-md shadow-purple-100 cursor-pointer transition-all flex items-center justify-center gap-2"
         >
           Periksa Urutan
         </button>

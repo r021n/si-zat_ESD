@@ -1,16 +1,31 @@
 import { useState, useEffect, useRef } from "react";
 import { useAuthStore } from "../store/authStore";
 import { useCustomDialog } from "../components/CustomDialog";
-import { FiArrowLeft, FiRefreshCw, FiSend, FiPaperclip, FiChevronDown, FiChevronUp } from "react-icons/fi";
+import {
+  FiArrowLeft,
+  FiRefreshCw,
+  FiSend,
+  FiPaperclip,
+  FiChevronDown,
+  FiChevronUp,
+} from "react-icons/fi";
 import { useAppBack } from "../hooks/useAppBack";
-import { LuUpload, LuClock, LuUser, LuTrash2, LuImage, LuMessageSquare, LuAward } from "react-icons/lu";
-import { 
-  getTaskSubmissionsApi, 
-  createTaskSubmissionApi, 
+import {
+  LuUpload,
+  LuClock,
+  LuUser,
+  LuTrash2,
+  LuImage,
+  LuMessageSquare,
+  LuAward,
+} from "react-icons/lu";
+import {
+  getTaskSubmissionsApi,
+  createTaskSubmissionApi,
   deleteTaskSubmissionApi,
-  getTaskDiscussionsApi, 
+  getTaskDiscussionsApi,
   sendTaskDiscussionApi,
-  getOverallContributorsApi
+  getOverallContributorsApi,
 } from "../api/api";
 
 interface Message {
@@ -39,13 +54,16 @@ interface ContributorData {
 }
 
 // Canvas-based image compression helper
-function compressImage(file: File, maxSizeBytes: number = 200 * 1024): Promise<Blob> {
+function compressImage(
+  file: File,
+  maxSizeBytes: number = 200 * 1024,
+): Promise<Blob> {
   return new Promise((resolve, reject) => {
     if (!file.type.startsWith("image/")) {
       resolve(file); // Fallback to original if not an image
       return;
     }
-    
+
     if (file.size <= maxSizeBytes) {
       resolve(file); // No compression needed
       return;
@@ -104,7 +122,7 @@ function compressImage(file: File, maxSizeBytes: number = 200 * 1024): Promise<B
               }
             },
             "image/jpeg",
-            quality
+            quality,
           );
         };
 
@@ -126,14 +144,17 @@ export default function PenilaianBerpikirSistem() {
   const { showAlert, showConfirm } = useCustomDialog();
 
   // Active view: "list" | "detail" | "upload" | "history"
-  const [activeView, setActiveView] = useState<"list" | "detail" | "upload" | "history">("list");
+  const [activeView, setActiveView] = useState<
+    "list" | "detail" | "upload" | "history"
+  >("list");
 
   // Submissions list state
   const [submissions, setSubmissions] = useState<TaskSubmission[]>([]);
   const [loadingSubmissions, setLoadingSubmissions] = useState<boolean>(true);
 
   // Selected submission for detail/discussion view
-  const [selectedSubmission, setSelectedSubmission] = useState<TaskSubmission | null>(null);
+  const [selectedSubmission, setSelectedSubmission] =
+    useState<TaskSubmission | null>(null);
 
   // Toggle collapse/expand for task details in discussion
   const [isTaskCollapsed, setIsTaskCollapsed] = useState<boolean>(false);
@@ -156,18 +177,34 @@ export default function PenilaianBerpikirSistem() {
   const [compressedSize, setCompressedSize] = useState<string>("");
 
   // Contributor Modal State
-  const [isContributorModalOpen, setIsContributorModalOpen] = useState<boolean>(false);
-  const [contributorModalType, setContributorModalType] = useState<"overall" | "task">("overall");
-  const [contributorModalTaskTitle, setContributorModalTaskTitle] = useState<string>("");
-  const [contributorModalSubmissionId, setContributorModalSubmissionId] = useState<string>("");
-  const [loadingContributors, setLoadingContributors] = useState<boolean>(false);
-  const [contributorsData, setContributorsData] = useState<ContributorData[]>([]);
-  const [contributorsError, setContributorsError] = useState<string | null>(null);
+  const [isContributorModalOpen, setIsContributorModalOpen] =
+    useState<boolean>(false);
+  const [contributorModalType, setContributorModalType] = useState<
+    "overall" | "task"
+  >("overall");
+  const [contributorModalTaskTitle, setContributorModalTaskTitle] =
+    useState<string>("");
+  const [contributorModalSubmissionId, setContributorModalSubmissionId] =
+    useState<string>("");
+  const [loadingContributors, setLoadingContributors] =
+    useState<boolean>(false);
+  const [contributorsData, setContributorsData] = useState<ContributorData[]>(
+    [],
+  );
+  const [contributorsError, setContributorsError] = useState<string | null>(
+    null,
+  );
 
-  const displayName = user ? (user.nama || user.email.split("@")[0]) : "Pengguna";
-  const isAdmin = user ? (user.status.toLowerCase() === "admin" || user.email.toLowerCase().includes("admin")) : false;
+  const displayName = user ? user.nama || user.email.split("@")[0] : "Pengguna";
+  const isAdmin = user
+    ? user.status.toLowerCase() === "admin" ||
+      user.email.toLowerCase().includes("admin")
+    : false;
 
-  const handleShowTaskContributors = (submissionId: string, taskTitle: string) => {
+  const handleShowTaskContributors = (
+    submissionId: string,
+    taskTitle: string,
+  ) => {
     setContributorModalType("task");
     setContributorModalSubmissionId(submissionId);
     setContributorModalTaskTitle(taskTitle);
@@ -199,15 +236,27 @@ export default function PenilaianBerpikirSistem() {
           const formatted = data.map((item: any) => ({
             name: item.name,
             detail: `Kelas ${item.studentClass}`,
-            count: item.count
+            count: item.count,
           }));
           setContributorsData(formatted);
         } else {
-          const data = await getTaskDiscussionsApi(token || "", contributorModalSubmissionId);
+          let dataToProcess: any[] = [];
+          if (
+            selectedSubmission &&
+            selectedSubmission.id === contributorModalSubmissionId &&
+            messages.length > 0
+          ) {
+            dataToProcess = messages;
+          } else {
+            dataToProcess = await getTaskDiscussionsApi(
+              token || "",
+              contributorModalSubmissionId,
+            );
+          }
           if (!active) return;
 
           const counts: Record<string, { name: string; count: number }> = {};
-          data.forEach((comment: any) => {
+          dataToProcess.forEach((comment: any) => {
             const role = comment.senderRole?.toLowerCase();
             if (role === "siswa") {
               const key = comment.senderName;
@@ -222,7 +271,7 @@ export default function PenilaianBerpikirSistem() {
             .sort((a: any, b: any) => b.count - a.count)
             .map((item: any) => ({
               name: item.name,
-              count: item.count
+              count: item.count,
             }));
 
           setContributorsData(sorted);
@@ -243,7 +292,14 @@ export default function PenilaianBerpikirSistem() {
     return () => {
       active = false;
     };
-  }, [isContributorModalOpen, contributorModalType, contributorModalSubmissionId, token]);
+  }, [
+    isContributorModalOpen,
+    contributorModalType,
+    contributorModalSubmissionId,
+    token,
+    selectedSubmission,
+    messages,
+  ]);
 
   // Fetch all submissions
   const fetchSubmissions = async (showLoading = true) => {
@@ -264,7 +320,7 @@ export default function PenilaianBerpikirSistem() {
     }
   }, [token]);
 
-  // Fetch messages with polling every 5s if in detail view
+  // Fetch messages with polling every 5s if in detail view and window is active
   useEffect(() => {
     if (activeView !== "detail" || !selectedSubmission) {
       setMessages([]);
@@ -274,7 +330,10 @@ export default function PenilaianBerpikirSistem() {
     const fetchMessages = async (showLoading = false) => {
       try {
         if (showLoading) setLoadingMessages(true);
-        const data = await getTaskDiscussionsApi(token || "", selectedSubmission.id);
+        const data = await getTaskDiscussionsApi(
+          token || "",
+          selectedSubmission.id,
+        );
         setMessages(data);
       } catch (err) {
         console.error("Gagal memuat pesan diskusi:", err);
@@ -286,7 +345,9 @@ export default function PenilaianBerpikirSistem() {
     fetchMessages(true);
 
     const interval = setInterval(() => {
-      fetchMessages(false);
+      if (document.visibilityState === "visible") {
+        fetchMessages(false);
+      }
     }, 5000);
 
     return () => clearInterval(interval);
@@ -306,7 +367,11 @@ export default function PenilaianBerpikirSistem() {
     setNewMessage("");
 
     try {
-      const response = await sendTaskDiscussionApi(token || "", selectedSubmission.id, textToSend);
+      const response = await sendTaskDiscussionApi(
+        token || "",
+        selectedSubmission.id,
+        textToSend,
+      );
       setMessages((prev) => [...prev, response.comment]);
     } catch (err: any) {
       await showAlert(err.message || "Gagal mengirimkan pesan diskusi.");
@@ -320,7 +385,7 @@ export default function PenilaianBerpikirSistem() {
       setFileName(selectedFile.name);
       setOriginalSize((selectedFile.size / 1024).toFixed(1) + " KB");
       setCompressing(true);
-      
+
       try {
         const compressed = await compressImage(selectedFile);
         setFileBlob(compressed);
@@ -352,7 +417,7 @@ export default function PenilaianBerpikirSistem() {
       const formData = new FormData();
       formData.append("title", title.trim());
       formData.append("answer", answer.trim());
-      
+
       if (fileBlob) {
         const uploadName = fileName.replace(/\.[^/.]+$/, "") + ".jpg";
         formData.append("file", fileBlob, uploadName);
@@ -362,7 +427,7 @@ export default function PenilaianBerpikirSistem() {
       }
 
       await createTaskSubmissionApi(token || "", formData);
-      
+
       // Reset form
       setTitle("");
       setAnswer("");
@@ -385,7 +450,9 @@ export default function PenilaianBerpikirSistem() {
 
   // Handle delete task
   const handleDelete = async (id: string) => {
-    const confirmDelete = await showConfirm("Apakah Anda yakin ingin menghapus pengumpulan tugas ini?");
+    const confirmDelete = await showConfirm(
+      "Apakah Anda yakin ingin menghapus pengumpulan tugas ini?",
+    );
     if (!confirmDelete) return;
 
     try {
@@ -403,11 +470,10 @@ export default function PenilaianBerpikirSistem() {
   return (
     <div className="w-full h-screen max-h-screen bg-[#FAF9FF] flex justify-center items-center text-[#2C2B30] font-sans select-none overflow-hidden relative">
       {/* Decorative Blur Bubble */}
-      <div className="absolute top-[-10%] right-[-10%] w-[200px] h-[200px] bg-[#E9E4FF] rounded-full filter blur-2xl opacity-50"></div>
+      <div className="absolute top-[-10%] right-[-10%] w-50 h-50 bg-[#E9E4FF] rounded-full filter blur-2xl opacity-50"></div>
 
       {/* Container Mobile Portrait */}
-      <div className="w-full max-w-[430px] h-full max-h-screen flex flex-col justify-between px-6 py-6 z-10 overflow-hidden">
-        
+      <div className="w-full max-w-107.5 h-full max-h-screen flex flex-col justify-between px-6 py-6 z-10 overflow-hidden">
         {/* Top Header Section */}
         <div>
           <div className="w-full flex justify-between items-center mt-4 mb-4">
@@ -423,7 +489,7 @@ export default function PenilaianBerpikirSistem() {
                     setActiveView("list");
                   }
                 }}
-                className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-[#F0EDFF] text-[#8C66FF] cursor-pointer active:bg-neutral-50 transition-none flex-shrink-0"
+                className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-[#F0EDFF] text-[#8C66FF] cursor-pointer active:bg-neutral-50 transition-none shrink-0"
                 title="Kembali"
               >
                 <FiArrowLeft size={20} />
@@ -443,8 +509,8 @@ export default function PenilaianBerpikirSistem() {
                 </h1>
               </div>
             </div>
-            
-            <div className="flex items-center gap-2 flex-shrink-0">
+
+            <div className="flex items-center gap-2 shrink-0">
               {/* Refresh button - only visible on list view */}
               {activeView === "list" && (
                 <button
@@ -453,7 +519,10 @@ export default function PenilaianBerpikirSistem() {
                   className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-[#F0EDFF] text-[#8C66FF] cursor-pointer active:bg-neutral-50 transition-none"
                   title="Segarkan data"
                 >
-                  <FiRefreshCw size={16} className={loadingSubmissions ? "animate-spin" : ""} />
+                  <FiRefreshCw
+                    size={16}
+                    className={loadingSubmissions ? "animate-spin" : ""}
+                  />
                 </button>
               )}
 
@@ -473,7 +542,6 @@ export default function PenilaianBerpikirSistem() {
 
         {/* View switching content container */}
         <div className="w-full flex-1 flex flex-col justify-start my-2 overflow-hidden">
-          
           {/* LIST VIEW */}
           {activeView === "list" && (
             <div className="w-full flex-1 flex flex-col gap-3">
@@ -486,8 +554,12 @@ export default function PenilaianBerpikirSistem() {
                   <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-[#E6F8F6] text-[#2C8578] mb-2 shadow-inner">
                     <LuUpload className="text-lg" />
                   </div>
-                  <span className="text-xs font-bold text-[#2C2B30]">Unggah Tugas</span>
-                  <span className="text-[9px] text-[#9C98A6] mt-0.5">Kirim analisis baru</span>
+                  <span className="text-xs font-bold text-[#2C2B30]">
+                    Unggah Tugas
+                  </span>
+                  <span className="text-[9px] text-[#9C98A6] mt-0.5">
+                    Kirim analisis baru
+                  </span>
                 </button>
 
                 <button
@@ -497,24 +569,32 @@ export default function PenilaianBerpikirSistem() {
                   <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-[#FFEBF0] text-[#D95276] mb-2 shadow-inner">
                     <LuClock className="text-lg" />
                   </div>
-                  <span className="text-xs font-bold text-[#2C2B30]">Tugas Saya</span>
-                  <span className="text-[9px] text-[#9C98A6] mt-0.5">Riwayat & hapus ({mySubmissions.length})</span>
+                  <span className="text-xs font-bold text-[#2C2B30]">
+                    Tugas Saya
+                  </span>
+                  <span className="text-[9px] text-[#9C98A6] mt-0.5">
+                    Riwayat & hapus ({mySubmissions.length})
+                  </span>
                 </button>
               </div>
 
               {/* Submissions list */}
               <div className="w-full flex-1 flex flex-col gap-3 overflow-y-auto max-h-[58vh] pr-1 custom-scroll">
-                <p className="text-[10px] text-[#9C98A6] font-semibold leading-relaxed bg-[#F5F2FF] border border-[#E9E4FF] p-3 rounded-[16px]">
-                  💡 Pilih salah satu tugas di bawah ini untuk membuka forum obrolan dan mendiskusikan hasil analisis berpikir sistem mereka.
+                <p className="text-[10px] text-[#9C98A6] font-semibold leading-relaxed bg-[#F5F2FF] border border-[#E9E4FF] p-3 rounded-2xl">
+                  💡 Pilih salah satu tugas di bawah ini untuk membuka forum
+                  obrolan dan mendiskusikan hasil analisis berpikir sistem
+                  mereka.
                 </p>
 
                 {loadingSubmissions ? (
-                  <div className="w-full py-12 flex flex-col items-center justify-center gap-2 bg-white border border-dashed border-[#F0EDFF] rounded-[24px] shadow-sm">
+                  <div className="w-full py-12 flex flex-col items-center justify-center gap-2 bg-white border border-dashed border-[#F0EDFF] rounded-3xl shadow-sm">
                     <div className="w-6 h-6 border-2 border-[#8C66FF] border-t-transparent rounded-full animate-spin"></div>
-                    <p className="text-[10px] font-bold text-[#9C98A6] uppercase tracking-wider">Memuat daftar tugas...</p>
+                    <p className="text-[10px] font-bold text-[#9C98A6] uppercase tracking-wider">
+                      Memuat daftar tugas...
+                    </p>
                   </div>
                 ) : submissions.length === 0 ? (
-                  <div className="w-full py-12 flex flex-col items-center justify-center gap-2 bg-white border border-dashed border-[#F0EDFF] rounded-[24px] shadow-sm text-center px-4">
+                  <div className="w-full py-12 flex flex-col items-center justify-center gap-2 bg-white border border-dashed border-[#F0EDFF] rounded-3xl shadow-sm text-center px-4">
                     <p className="text-xs text-[#9C98A6] italic font-semibold">
                       Belum ada tugas yang dikumpulkan untuk didiskusikan.
                     </p>
@@ -522,15 +602,17 @@ export default function PenilaianBerpikirSistem() {
                 ) : (
                   <div className="flex flex-col gap-3 pb-4">
                     {submissions.map((sub) => {
-                      const hasImage = sub.fileName && sub.fileName !== "Tidak ada berkas terlampir";
+                      const hasImage =
+                        sub.fileName &&
+                        sub.fileName !== "Tidak ada berkas terlampir";
                       return (
-                        <div 
-                          key={sub.id} 
+                        <div
+                          key={sub.id}
                           onClick={() => {
                             setSelectedSubmission(sub);
                             setActiveView("detail");
                           }}
-                          className="w-full p-4.5 bg-white rounded-[24px] shadow-[0_4px_12px_rgba(0,0,0,0.01)] border border-[#F0EDFF] cursor-pointer active:bg-neutral-50 transition-none flex flex-col gap-2 relative"
+                          className="w-full p-4.5 bg-white rounded-3xl shadow-[0_4px_12px_rgba(0,0,0,0.01)] border border-[#F0EDFF] cursor-pointer active:bg-neutral-50 transition-none flex flex-col gap-2 relative"
                         >
                           <div className="flex justify-between items-center">
                             <span className="text-[9px] font-bold uppercase bg-[#E8E5FF] text-[#635BFF] px-2.5 py-0.5 rounded-full">
@@ -549,11 +631,12 @@ export default function PenilaianBerpikirSistem() {
                             {sub.answer}
                           </p>
 
-                          <div className="h-[1px] bg-[#F5F2FF] w-full my-1"></div>
+                          <div className="h-px bg-[#F5F2FF] w-full my-1"></div>
 
                           <div className="flex justify-between items-center text-[10px] text-[#9C98A6] font-bold">
                             <span className="text-[#2C2B30] flex items-center gap-1">
-                              <LuUser size={12} className="text-[#8C66FF]" /> {sub.studentName}
+                              <LuUser size={12} className="text-[#8C66FF]" />{" "}
+                              {sub.studentName}
                             </span>
                             <div className="flex items-center gap-2">
                               <button
@@ -587,35 +670,40 @@ export default function PenilaianBerpikirSistem() {
             <div className="w-full flex-1 flex flex-col gap-3 overflow-hidden min-h-0">
               {/* Task info box */}
               {isTaskCollapsed ? (
-                <div 
+                <div
                   onClick={() => setIsTaskCollapsed(false)}
                   className="w-full bg-white border border-[#F0EDFF] rounded-[20px] px-4 py-3 shadow-[0_4px_12px_rgba(0,0,0,0.01)] flex justify-between items-center cursor-pointer active:bg-neutral-50"
                 >
                   <div className="flex items-center gap-2 truncate flex-1 min-w-0">
-                    <LuUser className="text-[#8C66FF] flex-shrink-0" size={14} />
+                    <LuUser className="text-[#8C66FF] shrink-0" size={14} />
                     <span className="text-[11px] font-extrabold text-[#2C2B30] truncate">
-                      Detail Tugas: "{selectedSubmission.title}" ({selectedSubmission.studentName})
+                      Detail Tugas: "{selectedSubmission.title}" (
+                      {selectedSubmission.studentName})
                     </span>
                   </div>
-                  <div className="flex items-center gap-1 text-[#8C66FF] text-[10px] font-bold flex-shrink-0 ml-2">
+                  <div className="flex items-center gap-1 text-[#8C66FF] text-[10px] font-bold shrink-0 ml-2">
                     <span>Tampilkan</span>
                     <FiChevronDown size={14} />
                   </div>
                 </div>
               ) : (
-                <div className="w-full bg-white border border-[#F0EDFF] rounded-[24px] p-4.5 shadow-[0_4px_12px_rgba(0,0,0,0.01)] flex flex-col gap-2 max-h-[30vh] overflow-y-auto custom-scroll">
+                <div className="w-full bg-white border border-[#F0EDFF] rounded-3xl p-4.5 shadow-[0_4px_12px_rgba(0,0,0,0.01)] flex flex-col gap-2 max-h-[30vh] overflow-y-auto custom-scroll">
                   <div className="flex justify-between items-center border-b border-[#F5F2FF] pb-2">
                     <div>
-                      <p className="text-[8px] font-bold uppercase tracking-widest text-[#9C98A6]">Tugas dari</p>
+                      <p className="text-[8px] font-bold uppercase tracking-widest text-[#9C98A6]">
+                        Tugas dari
+                      </p>
                       <p className="text-[10px] font-extrabold text-[#2C2B30] flex items-center gap-1 mt-0.5">
-                        <LuUser size={12} className="text-[#8C66FF]" /> {selectedSubmission.studentName} ({selectedSubmission.studentClass})
+                        <LuUser size={12} className="text-[#8C66FF]" />{" "}
+                        {selectedSubmission.studentName} (
+                        {selectedSubmission.studentClass})
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-[9px] text-[#9C98A6] font-semibold">
                         ⏱ {selectedSubmission.submittedAt}
                       </span>
-                      <button 
+                      <button
                         type="button"
                         onClick={() => setIsTaskCollapsed(true)}
                         className="text-[10px] font-extrabold uppercase text-[#8C66FF] flex items-center gap-0.5 cursor-pointer active:opacity-75"
@@ -635,60 +723,80 @@ export default function PenilaianBerpikirSistem() {
                     {selectedSubmission.answer}
                   </p>
 
-                  {selectedSubmission.fileName && selectedSubmission.fileName !== "Tidak ada berkas terlampir" && (
-                    <div className="mt-2 border border-[#F0EDFF] bg-[#FAF9FF] p-2 rounded-[16px] flex flex-col gap-1.5">
-                      <div className="w-full bg-white border border-[#F0EDFF] rounded-[12px] flex justify-center items-center overflow-hidden max-h-[140px]">
-                        <img 
-                          src={`${API_URL}/api/tasks/submissions/${selectedSubmission.id}/image`}
-                          alt={selectedSubmission.title}
-                          className="max-h-[140px] w-auto object-contain cursor-pointer active:opacity-80"
-                          onClick={() => window.open(`${API_URL}/api/tasks/submissions/${selectedSubmission.id}/image`, "_blank")}
-                          onError={(e) => {
-                            (e.target as HTMLElement).style.display = 'none';
-                          }}
-                        />
+                  {selectedSubmission.fileName &&
+                    selectedSubmission.fileName !==
+                      "Tidak ada berkas terlampir" && (
+                      <div className="mt-2 border border-[#F0EDFF] bg-[#FAF9FF] p-2 rounded-2xl flex flex-col gap-1.5">
+                        <div className="w-full bg-white border border-[#F0EDFF] rounded-xl flex justify-center items-center overflow-hidden max-h-35">
+                          <img
+                            src={`${API_URL}/api/tasks/submissions/${selectedSubmission.id}/image`}
+                            alt={selectedSubmission.title}
+                            className="max-h-35 w-auto object-contain cursor-pointer active:opacity-80"
+                            onClick={() =>
+                              window.open(
+                                `${API_URL}/api/tasks/submissions/${selectedSubmission.id}/image`,
+                                "_blank",
+                              )
+                            }
+                            onError={(e) => {
+                              (e.target as HTMLElement).style.display = "none";
+                            }}
+                          />
+                        </div>
+                        <span className="text-[9px] text-[#9C98A6] font-semibold truncate text-center flex items-center justify-center gap-1">
+                          <FiPaperclip size={10} />{" "}
+                          {selectedSubmission.fileName}
+                        </span>
                       </div>
-                      <span className="text-[9px] text-[#9C98A6] font-semibold truncate text-center flex items-center justify-center gap-1">
-                        <FiPaperclip size={10} /> {selectedSubmission.fileName}
-                      </span>
-                    </div>
-                  )}
+                    )}
                 </div>
               )}
 
               {/* Chat Thread */}
-              <div className="w-full flex-1 p-4 bg-white border border-[#F0EDFF] rounded-[24px] shadow-[0_4px_12px_rgba(0,0,0,0.01)] overflow-y-auto flex flex-col gap-3 custom-scroll min-h-0">
+              <div className="w-full flex-1 p-4 bg-white border border-[#F0EDFF] rounded-3xl shadow-[0_4px_12px_rgba(0,0,0,0.01)] overflow-y-auto flex flex-col gap-3 custom-scroll min-h-0">
                 {loadingMessages && messages.length === 0 ? (
-                  <p className="text-xs text-[#9C98A6] italic text-center py-6">Memuat obrolan...</p>
+                  <p className="text-xs text-[#9C98A6] italic text-center py-6">
+                    Memuat obrolan...
+                  </p>
                 ) : messages.length === 0 ? (
-                  <div className="w-full py-8 flex flex-col items-center justify-center text-center gap-1.5 bg-[#FAF9FF] border border-dashed border-[#E9E4FF] rounded-[16px] px-3">
-                    <LuMessageSquare size={20} className="text-[#8C66FF] opacity-60" />
+                  <div className="w-full py-8 flex flex-col items-center justify-center text-center gap-1.5 bg-[#FAF9FF] border border-dashed border-[#E9E4FF] rounded-2xl px-3">
+                    <LuMessageSquare
+                      size={20}
+                      className="text-[#8C66FF] opacity-60"
+                    />
                     <p className="text-xs text-[#9C98A6] italic font-semibold">
-                      Belum ada diskusi untuk tugas ini. Tulis tanggapan Anda di bawah untuk memulai!
+                      Belum ada diskusi untuk tugas ini. Tulis tanggapan Anda di
+                      bawah untuk memulai!
                     </p>
                   </div>
                 ) : (
                   messages.map((msg) => {
                     const isMe = msg.senderName === displayName;
                     return (
-                      <div 
-                        key={msg.id} 
+                      <div
+                        key={msg.id}
                         className={`flex flex-col gap-1 max-w-[85%] ${
                           isMe ? "self-end items-end" : "self-start items-start"
                         }`}
                       >
                         <div className="flex gap-1.5 items-center text-[9px] text-[#9C98A6] font-bold">
-                          <span className={`font-extrabold ${isMe ? "text-[#8C66FF]" : "text-[#2C2B30]"}`}>
+                          <span
+                            className={`font-extrabold ${
+                              isMe ? "text-[#8C66FF]" : "text-[#2C2B30]"
+                            }`}
+                          >
                             {msg.senderName}
                           </span>
                           <span>[{msg.senderRole}]</span>
                         </div>
 
-                        <div className={`p-3 rounded-[20px] text-xs leading-relaxed font-medium transition-none ${
-                          isMe 
-                            ? "bg-[#8C66FF] text-white rounded-tr-none text-left" 
-                            : "bg-[#FAF9FF] text-[#2C2B30] border border-[#F0EDFF] rounded-tl-none text-left"
-                        }`}>
+                        <div
+                          className={`p-3 rounded-[20px] text-xs leading-relaxed font-medium transition-none ${
+                            isMe
+                              ? "bg-[#8C66FF] text-white rounded-tr-none text-left"
+                              : "bg-[#FAF9FF] text-[#2C2B30] border border-[#F0EDFF] rounded-tl-none text-left"
+                          }`}
+                        >
                           {msg.content}
                         </div>
 
@@ -703,9 +811,12 @@ export default function PenilaianBerpikirSistem() {
               </div>
 
               {/* Chat Input Form */}
-              <form onSubmit={handleSendMessage} className="w-full flex flex-col gap-1.5 mt-auto">
+              <form
+                onSubmit={handleSendMessage}
+                className="w-full flex flex-col gap-1.5 mt-auto"
+              >
                 <div className="flex gap-2">
-                  <input 
+                  <input
                     type="text"
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
@@ -714,9 +825,9 @@ export default function PenilaianBerpikirSistem() {
                     maxLength={250}
                     required
                   />
-                  <button 
+                  <button
                     type="submit"
-                    className="w-10 h-10 rounded-full bg-[#8C66FF] text-white flex items-center justify-center shadow-md cursor-pointer active:bg-[#7752EB] transition-none flex-shrink-0"
+                    className="w-10 h-10 rounded-full bg-[#8C66FF] text-white flex items-center justify-center shadow-md cursor-pointer active:bg-[#7752EB] transition-none shrink-0"
                   >
                     <FiSend size={16} />
                   </button>
@@ -731,14 +842,19 @@ export default function PenilaianBerpikirSistem() {
           {/* UPLOAD FORM VIEW */}
           {activeView === "upload" && (
             <div className="w-full flex-1 flex flex-col gap-4 overflow-y-auto max-h-[72vh] pr-1 custom-scroll pb-4">
-              <form onSubmit={handleSubmit} className="w-full flex flex-col gap-4 bg-white border border-[#F0EDFF] rounded-[24px] p-5 shadow-[0_4px_12px_rgba(0,0,0,0.01)]">
+              <form
+                onSubmit={handleSubmit}
+                className="w-full flex flex-col gap-4 bg-white border border-[#F0EDFF] rounded-3xl p-5 shadow-[0_4px_12px_rgba(0,0,0,0.01)]"
+              >
                 <h2 className="text-xs font-extrabold uppercase tracking-wider text-[#2C2B30] border-b border-[#F5F2FF] pb-2">
                   Form Pengumpulan Tugas
                 </h2>
-                
+
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-bold uppercase text-[#9C98A6]">Judul Tugas</label>
-                  <input 
+                  <label className="text-[10px] font-bold uppercase text-[#9C98A6]">
+                    Judul Tugas
+                  </label>
+                  <input
                     type="text"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
@@ -749,8 +865,10 @@ export default function PenilaianBerpikirSistem() {
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-bold uppercase text-[#9C98A6]">Jawaban / Analisis Deskriptif</label>
-                  <textarea 
+                  <label className="text-[10px] font-bold uppercase text-[#9C98A6]">
+                    Jawaban / Analisis Deskriptif
+                  </label>
+                  <textarea
                     rows={6}
                     value={answer}
                     onChange={(e) => setAnswer(e.target.value)}
@@ -761,18 +879,24 @@ export default function PenilaianBerpikirSistem() {
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-bold uppercase text-[#9C98A6]">Unggah Lampiran Gambar (Opsional)</label>
-                  
+                  <label className="text-[10px] font-bold uppercase text-[#9C98A6]">
+                    Unggah Lampiran Gambar (Opsional)
+                  </label>
+
                   {!fileName ? (
                     <label className="w-full border-2 border-dashed border-[#E9E4FF] hover:border-[#8C66FF] rounded-2xl p-6 flex flex-col items-center justify-center bg-[#FAF9FF] cursor-pointer active:bg-[#F3F0FF] transition-none">
                       <LuImage className="text-3xl text-[#8C66FF] mb-1.5" />
-                      <span className="text-xs font-bold text-[#8C66FF]">Pilih File Gambar</span>
-                      <span className="text-[9px] text-[#9C98A6] mt-0.5 font-semibold">Maksimal 200 KB (Otomatis dikompres)</span>
-                      <input 
-                        type="file" 
+                      <span className="text-xs font-bold text-[#8C66FF]">
+                        Pilih File Gambar
+                      </span>
+                      <span className="text-[9px] text-[#9C98A6] mt-0.5 font-semibold">
+                        Maksimal 200 KB (Otomatis dikompres)
+                      </span>
+                      <input
+                        type="file"
                         accept="image/*"
                         onChange={handleFileChange}
-                        className="hidden" 
+                        className="hidden"
                         disabled={compressing}
                       />
                     </label>
@@ -780,11 +904,13 @@ export default function PenilaianBerpikirSistem() {
                     <div className="w-full border border-[#F0EDFF] bg-[#FAF9FF] rounded-2xl p-4 flex flex-col gap-2">
                       <div className="flex justify-between items-center">
                         <div className="flex items-center gap-2 truncate flex-1">
-                          <FiPaperclip className="text-[#8C66FF] flex-shrink-0" />
-                          <span className="text-xs font-bold truncate text-[#2C2B30]">{fileName}</span>
+                          <FiPaperclip className="text-[#8C66FF] shrink-0" />
+                          <span className="text-xs font-bold truncate text-[#2C2B30]">
+                            {fileName}
+                          </span>
                         </div>
-                        <button 
-                          type="button" 
+                        <button
+                          type="button"
                           onClick={() => {
                             setFileName("");
                             setFileBlob(null);
@@ -803,7 +929,8 @@ export default function PenilaianBerpikirSistem() {
                       )}
                       {compressedSize && !compressing && (
                         <p className="text-[9px] font-mono text-[#2C8578] font-bold">
-                          Ukuran: {originalSize} &rarr; {compressedSize} (&lt; 200 KB)
+                          Ukuran: {originalSize} &rarr; {compressedSize} (&lt;
+                          200 KB)
                         </p>
                       )}
                     </div>
@@ -811,17 +938,19 @@ export default function PenilaianBerpikirSistem() {
                 </div>
 
                 <div className="flex gap-3 mt-2">
-                  <button 
+                  <button
                     type="button"
                     onClick={() => setActiveView("list")}
                     className="flex-1 py-3.5 bg-white border border-[#F0EDFF] text-[#8C66FF] font-extrabold uppercase tracking-wider text-[10px] rounded-full shadow-sm cursor-pointer transition-none text-center active:bg-neutral-50"
                   >
                     Batal
                   </button>
-                  <button 
+                  <button
                     type="submit"
                     disabled={compressing}
-                    className={`flex-1 py-3.5 bg-[#8C66FF] text-white font-extrabold uppercase tracking-wider text-[10px] rounded-full shadow-md cursor-pointer transition-none text-center active:bg-[#7752EB] ${compressing ? "opacity-50 cursor-not-allowed" : ""}`}
+                    className={`flex-1 py-3.5 bg-[#8C66FF] text-white font-extrabold uppercase tracking-wider text-[10px] rounded-full shadow-md cursor-pointer transition-none text-center active:bg-[#7752EB] ${
+                      compressing ? "opacity-50 cursor-not-allowed" : ""
+                    }`}
                   >
                     {compressing ? "Memproses..." : "Kirim Tugas"}
                   </button>
@@ -844,7 +973,7 @@ export default function PenilaianBerpikirSistem() {
                 </div>
 
                 {mySubmissions.length === 0 ? (
-                  <div className="w-full py-12 flex flex-col items-center justify-center gap-2 bg-white border border-dashed border-[#F0EDFF] rounded-[24px] shadow-sm text-center px-4">
+                  <div className="w-full py-12 flex flex-col items-center justify-center gap-2 bg-white border border-dashed border-[#F0EDFF] rounded-3xl shadow-sm text-center px-4">
                     <p className="text-xs text-[#9C98A6] italic font-semibold">
                       Belum ada tugas yang Anda kumpulkan.
                     </p>
@@ -852,12 +981,15 @@ export default function PenilaianBerpikirSistem() {
                 ) : (
                   <div className="flex flex-col gap-3">
                     {mySubmissions.map((sub) => (
-                      <div key={sub.id} className="w-full p-4.5 bg-white border border-[#F0EDFF] rounded-[24px] shadow-[0_4px_12px_rgba(0,0,0,0.01)] flex flex-col gap-2">
+                      <div
+                        key={sub.id}
+                        className="w-full p-4.5 bg-white border border-[#F0EDFF] rounded-3xl shadow-[0_4px_12px_rgba(0,0,0,0.01)] flex flex-col gap-2"
+                      >
                         <div className="flex justify-between items-center">
-                          <h3 className="text-xs font-extrabold text-[#2C2B30] tracking-wide leading-tight truncate max-w-[220px]">
+                          <h3 className="text-xs font-extrabold text-[#2C2B30] tracking-wide leading-tight truncate max-w-55">
                             {sub.title}
                           </h3>
-                          <button 
+                          <button
                             type="button"
                             onClick={() => handleDelete(sub.id)}
                             className="text-[9px] font-bold uppercase text-[#D95276] hover:text-[#b53a59] cursor-pointer flex items-center gap-1 bg-[#FFEBF0] px-2.5 py-1 rounded-full transition-none active:bg-[#ffd1dd]"
@@ -870,29 +1002,36 @@ export default function PenilaianBerpikirSistem() {
                           {sub.answer}
                         </p>
 
-                        {sub.fileName && sub.fileName !== "Tidak ada berkas terlampir" && (
-                          <div className="mt-2 border border-[#F0EDFF] bg-[#FAF9FF] p-2 rounded-[16px] flex flex-col gap-1.5">
-                            <div className="w-full bg-white border border-[#F0EDFF] rounded-[12px] flex justify-center items-center overflow-hidden max-h-[120px]">
-                              <img 
-                                src={`${API_URL}/api/tasks/submissions/${sub.id}/image`}
-                                alt={sub.title}
-                                className="max-h-[120px] w-auto object-contain cursor-pointer active:opacity-80"
-                                onClick={() => window.open(`${API_URL}/api/tasks/submissions/${sub.id}/image`, "_blank")}
-                                onError={(e) => {
-                                  (e.target as HTMLElement).style.display = 'none';
-                                }}
-                              />
+                        {sub.fileName &&
+                          sub.fileName !== "Tidak ada berkas terlampir" && (
+                            <div className="mt-2 border border-[#F0EDFF] bg-[#FAF9FF] p-2 rounded-2xl flex flex-col gap-1.5">
+                              <div className="w-full bg-white border border-[#F0EDFF] rounded-xl flex justify-center items-center overflow-hidden max-h-30">
+                                <img
+                                  src={`${API_URL}/api/tasks/submissions/${sub.id}/image`}
+                                  alt={sub.title}
+                                  className="max-h-30 w-auto object-contain cursor-pointer active:opacity-80"
+                                  onClick={() =>
+                                    window.open(
+                                      `${API_URL}/api/tasks/submissions/${sub.id}/image`,
+                                      "_blank",
+                                    )
+                                  }
+                                  onError={(e) => {
+                                    (e.target as HTMLElement).style.display =
+                                      "none";
+                                  }}
+                                />
+                              </div>
+                              <span className="text-[9px] text-[#9C98A6] font-semibold truncate text-center flex items-center justify-center gap-1">
+                                <FiPaperclip size={10} /> {sub.fileName}
+                              </span>
                             </div>
-                            <span className="text-[9px] text-[#9C98A6] font-semibold truncate text-center flex items-center justify-center gap-1">
-                              <FiPaperclip size={10} /> {sub.fileName}
-                            </span>
-                          </div>
-                        )}
+                          )}
 
-                        <div className="h-[1px] bg-[#F5F2FF] w-full my-1"></div>
+                        <div className="h-px bg-[#F5F2FF] w-full my-1"></div>
 
                         <div className="flex justify-between items-center text-[9px] text-[#9C98A6] font-bold">
-                          <span className="truncate max-w-[150px] flex items-center gap-1">
+                          <span className="truncate max-w-37.5 flex items-center gap-1">
                             <FiPaperclip size={10} /> {sub.fileName}
                           </span>
                           <span className="flex items-center gap-1">
@@ -911,7 +1050,7 @@ export default function PenilaianBerpikirSistem() {
         {/* Contributor Modal */}
         {isContributorModalOpen && (
           <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50 p-6 backdrop-blur-xs">
-            <div className="w-full max-w-[340px] bg-white rounded-[28px] p-6 shadow-xl border border-[#F0EDFF] flex flex-col gap-4 animate-none select-none text-left">
+            <div className="w-full max-w-85 bg-white rounded-[28px] p-6 shadow-xl border border-[#F0EDFF] flex flex-col gap-4 animate-none select-none text-left">
               <div>
                 <h3 className="text-sm font-extrabold text-[#2C2B30] tracking-wide uppercase flex items-center gap-2">
                   <LuAward className="text-[#8C66FF]" />
@@ -924,7 +1063,7 @@ export default function PenilaianBerpikirSistem() {
                 </p>
               </div>
 
-              <div className="max-h-[220px] overflow-y-auto pr-1 flex flex-col gap-2.5 my-1 no-scrollbar">
+              <div className="max-h-55 overflow-y-auto pr-1 flex flex-col gap-2.5 my-1 no-scrollbar">
                 {loadingContributors ? (
                   <div className="py-8 flex flex-col items-center justify-center gap-2 text-center">
                     <div className="w-6 h-6 border-2 border-[#8C66FF] border-t-transparent rounded-full animate-spin"></div>
@@ -982,7 +1121,6 @@ export default function PenilaianBerpikirSistem() {
             </div>
           </div>
         )}
-
       </div>
     </div>
   );

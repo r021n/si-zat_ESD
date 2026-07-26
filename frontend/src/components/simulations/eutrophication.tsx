@@ -943,7 +943,7 @@ export default function SimulasiEutrofikasi() {
               </div>
             </div>
 
-            <div className="relative flex-1 bg-gradient-to-b from-sky-100 to-sky-200 rounded-xl overflow-hidden border border-slate-100 shadow-inner">
+            <div className="relative flex-1 bg-linear-to-b from-sky-100 to-sky-200 rounded-xl overflow-hidden border border-slate-100 shadow-inner">
               <canvas ref={canvasRef} className="w-full h-full block"></canvas>
 
               {/* Tombol Info HUD */}
@@ -1033,7 +1033,7 @@ export default function SimulasiEutrofikasi() {
 
           {/* Status Kualitatif Bawah */}
           <div className="grid grid-cols-3 gap-2 mt-2 text-center shrink-0">
-            <div className="p-1.5 bg-slate-50 rounded-xl border border-slate-100 flex flex-col justify-center items-center min-h-[46px]">
+            <div className="p-1.5 bg-slate-50 rounded-xl border border-slate-100 flex flex-col justify-center items-center min-h-11.5">
               <span className="block text-[8px] text-slate-400 uppercase font-bold leading-none mb-0.5">
                 Kondisi Air
               </span>
@@ -1046,7 +1046,7 @@ export default function SimulasiEutrofikasi() {
                 </span>
               </div>
             </div>
-            <div className="p-1.5 bg-slate-50 rounded-xl border border-slate-100 flex flex-col justify-center items-center min-h-[46px]">
+            <div className="p-1.5 bg-slate-50 rounded-xl border border-slate-100 flex flex-col justify-center items-center min-h-11.5">
               <span className="block text-[8px] text-slate-400 uppercase font-bold leading-none mb-0.5">
                 Dominasi Alga
               </span>
@@ -1059,7 +1059,7 @@ export default function SimulasiEutrofikasi() {
                 </span>
               </div>
             </div>
-            <div className="p-1.5 bg-slate-50 rounded-xl border border-slate-100 flex flex-col justify-center items-center min-h-[46px]">
+            <div className="p-1.5 bg-slate-50 rounded-xl border border-slate-100 flex flex-col justify-center items-center min-h-11.5">
               <span className="block text-[8px] text-slate-400 uppercase font-bold leading-none mb-0.5">
                 Kondisi Makhluk Hidup
               </span>
@@ -1218,7 +1218,7 @@ export default function SimulasiEutrofikasi() {
         <h2 className="text-sm font-bold mb-2 uppercase tracking-wider">
           Mode Lanskap Diperlukan
         </h2>
-        <p className="text-xs text-neutral-400 max-w-[280px] leading-relaxed">
+        <p className="text-xs text-neutral-400 max-w-70 leading-relaxed">
           Silakan putar perangkat Anda ke arah lanskap (menyamping) untuk
           mengakses eko-simulasi eutrofikasi.
         </p>

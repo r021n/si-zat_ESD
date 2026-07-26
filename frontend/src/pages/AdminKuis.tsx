@@ -12,7 +12,7 @@ import {
   createQuizApi,
   updateQuizApi,
   deleteQuizApi,
-  getQuizSubmissionsApi
+  getQuizSubmissionsApi,
 } from "../api/api";
 
 interface Question {
@@ -78,7 +78,11 @@ export default function AdminKuis() {
     message: "",
   });
 
-  const showAlert = (message: string, title = "Info", onConfirm?: () => void) => {
+  const showAlert = (
+    message: string,
+    title = "Info",
+    onConfirm?: () => void,
+  ) => {
     setModal({
       isOpen: true,
       type: "alert",
@@ -88,7 +92,11 @@ export default function AdminKuis() {
     });
   };
 
-  const showConfirm = (message: string, onConfirm: () => void, title = "Konfirmasi") => {
+  const showConfirm = (
+    message: string,
+    onConfirm: () => void,
+    title = "Konfirmasi",
+  ) => {
     setModal({
       isOpen: true,
       type: "confirm",
@@ -104,7 +112,9 @@ export default function AdminKuis() {
       navigate("/auth");
       return;
     }
-    const isAdmin = user.status.toLowerCase() === "admin" || user.email.toLowerCase().includes("admin");
+    const isAdmin =
+      user.status.toLowerCase() === "admin" ||
+      user.email.toLowerCase().includes("admin");
     if (!isAdmin) {
       navigate("/menu");
     }
@@ -133,10 +143,10 @@ export default function AdminKuis() {
                   "Ledakan populasi alga (blooming) yang menutupi permukaan air",
                   "Berkurangnya keasaman air sehingga biota air lebih sehat",
                   "Penurunan populasi bakteri pengurai bahan organik",
-                  "Air menjadi lebih jernih dan aman dikonsumsi langsung"
+                  "Air menjadi lebih jernih dan aman dikonsumsi langsung",
                 ],
                 correctAnswers: [1], // Index 1 (B)
-                images: []
+                images: [],
               },
               {
                 id: "q-1-2",
@@ -146,10 +156,10 @@ export default function AdminKuis() {
                   "Nitrogen (N2)",
                   "Karbon Dioksida (CO2)",
                   "Helium (He)",
-                  "Argon (Ar)"
+                  "Argon (Ar)",
                 ],
                 correctAnswers: [2], // Index 2 (C)
-                images: []
+                images: [],
               },
               {
                 id: "q-1-3",
@@ -159,10 +169,10 @@ export default function AdminKuis() {
                   "Mengurangi emisi gas beracun seperti Karbon Monoksida (CO) menjadi CO2",
                   "Mengubah gas nitrogen menjadi senyawa nitrogen organik",
                   "Meredam kebisingan suara knalpot secara mekanis",
-                  "Menyaring partikel debu halus PM2.5 secara fisik"
+                  "Menyaring partikel debu halus PM2.5 secara fisik",
                 ],
                 correctAnswers: [1], // Index 1 (B)
-                images: []
+                images: [],
               },
               {
                 id: "q-1-4",
@@ -172,10 +182,10 @@ export default function AdminKuis() {
                   "Fitoremediasi menggunakan tanaman akumulator logam",
                   "Penimbunan tanah tercemar langsung ke dalam dasar laut terdalam",
                   "Penyiraman deterjen atau air sabun secara berkala",
-                  "Penutupan permukaan tanah tercemar dengan pasir kuarsa tebal"
+                  "Penutupan permukaan tanah tercemar dengan pasir kuarsa tebal",
                 ],
                 correctAnswers: [1], // Index 1 (B)
-                images: []
+                images: [],
               },
               {
                 id: "q-1-5",
@@ -185,12 +195,12 @@ export default function AdminKuis() {
                   "Memahami hubungan sebab-akibat yang kompleks antar-komponen lingkungan",
                   "Mengabaikan aspek sosial dan berfokus pada teknologi murni",
                   "Menyelesaikan masalah secara terpisah tanpa koordinasi antar sektor",
-                  "Mengurangi keterlibatan masyarakat dalam menjaga keseimbangan alam"
+                  "Mengurangi keterlibatan masyarakat dalam menjaga keseimbangan alam",
                 ],
                 correctAnswers: [1], // Index 1 (B)
-                images: []
-              }
-            ]
+                images: [],
+              },
+            ],
           },
           {
             id: "default-2",
@@ -204,13 +214,13 @@ export default function AdminKuis() {
                   "Mengurangi penggunaan plastik sekali pakai dan membuangnya ke sungai",
                   "Menerapkan pertanian organik dengan pupuk alami ramah lingkungan",
                   "Mendaur ulang oli bekas dan tidak membuangnya ke tanah atau saluran air",
-                  "Melakukan pembakaran sampah rumah tangga secara massal"
+                  "Melakukan pembakaran sampah rumah tangga secara massal",
                 ],
                 correctAnswers: [1, 2], // Index 1 and 2 (B and C)
-                images: []
-              }
-            ]
-          }
+                images: [],
+              },
+            ],
+          },
         ];
 
         // Seed quizzes to backend
@@ -247,8 +257,8 @@ export default function AdminKuis() {
         options: ["Pilihan A", "Pilihan B", "Pilihan C", "Pilihan D"],
         correctAnswers: [0],
         images: [],
-        questionType: "C1"
-      }
+        questionType: "C1",
+      },
     ]);
     setMode("FORM");
   };
@@ -267,13 +277,13 @@ export default function AdminKuis() {
         if (!token) return;
         try {
           await deleteQuizApi(token, id);
-          setQuizzes(quizzes.filter(q => q.id !== id));
+          setQuizzes(quizzes.filter((q) => q.id !== id));
           showAlert("Kuis berhasil dihapus.", "Sukses");
         } catch (err: any) {
           showAlert(err.message || "Gagal menghapus kuis.", "Gagal");
         }
       },
-      "Hapus Kuis"
+      "Hapus Kuis",
     );
   };
 
@@ -298,7 +308,7 @@ export default function AdminKuis() {
       options: ["Pilihan A", "Pilihan B", "Pilihan C", "Pilihan D"],
       correctAnswers: [0],
       images: [],
-      questionType: "C1"
+      questionType: "C1",
     };
     setQuestions([...questions, newQuestion]);
   };
@@ -308,89 +318,109 @@ export default function AdminKuis() {
       showAlert("Kuis harus memiliki minimal 1 soal.", "Peringatan");
       return;
     }
-    setQuestions(questions.filter(q => q.id !== questionId));
+    setQuestions(questions.filter((q) => q.id !== questionId));
   };
 
   const handleQuestionTextChange = (questionId: string, text: string) => {
-    setQuestions(prev => prev.map(q => {
-      if (q.id === questionId) {
-        return { ...q, text };
-      }
-      return q;
-    }));
+    setQuestions((prev) =>
+      prev.map((q) => {
+        if (q.id === questionId) {
+          return { ...q, text };
+        }
+        return q;
+      }),
+    );
   };
 
-  const handleQuestionTypeChange = (questionId: string, questionType: string) => {
-    setQuestions(prev => prev.map(q => {
-      if (q.id === questionId) {
-        return { ...q, questionType };
-      }
-      return q;
-    }));
+  const handleQuestionTypeChange = (
+    questionId: string,
+    questionType: string,
+  ) => {
+    setQuestions((prev) =>
+      prev.map((q) => {
+        if (q.id === questionId) {
+          return { ...q, questionType };
+        }
+        return q;
+      }),
+    );
   };
 
   const handleOptionCountChange = (questionId: string, newCount: number) => {
-    setQuestions(prev => prev.map(q => {
-      if (q.id === questionId) {
-        let currentOptions = [...q.options];
-        if (newCount > currentOptions.length) {
-          const letters = ["A", "B", "C", "D", "E"];
-          while (currentOptions.length < newCount) {
-            const letter = letters[currentOptions.length];
-            currentOptions.push(`Pilihan ${letter}`);
+    setQuestions((prev) =>
+      prev.map((q) => {
+        if (q.id === questionId) {
+          let currentOptions = [...q.options];
+          if (newCount > currentOptions.length) {
+            const letters = ["A", "B", "C", "D", "E"];
+            while (currentOptions.length < newCount) {
+              const letter = letters[currentOptions.length];
+              currentOptions.push(`Pilihan ${letter}`);
+            }
+          } else if (newCount < currentOptions.length) {
+            currentOptions = currentOptions.slice(0, newCount);
           }
-        } else if (newCount < currentOptions.length) {
-          currentOptions = currentOptions.slice(0, newCount);
+
+          const correctAnswers = q.correctAnswers.filter(
+            (idx) => idx < newCount,
+          );
+          const finalCorrectAnswers =
+            correctAnswers.length === 0 ? [0] : correctAnswers;
+
+          return {
+            ...q,
+            options: currentOptions,
+            correctAnswers: finalCorrectAnswers,
+          };
         }
-
-        const correctAnswers = q.correctAnswers.filter(idx => idx < newCount);
-        const finalCorrectAnswers = correctAnswers.length === 0 ? [0] : correctAnswers;
-
-        return {
-          ...q,
-          options: currentOptions,
-          correctAnswers: finalCorrectAnswers
-        };
-      }
-      return q;
-    }));
+        return q;
+      }),
+    );
   };
 
-  const handleOptionTextChange = (questionId: string, optIdx: number, text: string) => {
-    setQuestions(prev => prev.map(q => {
-      if (q.id === questionId) {
-        const newOptions = [...q.options];
-        newOptions[optIdx] = text;
-        return { ...q, options: newOptions };
-      }
-      return q;
-    }));
+  const handleOptionTextChange = (
+    questionId: string,
+    optIdx: number,
+    text: string,
+  ) => {
+    setQuestions((prev) =>
+      prev.map((q) => {
+        if (q.id === questionId) {
+          const newOptions = [...q.options];
+          newOptions[optIdx] = text;
+          return { ...q, options: newOptions };
+        }
+        return q;
+      }),
+    );
   };
 
   const handleToggleCorrectAnswer = (questionId: string, optIdx: number) => {
-    setQuestions(prev => prev.map(q => {
-      if (q.id === questionId) {
-        const isSelected = q.correctAnswers.includes(optIdx);
-        let newCorrect: number[];
-        if (isSelected) {
-          if (q.correctAnswers.length <= 1) {
-            showAlert("Harus ada minimal 1 jawaban benar.", "Peringatan");
-            return q;
+    setQuestions((prev) =>
+      prev.map((q) => {
+        if (q.id === questionId) {
+          const isSelected = q.correctAnswers.includes(optIdx);
+          let newCorrect: number[];
+          if (isSelected) {
+            if (q.correctAnswers.length <= 1) {
+              showAlert("Harus ada minimal 1 jawaban benar.", "Peringatan");
+              return q;
+            }
+            newCorrect = q.correctAnswers.filter((idx) => idx !== optIdx);
+          } else {
+            newCorrect = [...q.correctAnswers, optIdx].sort();
           }
-          newCorrect = q.correctAnswers.filter(idx => idx !== optIdx);
-        } else {
-          newCorrect = [...q.correctAnswers, optIdx].sort();
+          return { ...q, correctAnswers: newCorrect };
         }
-        return { ...q, correctAnswers: newCorrect };
-      }
-      return q;
-    }));
+        return q;
+      }),
+    );
   };
 
   const handleImageUpload = (questionId: string, files: FileList | null) => {
     if (!files || files.length === 0) return;
 
-    const readPromises = Array.from(files).map(file => {
+    const readPromises = Array.from(files).map((file) => {
       return new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = () => resolve(reader.result as string);
@@ -399,32 +429,38 @@ export default function AdminKuis() {
       });
     });
 
-    Promise.all(readPromises).then(base64Images => {
-      setQuestions(prev => prev.map(q => {
-        if (q.id === questionId) {
-          return {
-            ...q,
-            images: [...(q.images || []), ...base64Images]
-          };
-        }
-        return q;
-      }));
-    }).catch(err => {
-      console.error(err);
-      showAlert("Gagal membaca gambar.", "Gagal");
-    });
+    Promise.all(readPromises)
+      .then((base64Images) => {
+        setQuestions((prev) =>
+          prev.map((q) => {
+            if (q.id === questionId) {
+              return {
+                ...q,
+                images: [...(q.images || []), ...base64Images],
+              };
+            }
+            return q;
+          }),
+        );
+      })
+      .catch((err) => {
+        console.error(err);
+        showAlert("Gagal membaca gambar.", "Gagal");
+      });
   };
 
   const handleRemoveImage = (questionId: string, imgIdx: number) => {
-    setQuestions(prev => prev.map(q => {
-      if (q.id === questionId) {
-        return {
-          ...q,
-          images: q.images.filter((_, i) => i !== imgIdx)
-        };
-      }
-      return q;
-    }));
+    setQuestions((prev) =>
+      prev.map((q) => {
+        if (q.id === questionId) {
+          return {
+            ...q,
+            images: q.images.filter((_, i) => i !== imgIdx),
+          };
+        }
+        return q;
+      }),
+    );
   };
 
   const handleSaveQuiz = async () => {
@@ -442,12 +478,20 @@ export default function AdminKuis() {
       }
       for (let j = 0; j < q.options.length; j++) {
         if (!q.options[j].trim()) {
-          showAlert(`Pilihan ${String.fromCharCode(65 + j)} pada Soal #${i + 1} tidak boleh kosong.`, "Peringatan");
+          showAlert(
+            `Pilihan ${String.fromCharCode(65 + j)} pada Soal #${
+              i + 1
+            } tidak boleh kosong.`,
+            "Peringatan",
+          );
           return;
         }
       }
       if (q.correctAnswers.length === 0) {
-        showAlert(`Soal #${i + 1} harus memiliki minimal 1 jawaban benar.`, "Peringatan");
+        showAlert(
+          `Soal #${i + 1} harus memiliki minimal 1 jawaban benar.`,
+          "Peringatan",
+        );
         return;
       }
     }
@@ -461,7 +505,7 @@ export default function AdminKuis() {
           id: `quiz-${Date.now()}`,
           title: quizTitle,
           createdAt: new Date().toLocaleDateString("id-ID"),
-          questions
+          questions,
         };
         await createQuizApi(token, payload);
       }
@@ -480,11 +524,10 @@ export default function AdminKuis() {
   return (
     <div className="w-full min-h-screen bg-[#FAF9FF] flex justify-center items-center text-[#2C2B30] font-sans select-none overflow-hidden relative">
       {/* Decorative Blur Bubble */}
-      <div className="absolute top-[-10%] right-[-10%] w-[200px] h-[200px] bg-[#E9E4FF] rounded-full filter blur-2xl opacity-50"></div>
+      <div className="absolute top-[-10%] right-[-10%] w-50 h-50 bg-[#E9E4FF] rounded-full filter blur-2xl opacity-50"></div>
 
       {/* Container Mobile Portrait */}
-      <div className="w-full max-w-[430px] min-h-screen flex flex-col justify-between px-6 py-6 z-10">
-        
+      <div className="w-full max-w-107.5 min-h-screen flex flex-col justify-between px-6 py-6 z-10">
         {loading ? (
           <div className="w-full flex-1 flex flex-col justify-center items-center gap-3 text-center">
             <div className="w-8 h-8 border-2 border-[#8C66FF] border-t-transparent rounded-full animate-spin"></div>
@@ -528,7 +571,7 @@ export default function AdminKuis() {
                     () => {
                       setMode("LIST");
                     },
-                    "Batal Edit"
+                    "Batal Edit",
                   );
                 }}
               />
@@ -546,21 +589,26 @@ export default function AdminKuis() {
             )}
           </>
         )}
-
       </div>
 
       {/* Styled custom modal */}
       {modal.isOpen && (
         <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50 p-6 backdrop-blur-xs">
-          <div className="w-full max-w-[340px] bg-white rounded-[28px] p-6 shadow-xl border border-[#F0EDFF] flex flex-col gap-4 animate-none select-none text-left">
+          <div className="w-full max-w-85 bg-white rounded-[28px] p-6 shadow-xl border border-[#F0EDFF] flex flex-col gap-4 animate-none select-none text-left">
             <div>
-              <h3 className="text-sm font-extrabold text-[#2C2B30] tracking-wide uppercase">{modal.title}</h3>
-              <p className="text-xs text-[#9C98A6] font-medium mt-2 leading-relaxed">{modal.message}</p>
+              <h3 className="text-sm font-extrabold text-[#2C2B30] tracking-wide uppercase">
+                {modal.title}
+              </h3>
+              <p className="text-xs text-[#9C98A6] font-medium mt-2 leading-relaxed">
+                {modal.message}
+              </p>
             </div>
             <div className="flex gap-2.5 mt-2">
               {modal.type === "confirm" && (
                 <button
-                  onClick={() => setModal(prev => ({ ...prev, isOpen: false }))}
+                  onClick={() =>
+                    setModal((prev) => ({ ...prev, isOpen: false }))
+                  }
                   className="flex-1 py-3 bg-white border border-[#FFEAEA] text-[#FF5E8C] font-extrabold uppercase tracking-wider text-[10px] rounded-full shadow-sm cursor-pointer transition-none flex items-center justify-center"
                 >
                   Batal
@@ -568,7 +616,7 @@ export default function AdminKuis() {
               )}
               <button
                 onClick={() => {
-                  setModal(prev => ({ ...prev, isOpen: false }));
+                  setModal((prev) => ({ ...prev, isOpen: false }));
                   if (modal.onConfirm) modal.onConfirm();
                 }}
                 className="flex-1 py-3 bg-[#8C66FF] text-white font-extrabold uppercase tracking-wider text-[10px] rounded-full shadow-md shadow-purple-100 cursor-pointer transition-none flex items-center justify-center"

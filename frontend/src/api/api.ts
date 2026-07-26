@@ -83,7 +83,39 @@ export async function updateProfileApi(
   return data;
 }
 
-export async function getQuizzesApi(token: string) {
+// --- In-Memory Caching Helper ---
+interface CacheItem<T> {
+  data: T;
+  timestamp: number;
+}
+
+let quizzesCache: CacheItem<any> | null = null;
+let materialsCache: CacheItem<any> | null = null;
+const materialDetailCache = new Map<string, CacheItem<any>>();
+let accessStatusCache: CacheItem<any> | null = null;
+
+const DEFAULT_TTL_MS = 60 * 1000; // 60 seconds for materials and quizzes
+const ACCESS_STATUS_TTL_MS = 15 * 1000; // 15 seconds for access status
+
+export function clearQuizzesCache() {
+  quizzesCache = null;
+}
+
+export function clearMaterialsCache() {
+  materialsCache = null;
+  materialDetailCache.clear();
+}
+
+export function clearAccessStatusCache() {
+  accessStatusCache = null;
+}
+
+export async function getQuizzesApi(token: string, forceRefresh = false) {
+  const now = Date.now();
+  if (!forceRefresh && quizzesCache && (now - quizzesCache.timestamp < DEFAULT_TTL_MS)) {
+    return quizzesCache.data;
+  }
+
   const response = await fetch(`${API_URL}/api/quiz`, {
     method: "GET",
     headers: {
@@ -94,10 +126,12 @@ export async function getQuizzesApi(token: string) {
   if (!response.ok) {
     throw new Error(data.error || "Gagal mengambil kuis");
   }
+  quizzesCache = { data, timestamp: now };
   return data;
 }
 
 export async function createQuizApi(token: string, quizData: any) {
+  clearQuizzesCache();
   const response = await fetch(`${API_URL}/api/quiz`, {
     method: "POST",
     headers: {
@@ -114,6 +148,7 @@ export async function createQuizApi(token: string, quizData: any) {
 }
 
 export async function updateQuizApi(token: string, id: string, quizData: any) {
+  clearQuizzesCache();
   const response = await fetch(`${API_URL}/api/quiz/${id}`, {
     method: "PUT",
     headers: {
@@ -130,6 +165,7 @@ export async function updateQuizApi(token: string, id: string, quizData: any) {
 }
 
 export async function deleteQuizApi(token: string, id: string) {
+  clearQuizzesCache();
   const response = await fetch(`${API_URL}/api/quiz/${id}`, {
     method: "DELETE",
     headers: {
@@ -191,7 +227,12 @@ export async function getMySubmissionsApi(token: string) {
   return data;
 }
 
-export async function getMaterialsApi(token: string) {
+export async function getMaterialsApi(token: string, forceRefresh = false) {
+  const now = Date.now();
+  if (!forceRefresh && materialsCache && (now - materialsCache.timestamp < DEFAULT_TTL_MS)) {
+    return materialsCache.data;
+  }
+
   const response = await fetch(`${API_URL}/api/materi`, {
     method: "GET",
     headers: {
@@ -202,10 +243,17 @@ export async function getMaterialsApi(token: string) {
   if (!response.ok) {
     throw new Error(data.error || "Gagal mengambil data materi");
   }
+  materialsCache = { data, timestamp: now };
   return data;
 }
 
-export async function getMaterialDetailApi(token: string, id: string) {
+export async function getMaterialDetailApi(token: string, id: string, forceRefresh = false) {
+  const now = Date.now();
+  const cached = materialDetailCache.get(id);
+  if (!forceRefresh && cached && (now - cached.timestamp < DEFAULT_TTL_MS)) {
+    return cached.data;
+  }
+
   const response = await fetch(`${API_URL}/api/materi/${id}`, {
     method: "GET",
     headers: {
@@ -216,10 +264,12 @@ export async function getMaterialDetailApi(token: string, id: string) {
   if (!response.ok) {
     throw new Error(data.error || "Gagal mengambil detail materi");
   }
+  materialDetailCache.set(id, { data, timestamp: now });
   return data;
 }
 
 export async function createMaterialApi(token: string, formData: FormData) {
+  clearMaterialsCache();
   const response = await fetch(`${API_URL}/api/materi`, {
     method: "POST",
     headers: {
@@ -235,6 +285,7 @@ export async function createMaterialApi(token: string, formData: FormData) {
 }
 
 export async function updateMaterialApi(token: string, id: string, formData: FormData) {
+  clearMaterialsCache();
   const response = await fetch(`${API_URL}/api/materi/${id}`, {
     method: "PUT",
     headers: {
@@ -250,6 +301,7 @@ export async function updateMaterialApi(token: string, id: string, formData: For
 }
 
 export async function reorderMaterialsApi(token: string, ids: string[]) {
+  clearMaterialsCache();
   const response = await fetch(`${API_URL}/api/materi/reorder`, {
     method: "PUT",
     headers: {
@@ -266,6 +318,7 @@ export async function reorderMaterialsApi(token: string, ids: string[]) {
 }
 
 export async function deleteMaterialApi(token: string, id: string) {
+  clearMaterialsCache();
   const response = await fetch(`${API_URL}/api/materi/${id}`, {
     method: "DELETE",
     headers: {
@@ -471,7 +524,12 @@ export async function getSiswaAnalyticsApi(token: string, userId: number) {
   return data;
 }
 
-export async function getAccessStatusApi() {
+export async function getAccessStatusApi(forceRefresh = false) {
+  const now = Date.now();
+  if (!forceRefresh && accessStatusCache && (now - accessStatusCache.timestamp < ACCESS_STATUS_TTL_MS)) {
+    return accessStatusCache.data;
+  }
+
   const response = await fetch(`${API_URL}/api/access/status`, {
     method: "GET",
   });
@@ -479,6 +537,7 @@ export async function getAccessStatusApi() {
   if (!response.ok) {
     throw new Error(data.error || "Gagal mengambil status akses aplikasi");
   }
+  accessStatusCache = { data, timestamp: now };
   return data;
 }
 
@@ -497,6 +556,7 @@ export async function getAccessSettingsApi(token: string) {
 }
 
 export async function updateAccessSettingsApi(token: string, settingsData: { isLocked: boolean; isScheduleEnabled: boolean; schedules: any[] }) {
+  clearAccessStatusCache();
   const response = await fetch(`${API_URL}/api/access/settings`, {
     method: "POST",
     headers: {

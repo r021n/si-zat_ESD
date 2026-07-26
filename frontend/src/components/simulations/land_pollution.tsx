@@ -2075,7 +2075,7 @@ export default function SimulasiPencemaranTanah() {
           </div>
 
           <div className="grid grid-cols-3 gap-1.5 mt-2 text-center shrink-0">
-            <div className="p-1 bg-slate-50 rounded border border-slate-100 flex flex-col justify-center items-center min-h-[42px]">
+            <div className="p-1 bg-slate-50 rounded border border-slate-100 flex flex-col justify-center items-center min-h-10.5">
               <span className="block text-[8px] text-slate-400 uppercase font-bold leading-none mb-0.5">
                 Kondisi Air
               </span>
@@ -2088,7 +2088,7 @@ export default function SimulasiPencemaranTanah() {
                 </span>
               </div>
             </div>
-            <div className="p-1 bg-slate-50 rounded border border-slate-100 flex flex-col justify-center items-center min-h-[42px]">
+            <div className="p-1 bg-slate-50 rounded border border-slate-100 flex flex-col justify-center items-center min-h-10.5">
               <span className="block text-[8px] text-slate-400 uppercase font-bold leading-none mb-0.5">
                 Kondisi Akar
               </span>
@@ -2101,7 +2101,7 @@ export default function SimulasiPencemaranTanah() {
                 </span>
               </div>
             </div>
-            <div className="p-1 bg-slate-50 rounded border border-slate-100 flex flex-col justify-center items-center min-h-[42px]">
+            <div className="p-1 bg-slate-50 rounded border border-slate-100 flex flex-col justify-center items-center min-h-10.5">
               <span className="block text-[8px] text-slate-400 uppercase font-bold leading-none mb-0.5">
                 Hasil Panen
               </span>
@@ -2284,7 +2284,7 @@ export default function SimulasiPencemaranTanah() {
         <h2 className="text-sm font-bold mb-2 uppercase tracking-wider">
           Mode Lanskap Diperlukan
         </h2>
-        <p className="text-xs text-neutral-400 max-w-[280px] leading-relaxed">
+        <p className="text-xs text-neutral-400 max-w-70 leading-relaxed">
           Silakan putar perangkat Anda ke arah lanskap (menyamping) untuk
           mengakses eko-simulasi pencemaran tanah.
         </p>

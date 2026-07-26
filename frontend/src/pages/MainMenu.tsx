@@ -57,7 +57,9 @@ export default function MainMenu({ onNavigate }: MainMenuProps) {
     if (seconds < 3600) {
       const minutes = seconds / 60;
       const formatted = minutes.toFixed(1).replace(".", ",");
-      return `${formatted.endsWith(",0") ? Math.round(minutes) : formatted} menit`;
+      return `${
+        formatted.endsWith(",0") ? Math.round(minutes) : formatted
+      } menit`;
     }
     const hours = seconds / 3600;
     const formatted = hours.toFixed(1).replace(".", ",");
@@ -84,13 +86,17 @@ export default function MainMenu({ onNavigate }: MainMenuProps) {
       setStatsDetailModal({
         isOpen: true,
         title: "Detail Kunjungan",
-        message: `Aplikasi SiZat-ESD ini telah dibuka sebanyak ${user.openCount ?? 0} kali oleh akun Anda.`,
+        message: `Aplikasi SiZat-ESD ini telah dibuka sebanyak ${
+          user.openCount ?? 0
+        } kali oleh akun Anda.`,
       });
     } else {
       setStatsDetailModal({
         isOpen: true,
         title: "Detail Lama Belajar",
-        message: `Total waktu belajar Anda menggunakan media interaktif ini adalah ${formatFullUsageTime(user.totalUsageTime)}.`,
+        message: `Total waktu belajar Anda menggunakan media interaktif ini adalah ${formatFullUsageTime(
+          user.totalUsageTime,
+        )}.`,
       });
     }
   };
@@ -168,10 +174,10 @@ export default function MainMenu({ onNavigate }: MainMenuProps) {
   return (
     <div className="w-full min-h-screen bg-[#FAF9FF] flex justify-center items-center text-[#2C2B30] font-sans select-none overflow-hidden relative">
       {/* Decorative Blur Bubble */}
-      <div className="absolute top-[-10%] right-[-10%] w-[200px] h-[200px] bg-[#E9E4FF] rounded-full filter blur-2xl opacity-50"></div>
+      <div className="absolute top-[-10%] right-[-10%] w-50 h-50 bg-[#E9E4FF] rounded-full filter blur-2xl opacity-50"></div>
 
       {/* Container Mobile Portrait */}
-      <div className="w-full max-w-[430px] min-h-screen flex flex-col justify-between px-6 py-6 z-10">
+      <div className="w-full max-w-107.5 min-h-screen flex flex-col justify-between px-6 py-6 z-10">
         {/* Top Header Section */}
         <div>
           <div className="w-full flex justify-between items-center mt-4 mb-4">
@@ -219,10 +225,10 @@ export default function MainMenu({ onNavigate }: MainMenuProps) {
           </div>
 
           {/* Glassmorphic Promo/Profile Card (matches Unlimited Storage card in mockup) */}
-          <div className="w-full bg-gradient-to-br from-[#8C66FF] to-[#6039DF] text-white rounded-[28px] p-5 shadow-md relative overflow-hidden flex flex-col justify-between min-h-[140px]">
+          <div className="w-full bg-linear-to-br from-[#8C66FF] to-[#6039DF] text-white rounded-[28px] p-5 shadow-md relative overflow-hidden flex flex-col justify-between min-h-35">
             {/* Card Background elements */}
-            <div className="absolute right-[-10%] top-[-25%] w-[130px] h-[130px] bg-white/10 rounded-full blur-md"></div>
-            <div className="absolute right-[15%] bottom-[-20%] w-[90px] h-[90px] bg-white/5 rounded-full blur-sm"></div>
+            <div className="absolute right-[-10%] top-[-25%] w-32.5 h-32.5 bg-white/10 rounded-full blur-md"></div>
+            <div className="absolute right-[15%] bottom-[-20%] w-22.5 h-22.5 bg-white/5 rounded-full blur-sm"></div>
             <LuGraduationCap className="text-5xl opacity-15 absolute right-4 bottom-4 text-white" />
 
             <div>
@@ -260,7 +266,7 @@ export default function MainMenu({ onNavigate }: MainMenuProps) {
               <button
                 key={menu.id}
                 onClick={() => handleMenuClick(menu.id)}
-                className="w-full bg-white rounded-[24px] p-4 flex items-center justify-between shadow-[0_4px_12px_rgba(0,0,0,0.02)] border border-[#F0EDFF] cursor-pointer text-left transition-none"
+                className="w-full bg-white rounded-3xl p-4 flex items-center justify-between shadow-[0_4px_12px_rgba(0,0,0,0.02)] border border-[#F0EDFF] cursor-pointer text-left transition-none"
               >
                 <div className="flex items-center gap-4">
                   {/* Rounded icon box */}
@@ -298,7 +304,7 @@ export default function MainMenu({ onNavigate }: MainMenuProps) {
         </div>
 
         {/* Footer Section with Stats Report */}
-        <div className="w-full mt-6 mb-2 bg-white rounded-[24px] p-4 shadow-[0_4px_12px_rgba(0,0,0,0.02)] border border-[#F0EDFF] flex items-center justify-between">
+        <div className="w-full mt-6 mb-2 bg-white rounded-3xl p-4 shadow-[0_4px_12px_rgba(0,0,0,0.02)] border border-[#F0EDFF] flex items-center justify-between">
           <div
             className="flex-1 flex flex-col items-center border-r border-[#F0EDFF]/70 cursor-pointer"
             onClick={() => handleOpenStatsDetail("openCount")}
@@ -327,7 +333,7 @@ export default function MainMenu({ onNavigate }: MainMenuProps) {
       {/* Logout Confirmation Modal */}
       {isLogoutModalOpen && (
         <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50 p-6 backdrop-blur-xs">
-          <div className="w-full max-w-[340px] bg-white rounded-[28px] p-6 shadow-xl border border-[#F0EDFF] flex flex-col gap-4 animate-none select-none text-left">
+          <div className="w-full max-w-85 bg-white rounded-[28px] p-6 shadow-xl border border-[#F0EDFF] flex flex-col gap-4 animate-none select-none text-left">
             <div>
               <h3 className="text-sm font-extrabold text-[#2C2B30] tracking-wide uppercase">
                 Keluar Sesi
@@ -360,7 +366,7 @@ export default function MainMenu({ onNavigate }: MainMenuProps) {
       {/* Stats Detail Modal */}
       {statsDetailModal.isOpen && (
         <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50 p-6 backdrop-blur-xs">
-          <div className="w-full max-w-[340px] bg-white rounded-[28px] p-6 shadow-xl border border-[#F0EDFF] flex flex-col gap-4 animate-none select-none text-left">
+          <div className="w-full max-w-85 bg-white rounded-[28px] p-6 shadow-xl border border-[#F0EDFF] flex flex-col gap-4 animate-none select-none text-left">
             <div>
               <h3 className="text-sm font-extrabold text-[#2C2B30] tracking-wide uppercase">
                 {statsDetailModal.title}

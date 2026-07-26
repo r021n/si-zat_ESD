@@ -143,7 +143,7 @@ export default function QuizPuzzleComponent({
   };
 
   return (
-    <div className="w-full min-w-0 bg-white rounded-2xl sm:rounded-[24px] border border-[#F0EDFF] p-3.5 sm:p-5 shadow-[0_4px_12px_rgba(0,0,0,0.02)] flex flex-col gap-3 sm:gap-4 text-left select-none">
+    <div className="w-full min-w-0 bg-white rounded-2xl sm:rounded-3xl border border-[#F0EDFF] p-3.5 sm:p-5 shadow-[0_4px_12px_rgba(0,0,0,0.02)] flex flex-col gap-3 sm:gap-4 text-left select-none">
       {/* Header Badge */}
       <div className="flex justify-between items-center pb-2 border-b border-[#F0EDFF]/80 w-full min-w-0">
         <div className="flex items-center gap-2 min-w-0">
@@ -176,7 +176,7 @@ export default function QuizPuzzleComponent({
       {/* Instruction */}
       <div className="flex items-center gap-2 w-full min-w-0">
         <FiZap className="text-[#8C66FF] shrink-0" size={14} />
-        <h3 className="text-xs font-extrabold text-[#2C2B30] leading-relaxed break-words min-w-0 flex-1">
+        <h3 className="text-xs font-extrabold text-[#2C2B30] leading-relaxed wrap-break-word min-w-0 flex-1">
           {data.instruction || "Cocokkan pasangan di bawah ini!"}
         </h3>
       </div>
@@ -221,13 +221,13 @@ export default function QuizPuzzleComponent({
                 type="button"
                 onClick={() => handleSelectLeft(pair.id)}
                 disabled={submitted}
-                className={`w-full p-2.5 sm:p-3 border rounded-xl sm:rounded-2xl transition-all cursor-pointer flex items-start justify-between min-h-[46px] shadow-xs min-w-0 ${borderStyle}`}
+                className={`w-full p-2.5 sm:p-3 border rounded-xl sm:rounded-2xl transition-all cursor-pointer flex items-start justify-between min-h-11.5 shadow-xs min-w-0 ${borderStyle}`}
               >
                 <div className="flex items-start gap-1.5 sm:gap-2 min-w-0 w-full">
                   <span className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-white/80 border border-current text-[9px] sm:text-[10px] font-black flex items-center justify-center shrink-0 mt-0.5">
                     {idx + 1}
                   </span>
-                  <span className="text-left flex-1 break-words min-w-0 leading-snug text-[11px] sm:text-xs font-medium">
+                  <span className="text-left flex-1 wrap-break-word min-w-0 leading-snug text-[11px] sm:text-xs font-medium">
                     {pair.left}
                   </span>
                 </div>
@@ -273,10 +273,10 @@ export default function QuizPuzzleComponent({
                 type="button"
                 onClick={() => handleSelectRight(rItem.pairId)}
                 disabled={submitted}
-                className={`w-full p-2.5 sm:p-3 border rounded-xl sm:rounded-2xl transition-all cursor-pointer flex items-start justify-between min-h-[46px] shadow-xs min-w-0 ${borderStyle}`}
+                className={`w-full p-2.5 sm:p-3 border rounded-xl sm:rounded-2xl transition-all cursor-pointer flex items-start justify-between min-h-11.5 shadow-xs min-w-0 ${borderStyle}`}
               >
                 <div className="flex items-start justify-between gap-1 min-w-0 w-full">
-                  <span className="text-left flex-1 break-words min-w-0 leading-snug text-[11px] sm:text-xs font-medium">
+                  <span className="text-left flex-1 wrap-break-word min-w-0 leading-snug text-[11px] sm:text-xs font-medium">
                     {rItem.text}
                   </span>
 
@@ -307,7 +307,7 @@ export default function QuizPuzzleComponent({
           type="button"
           onClick={handleSubmit}
           disabled={!isAllMatched}
-          className="w-full py-3 mt-1 bg-gradient-to-br from-[#8C66FF] to-[#6039DF] text-white font-extrabold uppercase tracking-wider text-[10px] rounded-2xl shadow-md shadow-purple-100 disabled:opacity-40 cursor-pointer transition-all flex items-center justify-center gap-2"
+          className="w-full py-3 mt-1 bg-linear-to-br from-[#8C66FF] to-[#6039DF] text-white font-extrabold uppercase tracking-wider text-[10px] rounded-2xl shadow-md shadow-purple-100 disabled:opacity-40 cursor-pointer transition-all flex items-center justify-center gap-2"
         >
           {isAllMatched
             ? "Periksa Jawaban"

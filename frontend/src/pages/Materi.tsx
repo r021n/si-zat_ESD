@@ -158,17 +158,17 @@ export default function Materi() {
   return (
     <div className="w-full min-h-screen bg-[#FAF9FF] flex justify-center items-center text-[#2C2B30] font-sans select-none overflow-hidden relative">
       {/* Decorative Blur Bubble */}
-      <div className="absolute top-[-10%] right-[-10%] w-[200px] h-[200px] bg-[#E9E4FF] rounded-full filter blur-2xl opacity-50"></div>
+      <div className="absolute top-[-10%] right-[-10%] w-50 h-50 bg-[#E9E4FF] rounded-full filter blur-2xl opacity-50"></div>
 
       {/* Container Mobile Portrait */}
-      <div className="w-full max-w-[430px] min-h-screen flex flex-col justify-between px-6 py-6 z-10">
+      <div className="w-full max-w-107.5 min-h-screen flex flex-col justify-between px-6 py-6 z-10">
         <div>
           {/* Header */}
           <div className="w-full flex justify-between items-center mt-4 pb-4 border-b border-[#F0EDFF]/50">
             <div className="flex items-center gap-3">
               <button
                 onClick={() => goBack(isAdmin ? "/admin" : "/menu")}
-                className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-[#F0EDFF] text-[#8C66FF] cursor-pointer active:bg-neutral-50 transition-none flex-shrink-0"
+                className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-[#F0EDFF] text-[#8C66FF] cursor-pointer active:bg-neutral-50 transition-none shrink-0"
                 title="Kembali"
               >
                 <FiArrowLeft size={20} />
@@ -192,7 +192,7 @@ export default function Materi() {
                 </button>
                 <button
                   onClick={() => navigate("/admin/materi/new")}
-                  className="px-3 py-2 bg-gradient-to-br from-[#8C66FF] to-[#6039DF] text-white text-[9px] font-extrabold uppercase tracking-wider rounded-full shadow-sm cursor-pointer flex items-center gap-1 transition-none"
+                  className="px-3 py-2 bg-linear-to-br from-[#8C66FF] to-[#6039DF] text-white text-[9px] font-extrabold uppercase tracking-wider rounded-full shadow-sm cursor-pointer flex items-center gap-1 transition-none"
                 >
                   <FiPlus /> Tambah
                 </button>
@@ -208,7 +208,7 @@ export default function Materi() {
                 </button>
                 <button
                   onClick={handleSaveReorder}
-                  className="px-3 py-2 bg-gradient-to-br from-[#8C66FF] to-[#6039DF] text-white text-[9px] font-extrabold uppercase tracking-wider rounded-full shadow-sm cursor-pointer transition-none"
+                  className="px-3 py-2 bg-linear-to-br from-[#8C66FF] to-[#6039DF] text-white text-[9px] font-extrabold uppercase tracking-wider rounded-full shadow-sm cursor-pointer transition-none"
                 >
                   Simpan
                 </button>
@@ -226,7 +226,7 @@ export default function Materi() {
                 </p>
               </div>
             ) : (isReordering ? reorderedMaterials : materials).length === 0 ? (
-              <div className="text-center py-12 px-4 bg-white rounded-[24px] border border-[#F0EDFF] shadow-[0_4px_12px_rgba(0,0,0,0.02)] text-xs text-[#9C98A6] uppercase font-bold tracking-wider">
+              <div className="text-center py-12 px-4 bg-white rounded-3xl border border-[#F0EDFF] shadow-[0_4px_12px_rgba(0,0,0,0.02)] text-xs text-[#9C98A6] uppercase font-bold tracking-wider">
                 Belum ada materi yang tersedia.
               </div>
             ) : (
@@ -236,7 +236,7 @@ export default function Materi() {
                   onClick={() =>
                     !isReordering && navigate(`/materi/view/${m.id}`)
                   }
-                  className={`w-full bg-white rounded-[24px] p-5 shadow-[0_4px_12px_rgba(0,0,0,0.02)] border border-[#F0EDFF] flex flex-col gap-3 transition-none ${
+                  className={`w-full bg-white rounded-3xl p-5 shadow-[0_4px_12px_rgba(0,0,0,0.02)] border border-[#F0EDFF] flex flex-col gap-3 transition-none ${
                     isReordering ? "" : "cursor-pointer"
                   }`}
                 >
@@ -306,7 +306,7 @@ export default function Materi() {
       {/* Styled custom modal */}
       {modal.isOpen && (
         <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50 p-6 backdrop-blur-xs">
-          <div className="w-full max-w-[340px] bg-white rounded-[28px] p-6 shadow-xl border border-[#F0EDFF] flex flex-col gap-4 animate-none select-none text-left">
+          <div className="w-full max-w-85 bg-white rounded-[28px] p-6 shadow-xl border border-[#F0EDFF] flex flex-col gap-4 animate-none select-none text-left">
             <div>
               <h3 className="text-sm font-extrabold text-[#2C2B30] tracking-wide uppercase">
                 {modal.title}

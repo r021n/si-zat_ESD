@@ -27,17 +27,17 @@ export default function ProfilPengembang() {
   return (
     <div className="w-full min-h-screen bg-[#FAF9FF] flex justify-center items-center text-[#2C2B30] font-sans select-none overflow-hidden relative">
       {/* Decorative Blur Bubble */}
-      <div className="absolute top-[-10%] right-[-10%] w-[200px] h-[200px] bg-[#E9E4FF] rounded-full filter blur-2xl opacity-50"></div>
+      <div className="absolute top-[-10%] right-[-10%] w-50 h-50 bg-[#E9E4FF] rounded-full filter blur-2xl opacity-50"></div>
 
       {/* Container Mobile Portrait */}
-      <div className="w-full max-w-[430px] min-h-screen flex flex-col justify-between px-6 py-6 z-10">
+      <div className="w-full max-w-107.5 min-h-screen flex flex-col justify-between px-6 py-6 z-10">
         {/* Top Header Section */}
         <div>
           <div className="w-full flex justify-between items-center mt-4 mb-4">
             <div className="flex items-center gap-3">
               <button
                 onClick={() => goBack("/menu")}
-                className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-[#F0EDFF] text-[#8C66FF] cursor-pointer active:bg-neutral-50 transition-none flex-shrink-0"
+                className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-[#F0EDFF] text-[#8C66FF] cursor-pointer active:bg-neutral-50 transition-none shrink-0"
                 title="Kembali"
               >
                 <FiArrowLeft size={20} />
@@ -52,7 +52,7 @@ export default function ProfilPengembang() {
               </div>
             </div>
             {/* Logo UNS Card */}
-            <div className="h-10 px-3 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-[#F0EDFF] flex-shrink-0">
+            <div className="h-10 px-3 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-[#F0EDFF] shrink-0">
               <img
                 src={unsLogo}
                 alt="UNS Logo"
@@ -67,7 +67,7 @@ export default function ProfilPengembang() {
           {/* Photo & Main Profile Card */}
           <div className="w-full bg-white rounded-[28px] p-6 shadow-[0_4px_12px_rgba(0,0,0,0.02)] border border-[#F0EDFF] flex flex-col items-center text-center gap-4">
             {/* Photo Container */}
-            <div className="w-32 h-32 rounded-[24px] overflow-hidden border-2 border-[#8C66FF] shadow-sm flex items-center justify-center bg-gray-100">
+            <div className="w-32 h-32 rounded-3xl overflow-hidden border-2 border-[#8C66FF] shadow-sm flex items-center justify-center bg-gray-100">
               <img
                 src={pengembangImg}
                 alt="Foto Pengembang"
@@ -141,9 +141,9 @@ export default function ProfilPengembang() {
             </div>
 
             <p className="text-xs text-[#555555] font-medium leading-relaxed">
-              SiZat-ESD merupakan media pembelajaran interaktif berbasis web yang
-              dikembangkan untuk mendukung pembelajaran mandiri mengenai konsep
-              pencemaran lingkungan.
+              SiZat-ESD merupakan media pembelajaran interaktif berbasis web
+              yang dikembangkan untuk mendukung pembelajaran mandiri mengenai
+              konsep pencemaran lingkungan.
             </p>
           </div>
         </div>

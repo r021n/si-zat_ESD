@@ -28,7 +28,9 @@ interface Quiz {
 const formatDurationMMSS = (seconds: number) => {
   const mins = Math.floor(seconds / 60);
   const secs = seconds % 60;
-  return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+  return `${mins.toString().padStart(2, "0")}:${secs
+    .toString()
+    .padStart(2, "0")}`;
 };
 
 const formatDurationFriendly = (seconds: number | undefined | null) => {
@@ -238,10 +240,10 @@ export default function KuisMenu() {
   return (
     <div className="w-full min-h-screen bg-[#FAF9FF] flex justify-center items-center text-[#2C2B30] font-sans select-none overflow-hidden relative">
       {/* Decorative Blur Bubble */}
-      <div className="absolute top-[-10%] right-[-10%] w-[200px] h-[200px] bg-[#E9E4FF] rounded-full filter blur-2xl opacity-50"></div>
+      <div className="absolute top-[-10%] right-[-10%] w-50 h-50 bg-[#E9E4FF] rounded-full filter blur-2xl opacity-50"></div>
 
       {/* Container Mobile Portrait */}
-      <div className="w-full max-w-[430px] min-h-screen flex flex-col justify-between px-6 py-6 z-10">
+      <div className="w-full max-w-107.5 min-h-screen flex flex-col justify-between px-6 py-6 z-10">
         {/* Header Section */}
         <div>
           <div className="w-full flex justify-between items-center mt-4 mb-4">
@@ -260,7 +262,7 @@ export default function KuisMenu() {
                       ? "Kembali ke Daftar Kuis"
                       : "Kembali ke Menu Utama"
                   }
-                  className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-[#F0EDFF] text-[#8C66FF] cursor-pointer transition-none flex-shrink-0"
+                  className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-[#F0EDFF] text-[#8C66FF] cursor-pointer transition-none shrink-0"
                 >
                   <FiArrowLeft size={20} />
                 </button>
@@ -277,13 +279,13 @@ export default function KuisMenu() {
                   {activeQuiz
                     ? activeQuiz.title
                     : viewingHistory
-                      ? "Riwayat Kuis"
-                      : "Daftar Kuis"}
+                    ? "Riwayat Kuis"
+                    : "Daftar Kuis"}
                 </h1>
               </div>
             </div>
 
-            <div className="flex items-center gap-2 flex-shrink-0">
+            <div className="flex items-center gap-2 shrink-0">
               {!activeQuiz && !viewingHistory && (
                 <button
                   onClick={() => setViewingHistory(true)}
@@ -320,14 +322,14 @@ export default function KuisMenu() {
           {!activeQuiz && !viewingHistory && (
             <div className="w-full flex flex-col gap-3">
               {loading ? (
-                <div className="text-center py-12 bg-white rounded-[24px] border border-[#F0EDFF] shadow-[0_4px_12px_rgba(0,0,0,0.02)] flex flex-col gap-3 justify-center items-center">
+                <div className="text-center py-12 bg-white rounded-3xl border border-[#F0EDFF] shadow-[0_4px_12px_rgba(0,0,0,0.02)] flex flex-col gap-3 justify-center items-center">
                   <div className="w-6 h-6 border-2 border-[#8C66FF] border-t-transparent rounded-full animate-spin"></div>
                   <span className="text-[10px] font-bold uppercase tracking-wider text-[#9C98A6]">
                     Memuat Kuis...
                   </span>
                 </div>
               ) : quizzes.length === 0 ? (
-                <div className="text-center py-12 bg-white rounded-[24px] border border-[#F0EDFF] shadow-[0_4px_12px_rgba(0,0,0,0.02)] text-xs text-[#9C98A6] font-bold uppercase">
+                <div className="text-center py-12 bg-white rounded-3xl border border-[#F0EDFF] shadow-[0_4px_12px_rgba(0,0,0,0.02)] text-xs text-[#9C98A6] font-bold uppercase">
                   Belum ada kuis yang tersedia.
                 </div>
               ) : (
@@ -335,7 +337,7 @@ export default function KuisMenu() {
                   <button
                     key={quiz.id}
                     onClick={() => handleSelectQuiz(quiz)}
-                    className="w-full bg-white rounded-[24px] p-5 flex items-center justify-between shadow-[0_4px_12px_rgba(0,0,0,0.02)] border border-[#F0EDFF] cursor-pointer text-left transition-none"
+                    className="w-full bg-white rounded-3xl p-5 flex items-center justify-between shadow-[0_4px_12px_rgba(0,0,0,0.02)] border border-[#F0EDFF] cursor-pointer text-left transition-none"
                   >
                     <div className="flex items-center gap-4 flex-1 min-w-0">
                       <div className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-inner bg-[#FFEBF0] text-[#D95276]">
@@ -354,7 +356,7 @@ export default function KuisMenu() {
                       xmlns="http://www.w3.org/2000/svg"
                       viewBox="0 0 20 20"
                       fill="currentColor"
-                      className="w-5 h-5 text-[#8C66FF] opacity-50 flex-shrink-0 ml-2"
+                      className="w-5 h-5 text-[#8C66FF] opacity-50 shrink-0 ml-2"
                     >
                       <path
                         fillRule="evenodd"
@@ -372,14 +374,14 @@ export default function KuisMenu() {
           {!activeQuiz && viewingHistory && (
             <div className="w-full flex flex-col gap-3">
               {loadingHistory ? (
-                <div className="text-center py-12 bg-white rounded-[24px] border border-[#F0EDFF] shadow-[0_4px_12px_rgba(0,0,0,0.02)] flex flex-col gap-3 justify-center items-center">
+                <div className="text-center py-12 bg-white rounded-3xl border border-[#F0EDFF] shadow-[0_4px_12px_rgba(0,0,0,0.02)] flex flex-col gap-3 justify-center items-center">
                   <div className="w-6 h-6 border-2 border-[#8C66FF] border-t-transparent rounded-full animate-spin"></div>
                   <span className="text-[10px] font-bold uppercase tracking-wider text-[#9C98A6]">
                     Memuat Riwayat...
                   </span>
                 </div>
               ) : historySubmissions.length === 0 ? (
-                <div className="text-center py-12 bg-white rounded-[24px] border border-[#F0EDFF] shadow-[0_4px_12px_rgba(0,0,0,0.02)] text-xs text-[#9C98A6] font-bold uppercase">
+                <div className="text-center py-12 bg-white rounded-3xl border border-[#F0EDFF] shadow-[0_4px_12px_rgba(0,0,0,0.02)] text-xs text-[#9C98A6] font-bold uppercase">
                   Belum ada riwayat pengerjaan.
                 </div>
               ) : (
@@ -391,7 +393,7 @@ export default function KuisMenu() {
                       key={sub.id}
                       onClick={() => handleSelectHistory(sub, quiz)}
                       disabled={!quiz}
-                      className="w-full bg-white rounded-[24px] p-4 flex items-center justify-between shadow-[0_4px_12px_rgba(0,0,0,0.02)] border border-[#F0EDFF] cursor-pointer text-left transition-none disabled:opacity-50"
+                      className="w-full bg-white rounded-3xl p-4 flex items-center justify-between shadow-[0_4px_12px_rgba(0,0,0,0.02)] border border-[#F0EDFF] cursor-pointer text-left transition-none disabled:opacity-50"
                     >
                       <div className="flex items-center gap-4 flex-1 min-w-0">
                         <div className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-inner bg-[#F0ECFF] text-[#8C66FF]">
@@ -467,7 +469,7 @@ export default function KuisMenu() {
                       </div>
 
                       {/* Question Text */}
-                      <div className="w-full bg-white rounded-[24px] p-5 shadow-[0_4px_12px_rgba(0,0,0,0.02)] border border-[#F0EDFF] flex flex-col gap-3">
+                      <div className="w-full bg-white rounded-3xl p-5 shadow-[0_4px_12px_rgba(0,0,0,0.02)] border border-[#F0EDFF] flex flex-col gap-3">
                         {currentQuestion.images &&
                           currentQuestion.images.length > 0 && (
                             <div className="flex flex-wrap gap-2 justify-center mb-1">
@@ -476,7 +478,7 @@ export default function KuisMenu() {
                                   key={imgIdx}
                                   src={img}
                                   alt={`Ilustrasi Soal ${imgIdx + 1}`}
-                                  className="max-h-[140px] max-w-full object-contain rounded-xl border border-[#F0EDFF]"
+                                  className="max-h-35 max-w-full object-contain rounded-xl border border-[#F0EDFF]"
                                 />
                               ))}
                             </div>
@@ -611,7 +613,7 @@ export default function KuisMenu() {
                           </span>
                         </p>
                       </div>
-                      <div className="h-[1px] bg-[#F0EDFF] w-full"></div>
+                      <div className="h-px bg-[#F0EDFF] w-full"></div>
                       <div className="flex flex-col gap-2.5">
                         <button
                           onClick={() => setShowReview(true)}
@@ -675,7 +677,7 @@ export default function KuisMenu() {
                         </div>
                       </div>
 
-                      <div className="max-h-[380px] overflow-y-auto space-y-4 pr-1 no-scrollbar">
+                      <div className="max-h-95 overflow-y-auto space-y-4 pr-1 no-scrollbar">
                         {activeQuiz.questions.map((q, idx) => {
                           const userAns = answers[q.id] || [];
                           const correctAns = q.correctAnswers;
@@ -697,7 +699,9 @@ export default function KuisMenu() {
                           return (
                             <div
                               key={q.id}
-                              className={`pt-4 ${idx === 0 ? "pt-0" : "border-t border-[#FAF9FF]"}`}
+                              className={`pt-4 ${
+                                idx === 0 ? "pt-0" : "border-t border-[#FAF9FF]"
+                              }`}
                             >
                               {q.images && q.images.length > 0 && (
                                 <div className="flex flex-wrap gap-1 mb-2">
@@ -706,7 +710,7 @@ export default function KuisMenu() {
                                       key={imgIdx}
                                       src={img}
                                       alt="Ilustrasi"
-                                      className="max-h-[80px] object-contain rounded-lg border border-[#F0EDFF]"
+                                      className="max-h-20 object-contain rounded-lg border border-[#F0EDFF]"
                                     />
                                   ))}
                                 </div>
@@ -720,7 +724,11 @@ export default function KuisMenu() {
                                     Jawaban Anda:
                                   </span>
                                   <span
-                                    className={`font-black ${isCorrect ? "text-[#2C8578]" : "text-[#FF5E8C]"}`}
+                                    className={`font-black ${
+                                      isCorrect
+                                        ? "text-[#2C8578]"
+                                        : "text-[#FF5E8C]"
+                                    }`}
                                   >
                                     {userAnsText}
                                   </span>
