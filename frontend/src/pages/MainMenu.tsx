@@ -42,7 +42,7 @@ export default function MainMenu({ onNavigate }: MainMenuProps) {
     if (onNavigate) {
       onNavigate(menuId);
     } else {
-      navigate(`/${menuId}`);
+      navigate(`/${menuId}`, { state: { from: "/menu" } });
     }
   };
 
@@ -125,7 +125,7 @@ export default function MainMenu({ onNavigate }: MainMenuProps) {
     },
     {
       id: "kuis",
-      label: "Kuis",
+      label: "Tes Hasil Belajar",
       desc: "Uji tingkat pemahaman belajarmu",
       icon: <LuPenTool className="text-xl" />,
       bgIcon: "bg-[#FFEBF0]",
@@ -133,7 +133,7 @@ export default function MainMenu({ onNavigate }: MainMenuProps) {
     },
     {
       id: "kuis/berpikir-sistem",
-      label: "Berpikir Sistem",
+      label: "Keterampilan Berpikir Sistem",
       desc: "Kumpulkan tugas & forum diskusi",
       icon: <LuAward className="text-xl" />,
       bgIcon: "bg-[#EBF3FF]",

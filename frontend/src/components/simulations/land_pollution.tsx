@@ -2156,10 +2156,10 @@ export default function SimulasiPencemaranTanah() {
                     style={{ height: "50%" }}
                   ></div>
                 </div>
-                <span className="text-[9px] font-bold text-slate-600 mt-1.5 uppercase">
+                <span className="text-[9px] font-bold text-slate-600 mt-1.5 uppercase text-center">
                   pH
                 </span>
-                <span className="text-[7px] text-slate-400 font-bold tracking-tight">
+                <span className="text-[7px] text-slate-400 font-bold tracking-tight text-center">
                   Tanah
                 </span>
               </div>
@@ -2180,10 +2180,10 @@ export default function SimulasiPencemaranTanah() {
                     style={{ height: "80%" }}
                   ></div>
                 </div>
-                <span className="text-[9px] font-bold text-slate-600 mt-1.5 uppercase">
+                <span className="text-[9px] font-bold text-slate-600 mt-1.5 uppercase text-center">
                   Kesuburan Tanah
                 </span>
-                <span className="text-[7px] text-slate-400 font-bold tracking-tight">
+                <span className="text-[7px] text-slate-400 font-bold tracking-tight text-center">
                   Subur
                 </span>
               </div>
@@ -2204,10 +2204,10 @@ export default function SimulasiPencemaranTanah() {
                     style={{ height: "100%" }}
                   ></div>
                 </div>
-                <span className="text-[9px] font-bold text-slate-600 mt-1.5 uppercase">
+                <span className="text-[9px] font-bold text-slate-600 mt-1.5 uppercase text-center">
                   Kondisi Akar
                 </span>
-                <span className="text-[7px] text-slate-400 font-bold tracking-tight">
+                <span className="text-[7px] text-slate-400 font-bold tracking-tight text-center">
                   Akar
                 </span>
               </div>
@@ -2228,10 +2228,10 @@ export default function SimulasiPencemaranTanah() {
                     style={{ height: "0%" }}
                   ></div>
                 </div>
-                <span className="text-[9px] font-bold text-slate-600 mt-1.5 uppercase">
+                <span className="text-[9px] font-bold text-slate-600 mt-1.5 uppercase text-center">
                   Tingkat Racun
                 </span>
-                <span className="text-[7px] text-slate-400 font-bold tracking-tight">
+                <span className="text-[7px] text-slate-400 font-bold tracking-tight text-center">
                   Racun
                 </span>
               </div>
@@ -2252,14 +2252,28 @@ export default function SimulasiPencemaranTanah() {
                     style={{ height: "10%" }}
                   ></div>
                 </div>
-                <span className="text-[9px] font-bold text-slate-600 mt-1.5 uppercase">
+                <span className="text-[9px] font-bold text-slate-600 mt-1.5 uppercase text-center">
                   Hasil Panen
                 </span>
-                <span className="text-[7px] text-slate-400 font-bold tracking-tight">
+                <span className="text-[7px] text-slate-400 font-bold tracking-tight text-center">
                   Panen
                 </span>
               </div>
             </div>
+          </div>
+
+          {/* Keterangan Parameter Grafik */}
+          <div className="mt-2 pt-2 border-t border-slate-100 text-center shrink-0">
+            <span className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 text-center">
+              Keterangan Parameter Grafik
+            </span>
+            <p className="text-[10px] leading-relaxed text-slate-600 text-center font-semibold">
+              <span className="inline-block mx-1.5"><strong className="text-emerald-600">pH:</strong> Keasaman Tanah</span>
+              <span className="inline-block mx-1.5"><strong className="text-lime-600">Kesuburan:</strong> Kadar Unsur Hara</span>
+              <span className="inline-block mx-1.5"><strong className="text-amber-600">Akar:</strong> Kesehatan Perakaran</span>
+              <span className="inline-block mx-1.5"><strong className="text-rose-600">Racun:</strong> Konsentrasi Kontaminan</span>
+              <span className="inline-block mx-1.5"><strong className="text-sky-600">Panen:</strong> Estimasi Hasil Panen</span>
+            </p>
           </div>
         </section>
       </main>

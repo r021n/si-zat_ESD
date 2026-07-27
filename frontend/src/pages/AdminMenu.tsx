@@ -198,7 +198,7 @@ export default function AdminMenu() {
                     if (menu.id === "siswa-insights") {
                       setShowSiswaInsights(true);
                     } else {
-                      navigate(menu.path);
+                      navigate(menu.path, { state: { from: "/admin" } });
                     }
                   }}
                   className="w-full bg-white rounded-3xl p-4 flex items-center justify-between shadow-[0_4px_12px_rgba(0,0,0,0.02)] border border-[#F0EDFF] cursor-pointer text-left transition-none"

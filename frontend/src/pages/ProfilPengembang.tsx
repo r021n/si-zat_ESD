@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { LuGraduationCap, LuAward } from "react-icons/lu";
 import { FiArrowLeft } from "react-icons/fi";
 import { useAppBack } from "../hooks/useAppBack";
-import pengembangImg from "../assets/pengembang.jpg";
+import pengembangImg from "../assets/pengembang.jpeg";
 import unsLogo from "../assets/uns_logo.webp";
 
 export default function ProfilPengembang() {
@@ -71,19 +71,19 @@ export default function ProfilPengembang() {
               <img
                 src={pengembangImg}
                 alt="Foto Pengembang"
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover object-top"
               />
             </div>
 
             <div>
               <h2 className="text-lg font-black text-[#2C2B30] leading-tight">
-                [Nama Mahasiswa]
+                Syahwa Adila Gepsi
               </h2>
               <p className="text-xs text-[#8C66FF] font-extrabold mt-1 tracking-wider uppercase">
-                [NIM Mahasiswa]
+                NIM S832502004
               </p>
               <p className="text-[11px] text-[#9C98A6] font-bold mt-0.5">
-                Program Studi [Nama Program Studi]
+                Program Studi S2 Pendidikan Ilmu Pengetahuan Alam UNS
               </p>
               <p className="text-[10px] text-[#9C98A6] font-medium">
                 Universitas Sebelas Maret
@@ -108,10 +108,10 @@ export default function ProfilPengembang() {
                   Dosen Pembimbing I
                 </h4>
                 <p className="text-xs font-bold text-[#2C2B30] mt-0.5">
-                  [Nama Dosen Pembimbing I]
+                  Dr. Sri Yamtinah, S.Pd., M.Pd.
                 </p>
                 <p className="text-[10px] text-[#9C98A6] font-medium">
-                  [NIP Dosen Pembimbing I]
+                  196912042005012001
                 </p>
               </div>
 
@@ -120,10 +120,10 @@ export default function ProfilPengembang() {
                   Dosen Pembimbing II
                 </h4>
                 <p className="text-xs font-bold text-[#2C2B30] mt-0.5">
-                  [Nama Dosen Pembimbing II]
+                  Lina Mahardiani, S.T., M.M., M.Sc., Ph.D.
                 </p>
                 <p className="text-[10px] text-[#9C98A6] font-medium">
-                  [NIP Dosen Pembimbing II]
+                  198003102005012003
                 </p>
               </div>
             </div>

@@ -258,7 +258,8 @@ export default function PenilaianBerpikirSistem() {
           const counts: Record<string, { name: string; count: number }> = {};
           dataToProcess.forEach((comment: any) => {
             const role = comment.senderRole?.toLowerCase();
-            if (role === "siswa") {
+            const content = comment.content || "";
+            if (role === "siswa" && content.trim().length > 45) {
               const key = comment.senderName;
               if (!counts[key]) {
                 counts[key] = { name: comment.senderName, count: 0 };
@@ -582,8 +583,8 @@ export default function PenilaianBerpikirSistem() {
               <div className="w-full flex-1 flex flex-col gap-3 overflow-y-auto max-h-[58vh] pr-1 custom-scroll">
                 <p className="text-[10px] text-[#9C98A6] font-semibold leading-relaxed bg-[#F5F2FF] border border-[#E9E4FF] p-3 rounded-2xl">
                   💡 Pilih salah satu tugas di bawah ini untuk membuka forum
-                  obrolan dan mendiskusikan hasil analisis berpikir sistem
-                  mereka.
+                  obrolan dan mendiskusikan hasil analisis keterampilan berpikir
+                  sistem mereka.
                 </p>
 
                 {loadingSubmissions ? (
@@ -872,7 +873,7 @@ export default function PenilaianBerpikirSistem() {
                     rows={6}
                     value={answer}
                     onChange={(e) => setAnswer(e.target.value)}
-                    placeholder="Tuliskan analisis berpikir sistem Anda secara mendalam..."
+                    placeholder="Tuliskan analisis Anda secara mendalam..."
                     className="w-full px-4 py-3 bg-[#FAF9FF] border border-[#F0EDFF] rounded-2xl text-xs font-semibold text-[#2C2B30] placeholder-[#9C98A6] focus:outline-none focus:bg-white focus:border-[#8C66FF] resize-none transition-none"
                     required
                   />
@@ -1077,7 +1078,7 @@ export default function PenilaianBerpikirSistem() {
                   </p>
                 ) : contributorsData.length === 0 ? (
                   <p className="text-xs text-[#9C98A6] font-semibold text-center py-6">
-                    Belum ada komentar/diskusi yang tercatat.
+                    Belum ada kontribusi yang tercatat.
                   </p>
                 ) : (
                   <div className="flex flex-col gap-2">

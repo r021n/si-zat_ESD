@@ -1,12 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
-import {
-  LuDroplets,
-  LuFish,
-  LuSprout,
-  LuWind,
-} from "react-icons/lu";
+import { LuDroplets, LuFish, LuSprout, LuWind } from "react-icons/lu";
 import { FiArrowLeft, FiHelpCircle } from "react-icons/fi";
 import { useAppBack } from "../hooks/useAppBack";
 import { useCustomDialog } from "../components/CustomDialog";
@@ -69,25 +64,55 @@ export default function Simulasi() {
   ];
 
   const handleOptionClick = (id: string) => {
-    navigate(`/simulasi/${id}`);
+    navigate(`/simulasi/${id}`, { state: { from: "/simulasi" } });
   };
 
   const showGuide = () => {
     showAlert(
       <div className="text-left w-full mt-2">
         <ol className="list-decimal pl-4 text-xs font-medium text-[#2C2B30] space-y-2.5 leading-relaxed">
-          <li>Pilih topik simulasi, misalnya Pencemaran Air, Eutrofikasi, Pencemaran Tanah, atau Pencemaran Udara.</li>
-          <li><strong>Amati kondisi awal</strong> pada simulasi, seperti warna air, jumlah ikan, kondisi tanah, atau kualitas udara.</li>
-          <li><strong>Atur variabel</strong> yang tersedia dengan <strong>menggeser <em>slider</em></strong> atau <strong>menekan tombol ON/OFF</strong>.</li>
-          <li>Tekan tombol "Mulai" di pojok kanan atas untuk menjalankan simulasi.</li>
-          <li>Perhatikan perubahan yang terjadi pada gambar simulasi dan grafik parameter di sebelah kanan.</li>
+          <li>
+            Pilih topik simulasi, misalnya Pencemaran Air, Eutrofikasi,
+            Pencemaran Tanah, atau Pencemaran Udara.
+          </li>
+          <li>
+            <strong>Amati kondisi awal</strong> pada simulasi, seperti warna
+            air, jumlah ikan, kondisi tanah, atau kualitas udara.
+          </li>
+          <li>
+            <strong>Atur variabel</strong> yang tersedia dengan{" "}
+            <strong>
+              menggeser <em>slider</em>
+            </strong>{" "}
+            atau <strong>menekan tombol ON/OFF</strong>.
+          </li>
+          <li>
+            Tekan tombol "Mulai" di pojok kanan atas untuk menjalankan simulasi.
+          </li>
+          <li>
+            Perhatikan perubahan yang terjadi pada gambar simulasi dan grafik
+            parameter di sebelah kanan.
+          </li>
           <li>Bandingkan hasil sebelum dan sesudah variabel diubah.</li>
-          <li>Coba ubah variabel lain untuk melihat apakah hasil simulasi juga berubah.</li>
-          <li>Gunakan fitur pemulihan lingkungan <strong>(seperti fitur purifikasi, restorasi air, bersihkan, atau hujan buatan)</strong> sesuai jenis simulasi, kemudian amati perubahan yang terjadi.</li>
-          <li>Diskusikan hasil pengamatan bersama kelompok dan tuliskan kesimpulan pada LKPD.</li>
+          <li>
+            Coba ubah variabel lain untuk melihat apakah hasil simulasi juga
+            berubah.
+          </li>
+          <li>
+            Gunakan fitur pemulihan lingkungan{" "}
+            <strong>
+              (seperti fitur purifikasi, restorasi air, bersihkan, atau hujan
+              buatan)
+            </strong>{" "}
+            sesuai jenis simulasi, kemudian amati perubahan yang terjadi.
+          </li>
+          <li>
+            Diskusikan hasil pengamatan bersama kelompok dan tuliskan kesimpulan
+            pada LKPD.
+          </li>
         </ol>
       </div>,
-      "Petunjuk Simulator"
+      "Petunjuk Simulator",
     );
   };
 
@@ -96,17 +121,17 @@ export default function Simulasi() {
   return (
     <div className="w-full min-h-screen bg-[#FAF9FF] flex justify-center items-center text-[#2C2B30] font-sans select-none overflow-hidden relative">
       {/* Decorative Blur Bubble */}
-      <div className="absolute top-[-10%] right-[-10%] w-[200px] h-[200px] bg-[#E9E4FF] rounded-full filter blur-2xl opacity-50"></div>
+      <div className="absolute top-[-10%] right-[-10%] w-50 h-50 bg-[#E9E4FF] rounded-full filter blur-2xl opacity-50"></div>
 
       {/* Container Mobile Portrait */}
-      <div className="w-full max-w-[430px] min-h-screen flex flex-col justify-between px-6 py-6 z-10">
+      <div className="w-full max-w-107.5 min-h-screen flex flex-col justify-between px-6 py-6 z-10">
         {/* Header Section */}
         <div>
           <div className="w-full flex justify-between items-center mt-4 mb-4">
             <div className="flex items-center gap-3">
               <button
                 onClick={() => goBack("/menu")}
-                className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-[#F0EDFF] text-[#8C66FF] cursor-pointer active:bg-neutral-50 transition-none flex-shrink-0"
+                className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-[#F0EDFF] text-[#8C66FF] cursor-pointer active:bg-neutral-50 transition-none shrink-0"
                 title="Kembali"
               >
                 <FiArrowLeft size={20} />
@@ -123,7 +148,7 @@ export default function Simulasi() {
             {/* Help/Guide Button */}
             <button
               onClick={showGuide}
-              className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-[#F0EDFF] text-[#8C66FF] cursor-pointer active:bg-neutral-50 transition-none flex-shrink-0"
+              className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-[#F0EDFF] text-[#8C66FF] cursor-pointer active:bg-neutral-50 transition-none shrink-0"
               title="Petunjuk Penggunaan"
             >
               <FiHelpCircle size={20} />
@@ -141,7 +166,7 @@ export default function Simulasi() {
             <button
               key={option.id}
               onClick={() => handleOptionClick(option.id)}
-              className="w-full bg-white rounded-[24px] p-4 flex items-center justify-between shadow-[0_4px_12px_rgba(0,0,0,0.02)] border border-[#F0EDFF] cursor-pointer text-left transition-none active:bg-slate-50"
+              className="w-full bg-white rounded-3xl p-4 flex items-center justify-between shadow-[0_4px_12px_rgba(0,0,0,0.02)] border border-[#F0EDFF] cursor-pointer text-left transition-none active:bg-slate-50"
             >
               <div className="flex items-center gap-4">
                 {/* Rounded icon box */}
@@ -164,7 +189,7 @@ export default function Simulasi() {
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 20 20"
                 fill="currentColor"
-                className="w-5 h-5 text-[#8C66FF] opacity-50 flex-shrink-0"
+                className="w-5 h-5 text-[#8C66FF] opacity-50 shrink-0"
               >
                 <path
                   fillRule="evenodd"

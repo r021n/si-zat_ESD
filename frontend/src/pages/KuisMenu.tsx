@@ -259,7 +259,7 @@ export default function KuisMenu() {
                   }}
                   title={
                     viewingHistory
-                      ? "Kembali ke Daftar Kuis"
+                      ? "Kembali ke Daftar Tes"
                       : "Kembali ke Menu Utama"
                   }
                   className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-[#F0EDFF] text-[#8C66FF] cursor-pointer transition-none shrink-0"
@@ -271,16 +271,16 @@ export default function KuisMenu() {
                 <p className="text-[10px] uppercase tracking-widest text-[#9C98A6] font-bold">
                   {activeQuiz
                     ? submitted
-                      ? "Hasil Kuis"
-                      : "Pengerjaan Kuis"
+                      ? "Hasil Tes"
+                      : "Pengerjaan Tes"
                     : "Evaluasi Pembelajaran"}
                 </p>
                 <h1 className="text-xl font-extrabold text-[#2C2B30] leading-tight mt-0.5 truncate">
                   {activeQuiz
                     ? activeQuiz.title
                     : viewingHistory
-                    ? "Riwayat Kuis"
-                    : "Daftar Kuis"}
+                    ? "Riwayat Tes"
+                    : "Daftar Tes"}
                 </h1>
               </div>
             </div>
@@ -301,7 +301,7 @@ export default function KuisMenu() {
                   onClick={async () => {
                     if (
                       await showConfirm(
-                        "Batal mengerjakan dan kembali ke daftar kuis? Progres Anda saat ini akan hilang.",
+                        "Batal mengerjakan dan kembali ke daftar tes? Progres Anda saat ini akan hilang.",
                       )
                     ) {
                       setActiveQuiz(null);
@@ -325,12 +325,12 @@ export default function KuisMenu() {
                 <div className="text-center py-12 bg-white rounded-3xl border border-[#F0EDFF] shadow-[0_4px_12px_rgba(0,0,0,0.02)] flex flex-col gap-3 justify-center items-center">
                   <div className="w-6 h-6 border-2 border-[#8C66FF] border-t-transparent rounded-full animate-spin"></div>
                   <span className="text-[10px] font-bold uppercase tracking-wider text-[#9C98A6]">
-                    Memuat Kuis...
+                    Memuat Tes...
                   </span>
                 </div>
               ) : quizzes.length === 0 ? (
                 <div className="text-center py-12 bg-white rounded-3xl border border-[#F0EDFF] shadow-[0_4px_12px_rgba(0,0,0,0.02)] text-xs text-[#9C98A6] font-bold uppercase">
-                  Belum ada kuis yang tersedia.
+                  Belum ada tes yang tersedia.
                 </div>
               ) : (
                 quizzes.map((quiz) => (
@@ -387,7 +387,7 @@ export default function KuisMenu() {
               ) : (
                 historySubmissions.map((sub) => {
                   const quiz = quizzes.find((q) => q.id === sub.quizId);
-                  const title = quiz ? quiz.title : "Kuis Tidak Dikenal";
+                  const title = quiz ? quiz.title : "Tes Tidak Dikenal";
                   return (
                     <button
                       key={sub.id}
@@ -568,7 +568,7 @@ export default function KuisMenu() {
                     <div className="w-full bg-white rounded-[28px] p-6 shadow-md border border-[#F0EDFF] text-center flex flex-col gap-5">
                       <div>
                         <p className="text-[10px] font-extrabold uppercase text-[#9C98A6] tracking-wider">
-                          Hasil Kuis
+                          Hasil Tes
                         </p>
                         <div className="text-6xl font-black tracking-tight text-[#8C66FF] my-4">
                           {score}
@@ -625,7 +625,7 @@ export default function KuisMenu() {
                           onClick={() => setActiveQuiz(null)}
                           className="w-full py-3.5 bg-[#8C66FF] text-white font-extrabold uppercase tracking-wider text-[10px] rounded-full shadow-md shadow-purple-100 cursor-pointer transition-none flex items-center justify-center"
                         >
-                          Kembali ke Daftar Kuis
+                          Kembali ke Daftar Tes
                         </button>
                       </div>
                     </div>
@@ -766,7 +766,7 @@ export default function KuisMenu() {
                         }}
                         className="w-full py-3.5 bg-[#8C66FF] text-white font-extrabold uppercase tracking-wider text-[10px] rounded-full shadow-md shadow-purple-100 cursor-pointer transition-none flex items-center justify-center"
                       >
-                        Kembali ke Menu Kuis
+                        Kembali ke Menu Tes
                       </button>
                     </div>
                   )}

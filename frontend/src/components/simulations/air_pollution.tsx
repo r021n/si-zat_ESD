@@ -1252,10 +1252,10 @@ export default function SimulasiPencemaranUdara() {
                     style={{ height: "12%" }}
                   ></div>
                 </div>
-                <span className="text-[9px] font-bold text-slate-600 mt-1.5 uppercase">
-                  Indeks Kualitas Udara (AQI)
+                <span className="text-[9px] font-bold text-slate-600 mt-1.5 uppercase text-center">
+                  AQI
                 </span>
-                <span className="text-[7px] text-slate-400 font-bold tracking-tight">
+                <span className="text-[7px] text-slate-400 font-bold tracking-tight text-center">
                   indeks
                 </span>
               </div>
@@ -1276,10 +1276,10 @@ export default function SimulasiPencemaranUdara() {
                     style={{ height: "6%" }}
                   ></div>
                 </div>
-                <span className="text-[9px] font-bold text-slate-600 mt-1.5 uppercase">
-                  Debu Halus (PM2.5)
+                <span className="text-[9px] font-bold text-slate-600 mt-1.5 uppercase text-center">
+                  PM2.5
                 </span>
-                <span className="text-[7px] text-slate-400 font-bold tracking-tight">
+                <span className="text-[7px] text-slate-400 font-bold tracking-tight text-center">
                   µg/m³
                 </span>
               </div>
@@ -1300,10 +1300,10 @@ export default function SimulasiPencemaranUdara() {
                     style={{ height: "40%" }}
                   ></div>
                 </div>
-                <span className="text-[9px] font-bold text-slate-600 mt-1.5 uppercase">
+                <span className="text-[9px] font-bold text-slate-600 mt-1.5 uppercase text-center">
                   CO2
                 </span>
-                <span className="text-[7px] text-slate-400 font-bold tracking-tight">
+                <span className="text-[7px] text-slate-400 font-bold tracking-tight text-center">
                   ppm
                 </span>
               </div>
@@ -1324,10 +1324,10 @@ export default function SimulasiPencemaranUdara() {
                     style={{ height: "4%" }}
                   ></div>
                 </div>
-                <span className="text-[9px] font-bold text-slate-600 mt-1.5 uppercase">
+                <span className="text-[9px] font-bold text-slate-600 mt-1.5 uppercase text-center">
                   CO
                 </span>
-                <span className="text-[7px] text-slate-400 font-bold tracking-tight">
+                <span className="text-[7px] text-slate-400 font-bold tracking-tight text-center">
                   ppm
                 </span>
               </div>
@@ -1348,14 +1348,40 @@ export default function SimulasiPencemaranUdara() {
                     style={{ height: "84%" }}
                   ></div>
                 </div>
-                <span className="text-[9px] font-bold text-slate-600 mt-1.5 uppercase">
-                  Oksigen
+                <span className="text-[9px] font-bold text-slate-600 mt-1.5 uppercase text-center">
+                  O2
                 </span>
-                <span className="text-[7px] text-slate-400 font-bold tracking-tight">
+                <span className="text-[7px] text-slate-400 font-bold tracking-tight text-center">
                   % Vol
                 </span>
               </div>
             </div>
+          </div>
+
+          {/* Keterangan Parameter Grafik */}
+          <div className="mt-2 pt-2 border-t border-slate-100 text-center shrink-0">
+            <span className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 text-center">
+              Keterangan Parameter Grafik
+            </span>
+            <p className="text-[10px] leading-relaxed text-slate-600 text-center font-semibold">
+              <span className="inline-block mx-1.5">
+                <strong className="text-emerald-600">AQI:</strong> Indeks
+                Kualitas Udara
+              </span>
+              <span className="inline-block mx-1.5">
+                <strong className="text-emerald-600">PM2.5:</strong> Partikel
+                Debu Halus
+              </span>
+              <span className="inline-block mx-1.5">
+                <strong className="text-cyan-600">CO2:</strong> Karbon Dioksida
+              </span>
+              <span className="inline-block mx-1.5">
+                <strong className="text-sky-600">CO:</strong> Karbon Monoksida
+              </span>
+              <span className="inline-block mx-1.5">
+                <strong className="text-blue-600">O2:</strong> Oksigen Udara
+              </span>
+            </p>
           </div>
         </section>
       </main>

@@ -1151,10 +1151,10 @@ export default function SimulasiPencemaranAir() {
                     style={{ height: "80%" }}
                   ></div>
                 </div>
-                <span className="text-[9px] font-bold text-slate-600 mt-1.5 uppercase">
+                <span className="text-[9px] font-bold text-slate-600 mt-1.5 uppercase text-center">
                   DO
                 </span>
-                <span className="text-[7px] text-slate-400 font-bold tracking-tight">
+                <span className="text-[7px] text-slate-400 font-bold tracking-tight text-center">
                   mg/L
                 </span>
               </div>
@@ -1175,10 +1175,10 @@ export default function SimulasiPencemaranAir() {
                     style={{ height: "50%" }}
                   ></div>
                 </div>
-                <span className="text-[9px] font-bold text-slate-600 mt-1.5 uppercase">
+                <span className="text-[9px] font-bold text-slate-600 mt-1.5 uppercase text-center">
                   pH
                 </span>
-                <span className="text-[7px] text-slate-400 font-bold tracking-tight">
+                <span className="text-[7px] text-slate-400 font-bold tracking-tight text-center">
                   pH
                 </span>
               </div>
@@ -1199,10 +1199,10 @@ export default function SimulasiPencemaranAir() {
                     style={{ height: "1%" }}
                   ></div>
                 </div>
-                <span className="text-[9px] font-bold text-slate-600 mt-1.5 uppercase">
+                <span className="text-[9px] font-bold text-slate-600 mt-1.5 uppercase text-center">
                   BOD
                 </span>
-                <span className="text-[7px] text-slate-400 font-bold tracking-tight">
+                <span className="text-[7px] text-slate-400 font-bold tracking-tight text-center">
                   mg/L
                 </span>
               </div>
@@ -1223,10 +1223,10 @@ export default function SimulasiPencemaranAir() {
                     style={{ height: "3%" }}
                   ></div>
                 </div>
-                <span className="text-[9px] font-bold text-slate-600 mt-1.5 uppercase">
+                <span className="text-[9px] font-bold text-slate-600 mt-1.5 uppercase text-center">
                   COD
                 </span>
-                <span className="text-[7px] text-slate-400 font-bold tracking-tight">
+                <span className="text-[7px] text-slate-400 font-bold tracking-tight text-center">
                   mg/L
                 </span>
               </div>
@@ -1247,14 +1247,28 @@ export default function SimulasiPencemaranAir() {
                     style={{ height: "0%" }}
                   ></div>
                 </div>
-                <span className="text-[9px] font-bold text-slate-600 mt-1.5 uppercase">
+                <span className="text-[9px] font-bold text-slate-600 mt-1.5 uppercase text-center">
                   Polutan
                 </span>
-                <span className="text-[7px] text-slate-400 font-bold tracking-tight">
+                <span className="text-[7px] text-slate-400 font-bold tracking-tight text-center">
                   ppm
                 </span>
               </div>
             </div>
+          </div>
+
+          {/* Keterangan Parameter Grafik */}
+          <div className="mt-2 pt-2 border-t border-slate-100 text-center shrink-0">
+            <span className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 text-center">
+              Keterangan Parameter Grafik
+            </span>
+            <p className="text-[10px] leading-relaxed text-slate-600 text-center font-semibold">
+              <span className="inline-block mx-1.5"><strong className="text-emerald-600">DO:</strong> Oksigen Terlarut</span>
+              <span className="inline-block mx-1.5"><strong className="text-blue-600">pH:</strong> Keasaman Air</span>
+              <span className="inline-block mx-1.5"><strong className="text-amber-600">BOD:</strong> Kebutuhan Oksigen Biologis</span>
+              <span className="inline-block mx-1.5"><strong className="text-orange-600">COD:</strong> Kebutuhan Oksigen Kimiawi</span>
+              <span className="inline-block mx-1.5"><strong className="text-rose-600">Polutan:</strong> Tingkat Pencemar</span>
+            </p>
           </div>
         </section>
       </main>

@@ -1114,10 +1114,10 @@ export default function SimulasiEutrofikasi() {
                     style={{ height: "10%" }}
                   ></div>
                 </div>
-                <span className="text-[9px] font-bold text-slate-600 mt-2">
-                  Nutrien (Nitrat/Fosfat)
+                <span className="text-[9px] font-bold text-slate-600 mt-2 text-center">
+                  Nutrien
                 </span>
-                <span className="text-[7px] text-slate-400 font-bold tracking-tight">
+                <span className="text-[7px] text-slate-400 font-bold tracking-tight text-center">
                   Nitrat/Fosfat
                 </span>
               </div>
@@ -1138,10 +1138,10 @@ export default function SimulasiEutrofikasi() {
                     style={{ height: "15%" }}
                   ></div>
                 </div>
-                <span className="text-[9px] font-bold text-slate-600 mt-2">
+                <span className="text-[9px] font-bold text-slate-600 mt-2 text-center">
                   Alga
                 </span>
-                <span className="text-[7px] text-slate-400 font-bold tracking-tight">
+                <span className="text-[7px] text-slate-400 font-bold tracking-tight text-center">
                   Populasi (%)
                 </span>
               </div>
@@ -1162,10 +1162,10 @@ export default function SimulasiEutrofikasi() {
                     style={{ height: "80%" }}
                   ></div>
                 </div>
-                <span className="text-[9px] font-bold text-slate-600 mt-2">
-                  DO (Oksigen Terlarut)
+                <span className="text-[9px] font-bold text-slate-600 mt-2 text-center">
+                  DO
                 </span>
-                <span className="text-[7px] text-slate-400 font-bold tracking-tight">
+                <span className="text-[7px] text-slate-400 font-bold tracking-tight text-center">
                   Oksigen Terl.
                 </span>
               </div>
@@ -1186,14 +1186,38 @@ export default function SimulasiEutrofikasi() {
                     style={{ height: "5%" }}
                   ></div>
                 </div>
-                <span className="text-[9px] font-bold text-slate-600 mt-2">
-                  BOD (Kebutuhan Oksigen)
+                <span className="text-[9px] font-bold text-slate-600 mt-2 text-center">
+                  BOD
                 </span>
-                <span className="text-[7px] text-slate-400 font-bold tracking-tight">
+                <span className="text-[7px] text-slate-400 font-bold tracking-tight text-center">
                   Kebutuhan Oks.
                 </span>
               </div>
             </div>
+          </div>
+
+          {/* Keterangan Parameter Grafik */}
+          <div className="mt-2 pt-2 border-t border-slate-100 text-center shrink-0">
+            <span className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 text-center">
+              Keterangan Parameter Grafik
+            </span>
+            <p className="text-[10px] leading-relaxed text-slate-600 text-center font-semibold">
+              <span className="inline-block mx-1.5">
+                <strong className="text-amber-600">Nutrien:</strong> Pupuk
+                Nitrat & Fosfat
+              </span>
+              <span className="inline-block mx-1.5">
+                <strong className="text-emerald-600">Alga:</strong> Populasi
+                Alga / Tumbuhan Air
+              </span>
+              <span className="inline-block mx-1.5">
+                <strong className="text-sky-600">DO:</strong> Oksigen Terlarut
+              </span>
+              <span className="inline-block mx-1.5">
+                <strong className="text-rose-600">BOD:</strong> Kebutuhan
+                Oksigen Biologis
+              </span>
+            </p>
           </div>
         </section>
       </main>

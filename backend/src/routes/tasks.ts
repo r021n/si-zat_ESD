@@ -2,7 +2,7 @@ import { Hono } from 'hono'
 import { verify } from 'hono/jwt'
 import { db } from '../db/index.js'
 import { users, taskSubmissions, taskDiscussions } from '../db/schema.js'
-import { eq } from 'drizzle-orm'
+import { eq, sql } from 'drizzle-orm'
 
 const tasks = new Hono()
 
@@ -99,6 +99,7 @@ tasks.get('/discussions/overall-contributors', async (c: any) => {
     })
     .from(taskDiscussions)
     .leftJoin(users, eq(taskDiscussions.userId, users.id))
+    .where(sql`LENGTH(TRIM(${taskDiscussions.content})) > 45`)
 
     const counts: Record<string, { name: string; count: number; studentClass: string }> = {}
 
