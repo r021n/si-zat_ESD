@@ -4,7 +4,6 @@ import { useAuthStore } from "../store/authStore";
 import { useAppBack } from "../hooks/useAppBack";
 import {
   LuPenTool,
-  LuBookOpen,
   LuLock,
   LuChartBar,
   LuClock,
@@ -126,15 +125,6 @@ export default function AdminMenu() {
       bgIcon: "bg-[#FFEBF0]",
       textIcon: "text-[#D95276]",
       path: "/admin/kuis",
-    },
-    {
-      id: "materi",
-      label: "Kelola Materi",
-      desc: "Kelola materi pembelajaran (tambah, edit, dan hapus)",
-      icon: <LuBookOpen className="text-xl" />,
-      bgIcon: "bg-[#FFF4EB]",
-      textIcon: "text-[#FF9D42]",
-      path: "/materi",
     },
     {
       id: "change-password",

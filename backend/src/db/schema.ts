@@ -41,24 +41,6 @@ export const submissions = sqliteTable('submissions', {
   createdAt: text('created_at').notNull(),
 })
 
-export const materials = sqliteTable('materials', {
-  id: text('id').primaryKey(),
-  title: text('title').notNull(),
-  createdAt: text('created_at').notNull(),
-  updatedAt: text('updated_at').notNull(),
-  sortOrder: integer('sort_order').default(0),
-})
-
-export const materialBlocks = sqliteTable('material_blocks', {
-  id: text('id').primaryKey(),
-  materialId: text('material_id').notNull().references(() => materials.id, { onDelete: 'cascade' }),
-  type: text('type').notNull(), // 'text' | 'image' | 'audio'
-  textContent: text('text_content'),
-  mediaBlob: blob('media_blob', { mode: 'buffer' }),
-  mediaType: text('media_type'),
-  sortOrder: integer('sort_order').notNull(),
-})
-
 export const taskSubmissions = sqliteTable('task_submissions', {
   id: text('id').primaryKey(),
   userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),

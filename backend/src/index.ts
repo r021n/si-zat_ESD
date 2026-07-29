@@ -4,7 +4,6 @@ import { cors } from 'hono/cors'
 import { serve } from '@hono/node-server'
 import authRoute from './routes/auth.js'
 import quizRoute from './routes/quiz.js'
-import materiRoute from './routes/materi.js'
 import tasksRoute from './routes/tasks.js'
 import analyticsRoute from './routes/analytics.js'
 import accessRoute, { getSettings, checkIsLocked } from './routes/access.js'
@@ -104,7 +103,6 @@ app.use('/api/*', async (c, next) => {
 // Mount separate routing modules
 app.route('/api/auth', authRoute)
 app.route('/api/quiz', quizRoute)
-app.route('/api/materi', materiRoute)
 app.route('/api/tasks', tasksRoute)
 app.route('/api/analytics', analyticsRoute)
 app.route('/api/access', accessRoute)

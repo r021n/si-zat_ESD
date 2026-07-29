@@ -90,20 +90,13 @@ interface CacheItem<T> {
 }
 
 let quizzesCache: CacheItem<any> | null = null;
-let materialsCache: CacheItem<any> | null = null;
-const materialDetailCache = new Map<string, CacheItem<any>>();
 let accessStatusCache: CacheItem<any> | null = null;
 
-const DEFAULT_TTL_MS = 60 * 1000; // 60 seconds for materials and quizzes
+const DEFAULT_TTL_MS = 60 * 1000; // 60 seconds for quizzes
 const ACCESS_STATUS_TTL_MS = 15 * 1000; // 15 seconds for access status
 
 export function clearQuizzesCache() {
   quizzesCache = null;
-}
-
-export function clearMaterialsCache() {
-  materialsCache = null;
-  materialDetailCache.clear();
 }
 
 export function clearAccessStatusCache() {
@@ -227,110 +220,6 @@ export async function getMySubmissionsApi(token: string) {
   return data;
 }
 
-export async function getMaterialsApi(token: string, forceRefresh = false) {
-  const now = Date.now();
-  if (!forceRefresh && materialsCache && (now - materialsCache.timestamp < DEFAULT_TTL_MS)) {
-    return materialsCache.data;
-  }
-
-  const response = await fetch(`${API_URL}/api/materi`, {
-    method: "GET",
-    headers: {
-      "Authorization": `Bearer ${token}`
-    }
-  });
-  const data = await response.json();
-  if (!response.ok) {
-    throw new Error(data.error || "Gagal mengambil data materi");
-  }
-  materialsCache = { data, timestamp: now };
-  return data;
-}
-
-export async function getMaterialDetailApi(token: string, id: string, forceRefresh = false) {
-  const now = Date.now();
-  const cached = materialDetailCache.get(id);
-  if (!forceRefresh && cached && (now - cached.timestamp < DEFAULT_TTL_MS)) {
-    return cached.data;
-  }
-
-  const response = await fetch(`${API_URL}/api/materi/${id}`, {
-    method: "GET",
-    headers: {
-      "Authorization": `Bearer ${token}`
-    }
-  });
-  const data = await response.json();
-  if (!response.ok) {
-    throw new Error(data.error || "Gagal mengambil detail materi");
-  }
-  materialDetailCache.set(id, { data, timestamp: now });
-  return data;
-}
-
-export async function createMaterialApi(token: string, formData: FormData) {
-  clearMaterialsCache();
-  const response = await fetch(`${API_URL}/api/materi`, {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${token}`
-    },
-    body: formData
-  });
-  const data = await response.json();
-  if (!response.ok) {
-    throw new Error(data.error || "Gagal membuat materi");
-  }
-  return data;
-}
-
-export async function updateMaterialApi(token: string, id: string, formData: FormData) {
-  clearMaterialsCache();
-  const response = await fetch(`${API_URL}/api/materi/${id}`, {
-    method: "PUT",
-    headers: {
-      "Authorization": `Bearer ${token}`
-    },
-    body: formData
-  });
-  const data = await response.json();
-  if (!response.ok) {
-    throw new Error(data.error || "Gagal memperbarui materi");
-  }
-  return data;
-}
-
-export async function reorderMaterialsApi(token: string, ids: string[]) {
-  clearMaterialsCache();
-  const response = await fetch(`${API_URL}/api/materi/reorder`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${token}`
-    },
-    body: JSON.stringify({ ids })
-  });
-  const data = await response.json();
-  if (!response.ok) {
-    throw new Error(data.error || "Gagal mengubah urutan materi");
-  }
-  return data;
-}
-
-export async function deleteMaterialApi(token: string, id: string) {
-  clearMaterialsCache();
-  const response = await fetch(`${API_URL}/api/materi/${id}`, {
-    method: "DELETE",
-    headers: {
-      "Authorization": `Bearer ${token}`
-    }
-  });
-  const data = await response.json();
-  if (!response.ok) {
-    throw new Error(data.error || "Gagal menghapus materi");
-  }
-  return data;
-}
 
 export async function getTaskSubmissionsApi(token: string) {
   const response = await fetch(`${API_URL}/api/tasks/submissions`, {
