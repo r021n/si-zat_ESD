@@ -7,6 +7,7 @@ import quizRoute from './routes/quiz.js'
 import tasksRoute from './routes/tasks.js'
 import analyticsRoute from './routes/analytics.js'
 import accessRoute, { getSettings, checkIsLocked } from './routes/access.js'
+import materiRoute from './routes/materi.js'
 import { verify } from 'hono/jwt'
 import { db } from './db/index.js'
 import { users } from './db/schema.js'
@@ -106,6 +107,7 @@ app.route('/api/quiz', quizRoute)
 app.route('/api/tasks', tasksRoute)
 app.route('/api/analytics', analyticsRoute)
 app.route('/api/access', accessRoute)
+app.route('/api/materi', materiRoute)
 
 
 

@@ -4,4 +4,5 @@
     <string name="title_activity_main">SiZat-ESD</string>
     <string name="package_name">com.sizat.esd</string>
     <string name="custom_url_scheme">com.sizat.esd</string>
+    <string name="server_client_id">309310930641-v44l2fjvgl3a9i9455lrueuv2df66i5f.apps.googleusercontent.com</string>
 </resources>

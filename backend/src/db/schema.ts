@@ -78,6 +78,10 @@ export const accessControls = sqliteTable('access_controls', {
   schedules: text('schedules').default('[]').notNull(), // JSON string representing ScheduleItem[]
 })
 
-
-
-
+export const materiProgress = sqliteTable('materi_progress', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  userId: integer('user_id').notNull().unique().references(() => users.id, { onDelete: 'cascade' }),
+  lastPage: integer('last_page').default(0).notNull(),
+  maxUnlockedIndex: integer('max_unlocked_index').default(0).notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
+})

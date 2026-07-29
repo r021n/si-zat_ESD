@@ -5,6 +5,9 @@ import Login from "../components/auth/Login";
 import Register from "../components/auth/Register";
 import unsLogo from "../assets/uns_logo.webp";
 import { useCustomDialog } from "../components/CustomDialog";
+import { Capacitor } from "@capacitor/core";
+import { GoogleAuth } from "@codetrix-studio/capacitor-google-auth";
+import { FcGoogle } from "react-icons/fc";
 
 declare global {
   interface Window {
@@ -30,6 +33,21 @@ export default function Auth() {
     }
   }, [user, navigate]);
 
+  // Initialize Native Google Auth if on mobile device
+  useEffect(() => {
+    if (Capacitor.isNativePlatform()) {
+      const webClientId =
+        import.meta.env.VITE_GOOGLE_WEB_CLIENT_ID ||
+        import.meta.env.VITE_GOOGLE_CLIENT_ID;
+
+      GoogleAuth.initialize({
+        clientId: webClientId,
+        scopes: ["profile", "email"],
+        grantOfflineAccess: true,
+      });
+    }
+  }, []);
+
   const handleAuthSuccess = () => {
     navigate("/menu");
   };
@@ -49,7 +67,29 @@ export default function Auth() {
         setShowClassModal(true);
       }
     } catch (err: any) {
-      await showAlert(err.message || "Gagal masuk menggunakan Google.");
+      const errMsg = err?.message || (typeof err === "object" ? JSON.stringify(err) : String(err));
+      await showAlert(`Error Backend Google Login:\n${errMsg}`);
+    } finally {
+      setIsSubmittingGoogle(false);
+    }
+  };
+
+  const handleNativeGoogleSignIn = async () => {
+    setIsSubmittingGoogle(true);
+    try {
+      const googleUser = await GoogleAuth.signIn();
+      const idToken = googleUser.authentication.idToken;
+      if (idToken) {
+        await handleGoogleCredentialResponse({ credential: idToken });
+      } else {
+        await showAlert("Gagal mendapatkan token autentikasi Google (idToken kosong).");
+      }
+    } catch (err: any) {
+      console.error("Google Auth Native Error:", err);
+      const strErr = typeof err === "object" ? (err?.message || JSON.stringify(err)) : String(err);
+      if (!strErr.toLowerCase().includes("cancel")) {
+        await showAlert(`Detail Error Native Google Auth:\n${strErr}`);
+      }
     } finally {
       setIsSubmittingGoogle(false);
     }
@@ -79,6 +119,9 @@ export default function Auth() {
   };
 
   useEffect(() => {
+    // Web only initialization
+    if (Capacitor.isNativePlatform()) return;
+
     // Dynamically load Google GSI client script
     const scriptId = "google-gsi-client";
     let script = document.getElementById(scriptId) as HTMLScriptElement;
@@ -86,6 +129,7 @@ export default function Auth() {
     const initializeGoogleSignIn = () => {
       if (window.google) {
         const client_id =
+          import.meta.env.VITE_GOOGLE_WEB_CLIENT_ID ||
           import.meta.env.VITE_GOOGLE_CLIENT_ID ||
           "your-google-client-id.apps.googleusercontent.com";
         window.google.accounts.id.initialize({
@@ -219,10 +263,26 @@ export default function Auth() {
 
           {/* Google Button */}
           <div className="flex justify-center w-full pb-1">
-            <div
-              id="google-signin-btn"
-              className="w-full max-w-91.5 flex justify-center"
-            ></div>
+            {Capacitor.isNativePlatform() ? (
+              <button
+                type="button"
+                onClick={handleNativeGoogleSignIn}
+                disabled={isSubmittingGoogle}
+                className="w-full max-w-91.5 py-3 px-4 bg-white hover:bg-neutral-50 active:bg-neutral-100 border border-gray-300 rounded-full flex items-center justify-center gap-2.5 font-bold text-xs text-[#2C2B30] shadow-sm cursor-pointer disabled:opacity-50 transition-all"
+              >
+                <FcGoogle className="w-5 h-5 shrink-0" />
+                <span>
+                  {isSubmittingGoogle
+                    ? "Memproses..."
+                    : "Masuk dengan Google"}
+                </span>
+              </button>
+            ) : (
+              <div
+                id="google-signin-btn"
+                className="w-full max-w-91.5 flex justify-center"
+              ></div>
+            )}
           </div>
         </div>
       </div>

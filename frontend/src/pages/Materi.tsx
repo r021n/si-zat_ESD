@@ -3,6 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 import { useAppBack } from "../hooks/useAppBack";
 import {
+  getMateriProgressApi,
+  updateMateriProgressApi,
+  resetMateriProgressApi,
+} from "../api/api";
+import {
   FiArrowLeft as ArrowLeftIcon,
   FiChevronLeft as ChevronLeftIcon,
   FiChevronRight as ChevronRightIcon,
@@ -28,13 +33,15 @@ import MateriIndexDrawer from "../components/materi/MateriIndexDrawer";
 export default function Materi() {
   const navigate = useNavigate();
   const goBack = useAppBack();
-  const { user } = useAuthStore();
+  const { user, token } = useAuthStore();
+  const isInitialLoadedRef = useRef<boolean>(false);
 
   const [currentPage, setCurrentPage] = useState<number>(0);
   const [maxUnlockedIndex, setMaxUnlockedIndex] = useState<number>(() => {
     const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
     return saved ? Math.min(parseInt(saved, 10), MATERI_SLIDES.length - 1) : 0;
   });
+
 
   const [page4Selected, setPage4Selected] = useState<string | null>(() => {
     return localStorage.getItem("sizat_materi_p4_selected") || null;
@@ -118,6 +125,58 @@ export default function Materi() {
       navigate("/auth");
     }
   }, [user, navigate]);
+
+  // Fetch reading progress from backend on mount
+  useEffect(() => {
+    const authToken = token || localStorage.getItem("token");
+    if (!authToken) {
+      isInitialLoadedRef.current = true;
+      return;
+    }
+
+    getMateriProgressApi(authToken)
+      .then((res) => {
+        if (res && res.status === "success" && res.progress) {
+          const { lastPage, maxUnlockedIndex: backendMaxUnlocked } = res.progress;
+          const validLastPage = Math.min(
+            Math.max(0, lastPage),
+            MATERI_SLIDES.length - 1
+          );
+          const validMaxUnlocked = Math.min(
+            Math.max(0, backendMaxUnlocked, validLastPage),
+            MATERI_SLIDES.length - 1
+          );
+
+          setCurrentPage(validLastPage);
+          setMaxUnlockedIndex((prev) => Math.max(prev, validMaxUnlocked));
+        }
+      })
+      .catch((err) => {
+        console.error("Gagal memuat progress bacaan dari backend:", err);
+      })
+      .finally(() => {
+        isInitialLoadedRef.current = true;
+      });
+  }, [token]);
+
+  // Sync reading progress to backend when currentPage or maxUnlockedIndex changes
+  useEffect(() => {
+    if (!isInitialLoadedRef.current) return;
+    const authToken = token || localStorage.getItem("token");
+    if (!authToken) return;
+
+    const timer = setTimeout(() => {
+      updateMateriProgressApi(authToken, {
+        lastPage: currentPage,
+        maxUnlockedIndex,
+      }).catch((err) => {
+        console.error("Gagal menyimpan progress bacaan ke backend:", err);
+      });
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [currentPage, maxUnlockedIndex, token]);
+
 
   // Immediately unlock next page when landing on current page (except interactive pages requiring correct answer)
   useEffect(() => {
@@ -446,6 +505,12 @@ export default function Materi() {
     localStorage.removeItem("sizat_materi_p14_submitted");
     localStorage.removeItem("sizat_materi_p17_selected");
     localStorage.removeItem("sizat_materi_p17_submitted");
+
+    const authToken = token || localStorage.getItem("token");
+    if (authToken) {
+      resetMateriProgressApi(authToken).catch(() => {});
+    }
+
     setShowIndexDrawer(false);
     showToast("Progres direset ke halaman awal.");
   };

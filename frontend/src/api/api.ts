@@ -461,6 +461,55 @@ export async function updateAccessSettingsApi(token: string, settingsData: { isL
   return data;
 }
 
+export async function getMateriProgressApi(token: string) {
+  const response = await fetch(`${API_URL}/api/materi/progress`, {
+    method: "GET",
+    headers: {
+      "Authorization": `Bearer ${token}`
+    }
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || "Gagal mengambil progress materi");
+  }
+  return data;
+}
+
+export async function updateMateriProgressApi(
+  token: string,
+  progress: { lastPage: number; maxUnlockedIndex?: number }
+) {
+  const response = await fetch(`${API_URL}/api/materi/progress`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    },
+    body: JSON.stringify(progress)
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || "Gagal menyimpan progress materi");
+  }
+  return data;
+}
+
+export async function resetMateriProgressApi(token: string) {
+  const response = await fetch(`${API_URL}/api/materi/progress/reset`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    }
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || "Gagal mereset progress materi");
+  }
+  return data;
+}
+
+
 
 
 
