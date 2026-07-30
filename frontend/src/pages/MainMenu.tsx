@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
+import { verifyEnrollCodeApi } from "../api/api";
 import {
   LuBookOpen,
   LuGamepad,
@@ -10,6 +11,7 @@ import {
   LuGraduationCap,
   LuUser,
   LuAward,
+  LuKeyRound,
 } from "react-icons/lu";
 import unsLogo from "../assets/uns_logo.webp";
 
@@ -19,9 +21,15 @@ interface MainMenuProps {
 
 export default function MainMenu({ onNavigate }: MainMenuProps) {
   const navigate = useNavigate();
-  const { user, logout } = useAuthStore();
+  const { user, logout, isEnrolled, enrollDeadline, setEnrolled } =
+    useAuthStore();
 
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+  const [isEnrollModalOpen, setIsEnrollModalOpen] = useState(false);
+  const [enrollCode, setEnrollCode] = useState("");
+  const [enrollLoading, setEnrollLoading] = useState(false);
+  const [enrollError, setEnrollError] = useState("");
+  const [enrollSuccess, setEnrollSuccess] = useState(false);
   const [statsDetailModal, setStatsDetailModal] = useState<{
     isOpen: boolean;
     title: string;
@@ -49,6 +57,31 @@ export default function MainMenu({ onNavigate }: MainMenuProps) {
   const handleLogout = () => {
     logout();
     navigate("/auth");
+  };
+
+  const handleEnroll = async () => {
+    if (!enrollCode.trim()) {
+      setEnrollError("Masukkan kode enroll.");
+      return;
+    }
+    setEnrollLoading(true);
+    setEnrollError("");
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) throw new Error("Tidak terautentikasi");
+      const res = await verifyEnrollCodeApi(token, enrollCode.trim());
+      setEnrolled(res.deadline);
+      setEnrollSuccess(true);
+      setTimeout(() => {
+        setIsEnrollModalOpen(false);
+        setEnrollSuccess(false);
+        setEnrollCode("");
+      }, 1200);
+    } catch (err: any) {
+      setEnrollError(err.message || "Gagal memverifikasi kode enroll");
+    } finally {
+      setEnrollLoading(false);
+    }
   };
 
   const formatAbbreviatedTime = (seconds?: number) => {
@@ -106,39 +139,47 @@ export default function MainMenu({ onNavigate }: MainMenuProps) {
   const displayName = user.nama || user.email.split("@")[0];
   const displayStatus = user.status.toUpperCase();
 
+  const isAdmin =
+    user.status.toLowerCase() === "admin" ||
+    user.email.toLowerCase().includes("admin");
+
   const menus = [
-    {
-      id: "materi",
-      label: "Materi",
-      desc: "Pelajari konsep pencemaran lingkungan",
-      icon: <LuBookOpen className="text-xl" />,
-      bgIcon: "bg-[#FFF4EB]",
-      textIcon: "text-[#FF9D42]",
-    },
-    {
-      id: "simulasi",
-      label: "Simulasi",
-      desc: "Eksperimen interaktif dampak zat",
-      icon: <LuGamepad className="text-xl" />,
-      bgIcon: "bg-[#E6F8F6]",
-      textIcon: "text-[#2C8578]",
-    },
-    {
-      id: "kuis",
-      label: "Tes Hasil Belajar",
-      desc: "Uji tingkat pemahaman belajarmu",
-      icon: <LuPenTool className="text-xl" />,
-      bgIcon: "bg-[#FFEBF0]",
-      textIcon: "text-[#D95276]",
-    },
-    {
-      id: "kuis/berpikir-sistem",
-      label: "Keterampilan Berpikir Sistem",
-      desc: "Kumpulkan tugas & forum diskusi",
-      icon: <LuAward className="text-xl" />,
-      bgIcon: "bg-[#EBF3FF]",
-      textIcon: "text-[#4285F4]",
-    },
+    ...(isEnrolled || isAdmin
+      ? [
+          {
+            id: "materi",
+            label: "Materi",
+            desc: "Pelajari konsep pencemaran lingkungan",
+            icon: <LuBookOpen className="text-xl" />,
+            bgIcon: "bg-[#FFF4EB]",
+            textIcon: "text-[#FF9D42]",
+          },
+          {
+            id: "simulasi",
+            label: "Simulasi",
+            desc: "Eksperimen interaktif dampak zat",
+            icon: <LuGamepad className="text-xl" />,
+            bgIcon: "bg-[#E6F8F6]",
+            textIcon: "text-[#2C8578]",
+          },
+          {
+            id: "kuis",
+            label: "Tes Hasil Belajar",
+            desc: "Uji tingkat pemahaman belajarmu",
+            icon: <LuPenTool className="text-xl" />,
+            bgIcon: "bg-[#FFEBF0]",
+            textIcon: "text-[#D95276]",
+          },
+          {
+            id: "kuis/berpikir-sistem",
+            label: "Tes Keterampilan Berpikir Sistem",
+            desc: "Kumpulkan tugas & forum diskusi",
+            icon: <LuAward className="text-xl" />,
+            bgIcon: "bg-[#EBF3FF]",
+            textIcon: "text-[#4285F4]",
+          },
+        ]
+      : []),
     {
       id: "profile-report",
       label: "Profil & Report",
@@ -157,9 +198,6 @@ export default function MainMenu({ onNavigate }: MainMenuProps) {
     },
   ];
 
-  const isAdmin =
-    user.status.toLowerCase() === "admin" ||
-    user.email.toLowerCase().includes("admin");
   if (isAdmin) {
     menus.push({
       id: "admin",
@@ -259,6 +297,45 @@ export default function MainMenu({ onNavigate }: MainMenuProps) {
           <p className="text-[10px] font-black uppercase tracking-widest text-[#9C98A6] mt-6 mb-3">
             Modul Aktivitas
           </p>
+
+          {/* Enroll CTA Card - only for non-enrolled non-admin students */}
+          {!isEnrolled && !isAdmin && (
+            <button
+              onClick={() => {
+                setEnrollCode("");
+                setEnrollError("");
+                setEnrollSuccess(false);
+                setIsEnrollModalOpen(true);
+              }}
+              className="w-full bg-linear-to-br from-[#FF5E8C] to-[#D95276] text-white rounded-3xl p-4 flex items-center justify-between shadow-[0_4px_12px_rgba(219,82,118,0.15)] border border-[#FF8FAD] cursor-pointer text-left transition-none mb-3"
+            >
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-inner bg-white/20">
+                  <LuKeyRound className="text-xl" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-extrabold text-white tracking-wide">
+                    Enroll Sekarang
+                  </h3>
+                  <p className="text-[10px] text-white/80 font-medium mt-0.5">
+                    Masukkan kode untuk akses materi, tes & simulasi
+                  </p>
+                </div>
+              </div>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                className="w-5 h-5 text-white opacity-70"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </button>
+          )}
 
           {/* Menu Buttons Stack (mockup third page style) */}
           <div className="w-full flex flex-col gap-3">
@@ -385,6 +462,115 @@ export default function MainMenu({ onNavigate }: MainMenuProps) {
                 Tutup
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Enroll Modal */}
+      {isEnrollModalOpen && (
+        <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50 p-6 backdrop-blur-xs">
+          <div className="w-full max-w-85 bg-white rounded-[28px] p-6 shadow-xl border border-[#F0EDFF] flex flex-col gap-4 animate-none select-none text-left">
+            {enrollSuccess ? (
+              <div className="flex flex-col items-center gap-4 py-4">
+                <div className="w-16 h-16 bg-[#E6F8F6] text-[#2C8578] rounded-2xl flex items-center justify-center shadow-inner">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={2.5}
+                    stroke="currentColor"
+                    className="w-8 h-8"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                </div>
+                <div className="text-center">
+                  <h3 className="text-sm font-extrabold text-[#2C2B30] tracking-wide uppercase">
+                    Enroll Berhasil!
+                  </h3>
+                  <p className="text-xs text-[#9C98A6] font-medium mt-2">
+                    Anda sekarang bisa mengakses materi, kuis, dan simulasi.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div>
+                  <h3 className="text-sm font-extrabold text-[#2C2B30] tracking-wide uppercase">
+                    Enroll
+                  </h3>
+                  <p className="text-xs text-[#9C98A6] font-medium mt-2 leading-relaxed">
+                    Masukkan kode enroll dari guru Anda untuk mengakses materi,
+                    kuis, dan simulasi.
+                  </p>
+                </div>
+
+                {enrollDeadline && (
+                  <div className="w-full bg-[#F0ECFF]/50 border border-[#F0EDFF] text-[#8C66FF] text-[10px] font-bold py-2.5 px-4 rounded-xl">
+                    Batas waktu:{" "}
+                    {new Date(enrollDeadline).toLocaleDateString("id-ID", {
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </div>
+                )}
+
+                {!enrollDeadline && (
+                  <div className="w-full bg-[#FFF9E6]/50 border border-[#FFF9E6] text-[#FFC107] text-[10px] font-bold py-2.5 px-4 rounded-xl">
+                    Belum ada kode enroll yang tersedia. Hubungi administrator.
+                  </div>
+                )}
+
+                {enrollError && (
+                  <div className="w-full bg-[#FFEBF0]/50 border border-[#FFEBF0] text-[#D95276] text-[10px] font-bold py-2.5 px-4 rounded-xl">
+                    {enrollError}
+                  </div>
+                )}
+
+                <input
+                  type="text"
+                  value={enrollCode}
+                  onChange={(e) => setEnrollCode(e.target.value.toUpperCase())}
+                  placeholder="Masukkan kode enroll"
+                  disabled={enrollLoading || !enrollDeadline}
+                  className="w-full py-3.5 px-4 bg-[#FAF9FF] border border-[#F0EDFF] rounded-xl text-sm font-bold text-[#2C2B30] placeholder:text-[#9C98A6]/50 focus:outline-none focus:ring-2 focus:ring-[#8C66FF]/30 focus:border-[#8C66FF] transition-all disabled:opacity-50 disabled:cursor-not-allowed text-center tracking-[0.3em] uppercase"
+                  maxLength={8}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !enrollLoading && enrollDeadline) {
+                      handleEnroll();
+                    }
+                  }}
+                />
+
+                <div className="flex gap-2.5 mt-1">
+                  <button
+                    onClick={() => {
+                      setIsEnrollModalOpen(false);
+                      setEnrollError("");
+                    }}
+                    className="flex-1 py-3 bg-white border border-[#F0EDFF] text-[#8C66FF] font-extrabold uppercase tracking-wider text-[10px] rounded-full shadow-sm cursor-pointer transition-none flex items-center justify-center"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    onClick={handleEnroll}
+                    disabled={
+                      enrollLoading || !enrollDeadline || !enrollCode.trim()
+                    }
+                    className="flex-1 py-3 bg-[#8C66FF] text-white font-extrabold uppercase tracking-wider text-[10px] rounded-full shadow-md shadow-purple-100 cursor-pointer transition-none flex items-center justify-center disabled:opacity-70 disabled:cursor-not-allowed"
+                  >
+                    {enrollLoading ? "Memverifikasi..." : "Enroll"}
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}

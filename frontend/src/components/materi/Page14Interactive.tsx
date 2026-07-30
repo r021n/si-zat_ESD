@@ -82,8 +82,11 @@ export default function Page14Interactive({
         >
           {/* Unassigned Pieces Pool */}
           <div className="bg-[#FAF9FF] border border-[#F0EDFF] rounded-2xl p-2 shadow-xs shrink-0">
-            <p className="text-[10px] sm:text-[11px] font-bold text-[#8C66FF] mb-1">
+            <p className="text-[10px] sm:text-[11px] font-bold text-[#8C66FF] mb-0.5">
               Pilihan Contoh Peristiwa:
+            </p>
+            <p className="text-[8px] sm:text-[9px] text-[#9C98A6] mb-1 italic">
+              Tap kartu, lalu tap lokasi penempatan
             </p>
 
             <div className="grid grid-cols-2 gap-1.5 min-h-12 items-center">
@@ -97,10 +100,6 @@ export default function Page14Interactive({
                   return (
                     <div
                       key={item.id}
-                      draggable={!isSubmitted}
-                      onDragStart={(e) => {
-                        e.dataTransfer.setData("itemId", item.id);
-                      }}
                       onClick={() => {
                         if (isSubmitted) return;
                         setSelectedLeftId(isSelected ? null : item.id);
@@ -143,14 +142,6 @@ export default function Page14Interactive({
                 <div key={slot.id} className="flex items-center gap-1.5 w-full">
                   {/* Left Drop Zone Slot */}
                   <div
-                    onDragOver={(e) => {
-                      e.preventDefault();
-                    }}
-                    onDrop={(e) => {
-                      e.preventDefault();
-                      const itemId = e.dataTransfer.getData("itemId");
-                      if (itemId) handleAssign(slot.id, itemId);
-                    }}
                     onClick={() => handleSlotClick(slot.id)}
                     className={`flex-1 h-9 sm:h-11 rounded-xl relative flex items-center justify-center p-1 transition-all border-2 ${
                       isSubmitted
@@ -186,7 +177,7 @@ export default function Page14Interactive({
                       </div>
                     ) : (
                       <span className="text-[8.5px] sm:text-[9.5px] text-[#9C98A6] font-semibold text-center">
-                        Tarik ke sini
+                        Tap di sini
                       </span>
                     )}
                   </div>

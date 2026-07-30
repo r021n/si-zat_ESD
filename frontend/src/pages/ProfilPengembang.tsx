@@ -83,7 +83,7 @@ export default function ProfilPengembang() {
                 NIM S832502004
               </p>
               <p className="text-[11px] text-[#9C98A6] font-bold mt-0.5">
-                Program Studi S2 Pendidikan Ilmu Pengetahuan Alam UNS
+                Program Studi S2 Pendidikan Ilmu Pengetahuan Alam
               </p>
               <p className="text-[10px] text-[#9C98A6] font-medium">
                 Universitas Sebelas Maret

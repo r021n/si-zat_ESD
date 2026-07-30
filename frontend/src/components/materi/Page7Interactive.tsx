@@ -80,8 +80,11 @@ export default function Page7Interactive({
         >
           {/* Unassigned Pieces Pool */}
           <div className="bg-[#FAF9FF] border border-[#F0EDFF] rounded-2xl p-2 shadow-xs">
-            <p className="text-[10px] sm:text-[11px] font-bold text-[#8C66FF] mb-1">
+            <p className="text-[10px] sm:text-[11px] font-bold text-[#8C66FF] mb-0.5">
               Partikel:
+            </p>
+            <p className="text-[8px] sm:text-[9px] text-[#9C98A6] mb-1 italic">
+              Tap kartu, lalu tap lokasi penempatan
             </p>
 
             <div className="grid grid-cols-3 gap-2 min-h-12 items-center">
@@ -95,10 +98,6 @@ export default function Page7Interactive({
                   return (
                     <div
                       key={item.id}
-                      draggable={!isSubmitted}
-                      onDragStart={(e) => {
-                        e.dataTransfer.setData("itemId", item.id);
-                      }}
                       onClick={() => {
                         if (isSubmitted) return;
                         setSelectedLeftId(isSelected ? null : item.id);
@@ -141,14 +140,6 @@ export default function Page7Interactive({
                 <div key={slot.id} className="flex items-center gap-1.5 w-full">
                   {/* Left Drop Zone Slot */}
                   <div
-                    onDragOver={(e) => {
-                      e.preventDefault();
-                    }}
-                    onDrop={(e) => {
-                      e.preventDefault();
-                      const itemId = e.dataTransfer.getData("itemId");
-                      if (itemId) handleAssign(slot.id, itemId);
-                    }}
                     onClick={() => handleSlotClick(slot.id)}
                     className={`flex-1 h-11 sm:h-13 rounded-2xl relative flex items-center justify-center p-1 transition-all border-2 ${
                       isSubmitted
@@ -184,7 +175,7 @@ export default function Page7Interactive({
                       </div>
                     ) : (
                       <span className="text-[9px] sm:text-[10px] text-[#9C98A6] font-semibold text-center">
-                        Tarik ke sini
+                        Tap di sini
                       </span>
                     )}
                   </div>

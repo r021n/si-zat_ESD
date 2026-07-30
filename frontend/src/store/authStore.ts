@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { loginApi, registerApi, getMeApi, updateProfileApi, loginWithGoogleApi } from "../api/api";
+import { loginApi, registerApi, getMeApi, updateProfileApi, loginWithGoogleApi, getEnrollStatusApi } from "../api/api";
 
 export interface User {
   id: number;
@@ -18,20 +18,26 @@ interface AuthState {
   loading: boolean;
   initialized: boolean;
   error: string | null;
+  isEnrolled: boolean | null;
+  enrollDeadline: string | null;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, kelas: string, password: string) => Promise<void>;
   loginWithGoogle: (idToken: string, kelas?: string) => Promise<{ registered: boolean; email?: string; nama?: string }>;
   logout: () => void;
   checkAuth: () => Promise<void>;
   updateProfile: (kelas: string, nama: string) => Promise<void>;
+  checkEnrollment: () => Promise<void>;
+  setEnrolled: (deadline: string) => void;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   token: null,
   loading: false,
   initialized: false,
   error: null,
+  isEnrolled: null,
+  enrollDeadline: null,
 
   login: async (email, password) => {
     set({ loading: true, error: null });
@@ -40,6 +46,8 @@ export const useAuthStore = create<AuthState>((set) => ({
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
       set({ user: data.user, token: data.token, loading: false });
+      // Check enrollment after login
+      setTimeout(() => get().checkEnrollment(), 0);
     } catch (err: any) {
       set({ error: err.message, loading: false });
       throw err;
@@ -53,6 +61,8 @@ export const useAuthStore = create<AuthState>((set) => ({
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
       set({ user: data.user, token: data.token, loading: false });
+      // New users are not enrolled
+      set({ isEnrolled: false });
     } catch (err: any) {
       set({ error: err.message, loading: false });
       throw err;
@@ -80,7 +90,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   logout: () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-    set({ user: null, token: null, error: null });
+    set({ user: null, token: null, error: null, isEnrolled: null, enrollDeadline: null });
   },
 
   checkAuth: async () => {
@@ -110,6 +120,8 @@ export const useAuthStore = create<AuthState>((set) => ({
       const data = await getMeApi(token);
       localStorage.setItem("user", JSON.stringify(data.user));
       set({ user: data.user, token, initialized: true });
+      // Check enrollment after successful auth
+      get().checkEnrollment();
     } catch (err: any) {
       // Check if it's a network/offline error
       const isNetworkError = err instanceof TypeError || (err.message && (
@@ -145,5 +157,30 @@ export const useAuthStore = create<AuthState>((set) => ({
       set({ error: err.message, loading: false });
       throw err;
     }
+  },
+
+  checkEnrollment: async () => {
+    const { token, user } = get();
+    if (!token || !user) {
+      set({ isEnrolled: null, enrollDeadline: null });
+      return;
+    }
+
+    const isAdmin = user.status.toLowerCase() === "admin" || user.email.toLowerCase().includes("admin");
+    if (isAdmin) {
+      set({ isEnrolled: true, enrollDeadline: null });
+      return;
+    }
+
+    try {
+      const data = await getEnrollStatusApi(token);
+      set({ isEnrolled: data.isEnrolled, enrollDeadline: data.deadline });
+    } catch {
+      set({ isEnrolled: false, enrollDeadline: null });
+    }
+  },
+
+  setEnrolled: (deadline: string) => {
+    set({ isEnrolled: true, enrollDeadline: deadline });
   },
 }));

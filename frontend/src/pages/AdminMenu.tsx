@@ -9,6 +9,7 @@ import {
   LuClock,
   LuEye,
   LuSettings,
+  LuKeyRound,
 } from "react-icons/lu";
 
 import { FiArrowLeft } from "react-icons/fi";
@@ -117,6 +118,15 @@ export default function AdminMenu() {
   };
 
   const adminMenus = [
+    {
+      id: "enrollment",
+      label: "Enrollment",
+      desc: "Generate kode enroll, set deadline, dan kelola siswa",
+      icon: <LuKeyRound className="text-xl" />,
+      bgIcon: "bg-[#E6F8F6]",
+      textIcon: "text-[#2C8578]",
+      path: "/admin/enrollment",
+    },
     {
       id: "kuis",
       label: "Kelola Kuis",

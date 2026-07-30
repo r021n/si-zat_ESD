@@ -8,6 +8,7 @@ import tasksRoute from './routes/tasks.js'
 import analyticsRoute from './routes/analytics.js'
 import accessRoute, { getSettings, checkIsLocked } from './routes/access.js'
 import materiRoute from './routes/materi.js'
+import enrollRoute from './routes/enroll.js'
 import { verify } from 'hono/jwt'
 import { db } from './db/index.js'
 import { users } from './db/schema.js'
@@ -57,7 +58,8 @@ app.use('/api/*', async (c, next) => {
     path === '/api/auth/login' ||
     path === '/api/auth/register' ||
     path === '/api/auth/me' ||
-    path === '/api/access/status'
+    path === '/api/access/status' ||
+    path === '/api/enroll/status'
   ) {
     return await next()
   }
@@ -108,6 +110,7 @@ app.route('/api/tasks', tasksRoute)
 app.route('/api/analytics', analyticsRoute)
 app.route('/api/access', accessRoute)
 app.route('/api/materi', materiRoute)
+app.route('/api/enroll', enrollRoute)
 
 
 

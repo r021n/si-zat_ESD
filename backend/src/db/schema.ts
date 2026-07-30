@@ -78,6 +78,19 @@ export const accessControls = sqliteTable('access_controls', {
   schedules: text('schedules').default('[]').notNull(), // JSON string representing ScheduleItem[]
 })
 
+export const enrollConfig = sqliteTable('enroll_config', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  code: text('code').notNull(),
+  deadline: text('deadline').notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
+})
+
+export const enrollments = sqliteTable('enrollments', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  userId: integer('user_id').notNull().unique().references(() => users.id, { onDelete: 'cascade' }),
+  enrolledAt: text('enrolled_at').notNull(),
+})
+
 export const materiProgress = sqliteTable('materi_progress', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   userId: integer('user_id').notNull().unique().references(() => users.id, { onDelete: 'cascade' }),

@@ -36,6 +36,8 @@ import AdminChangePassword from "./pages/AdminChangePassword";
 import ProfilPengembang from "./pages/ProfilPengembang";
 import AdminAccessControl from "./pages/AdminAccessControl";
 import Locked from "./pages/Locked";
+import EnrollPage from "./pages/EnrollPage";
+import AdminEnroll from "./pages/AdminEnroll";
 
 function RouteTracker() {
   const location = useLocation();
@@ -199,6 +201,22 @@ function AccessLayout() {
   );
 }
 
+function EnrollGuard({ children }: { children: React.ReactNode }) {
+  const { user } = useAuthStore();
+
+  if (!user) return null;
+
+  return <>{children}</>;
+}
+
+function EnrollLayout() {
+  return (
+    <EnrollGuard>
+      <Outlet />
+    </EnrollGuard>
+  );
+}
+
 function AppContent() {
   const { checkAuth, initialized, user, token } = useAuthStore();
 
@@ -283,23 +301,31 @@ function AppContent() {
           {/* Subpages routes */}
           <Route path="/profile-report" element={<ProfileReport />} />
           <Route path="/profil-pengembang" element={<ProfilPengembang />} />
-          <Route path="/materi" element={<Materi />} />
 
-          {/* Simulasi routes */}
-          <Route path="/simulasi" element={<Simulasi />} />
-          <Route path="/simulasi/air" element={<SimulasiPencemaranAir />} />
-          <Route
-            path="/simulasi/eutrofikasi"
-            element={<SimulasiEutrofikasi />}
-          />
-          <Route path="/simulasi/tanah" element={<SimulasiPencemaranTanah />} />
-          <Route path="/simulasi/udara" element={<SimulasiPencemaranUdara />} />
+          {/* Enrollment Route */}
+          <Route path="/enroll" element={<EnrollPage />} />
 
-          <Route path="/kuis" element={<KuisMenu />} />
-          <Route
-            path="/kuis/berpikir-sistem"
-            element={<PenilaianBerpikirSistem />}
-          />
+          {/* Routes that require enrollment */}
+          <Route element={<EnrollLayout />}>
+            <Route path="/materi" element={<Materi />} />
+
+            {/* Simulasi routes */}
+            <Route path="/simulasi" element={<Simulasi />} />
+            <Route path="/simulasi/air" element={<SimulasiPencemaranAir />} />
+            <Route
+              path="/simulasi/eutrofikasi"
+              element={<SimulasiEutrofikasi />}
+            />
+            <Route path="/simulasi/tanah" element={<SimulasiPencemaranTanah />} />
+            <Route path="/simulasi/udara" element={<SimulasiPencemaranUdara />} />
+
+            <Route path="/kuis" element={<KuisMenu />} />
+            <Route
+              path="/kuis/berpikir-sistem"
+              element={<PenilaianBerpikirSistem />}
+            />
+          </Route>
+
           <Route path="/admin" element={<AdminMenu />} />
           <Route path="/admin/kuis" element={<AdminKuis />} />
           <Route
@@ -309,6 +335,10 @@ function AppContent() {
           <Route
             path="/admin/access-control"
             element={<AdminAccessControl />}
+          />
+          <Route
+            path="/admin/enrollment"
+            element={<AdminEnroll />}
           />
         </Route>
 

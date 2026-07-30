@@ -509,7 +509,94 @@ export async function resetMateriProgressApi(token: string) {
   return data;
 }
 
+// --- Enrollment API ---
 
+export async function getEnrollStatusApi(token: string) {
+  const response = await fetch(`${API_URL}/api/enroll/status`, {
+    method: "GET",
+    headers: {
+      "Authorization": `Bearer ${token}`
+    }
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || "Gagal memeriksa status enroll");
+  }
+  return data;
+}
 
+export async function verifyEnrollCodeApi(token: string, code: string) {
+  const response = await fetch(`${API_URL}/api/enroll/verify`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    },
+    body: JSON.stringify({ code })
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || "Gagal memverifikasi kode enroll");
+  }
+  return data;
+}
 
+export async function getEnrollConfigApi(token: string) {
+  const response = await fetch(`${API_URL}/api/enroll/config`, {
+    method: "GET",
+    headers: {
+      "Authorization": `Bearer ${token}`
+    }
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || "Gagal mengambil konfigurasi enroll");
+  }
+  return data;
+}
+
+export async function generateEnrollCodeApi(token: string, deadline: string) {
+  const response = await fetch(`${API_URL}/api/enroll/generate`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    },
+    body: JSON.stringify({ deadline })
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || "Gagal membuat kode enroll baru");
+  }
+  return data;
+}
+
+export async function getEnrollListApi(token: string) {
+  const response = await fetch(`${API_URL}/api/enroll/list`, {
+    method: "GET",
+    headers: {
+      "Authorization": `Bearer ${token}`
+    }
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || "Gagal mengambil daftar enroll");
+  }
+  return data;
+}
+
+export async function revokeEnrollApi(token: string, userId: number) {
+  const response = await fetch(`${API_URL}/api/enroll/revoke/${userId}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    }
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || "Gagal mencabut enrollment");
+  }
+  return data;
+}
 
