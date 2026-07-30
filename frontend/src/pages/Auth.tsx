@@ -6,7 +6,7 @@ import Register from "../components/auth/Register";
 import unsLogo from "../assets/uns_logo.webp";
 import { useCustomDialog } from "../components/CustomDialog";
 import { Capacitor } from "@capacitor/core";
-import { GoogleAuth } from "@codetrix-studio/capacitor-google-auth";
+import { SocialLogin } from "@capgo/capacitor-social-login";
 import { FcGoogle } from "react-icons/fc";
 
 declare global {
@@ -40,10 +40,12 @@ export default function Auth() {
         import.meta.env.VITE_GOOGLE_WEB_CLIENT_ID ||
         import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
-      GoogleAuth.initialize({
-        clientId: webClientId,
-        scopes: ["profile", "email"],
-        grantOfflineAccess: true,
+      SocialLogin.initialize({
+        google: {
+          webClientId,
+          iOSClientId: webClientId,
+          mode: 'online',
+        },
       });
     }
   }, []);
@@ -77,8 +79,13 @@ export default function Auth() {
   const handleNativeGoogleSignIn = async () => {
     setIsSubmittingGoogle(true);
     try {
-      const googleUser = await GoogleAuth.signIn();
-      const idToken = googleUser.authentication.idToken;
+      const res = await SocialLogin.login({ provider: 'google', options: {} });
+      const result = res.result;
+      if (result.responseType === 'offline') {
+        await showAlert("Mode offline tidak didukung.");
+        return;
+      }
+      const idToken = result.idToken;
       if (idToken) {
         await handleGoogleCredentialResponse({ credential: idToken });
       } else {
