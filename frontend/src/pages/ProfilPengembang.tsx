@@ -108,7 +108,7 @@ export default function ProfilPengembang() {
                   Dosen Pembimbing I
                 </h4>
                 <p className="text-xs font-bold text-[#2C2B30] mt-0.5">
-                  Dr. Sri Yamtinah, S.Pd., M.Pd.
+                  Prof. Dr. Sri Yamtinah M.Pd
                 </p>
                 <p className="text-[10px] text-[#9C98A6] font-medium">
                   196912042005012001
