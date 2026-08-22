@@ -46,19 +46,19 @@ export const PAGE4_OPTIONS = [
 export const PAGE17_OPTIONS = [
   {
     id: "A",
-    text: "Membakar sampah plastik daripada mendaur ulang.",
+    text: "Membakar sampah plastik daripada mendaur ulang",
   },
   {
     id: "B",
-    text: "Menjemur pakaian menggunakan sinar matahari daripada menggunakan mesin pengering.",
+    text: "Menjemur pakaian menggunakan sinar matahari daripada menggunakan mesin pengering",
   },
   {
     id: "C",
-    text: "Membuang air bekas cucian ke sungai.",
+    text: "Membuang langsung air bekas cucian ke sungai, tanpa mengolahnya terlebih dahulu",
   },
   {
     id: "D",
-    text: "Menebang pohon sembarangan.",
+    text: "Menebang pohon sembarangan, guna memperbanyak bahan baku produksi",
   },
 ];
 
@@ -117,8 +117,8 @@ export const PAGE14_PUZZLE_ITEMS = [
 ];
 
 export const PAGE14_PUZZLE_SLOTS = [
-  { id: "slot-menguap", title: "Menguap", subtitle: "Cair → Gas", correctItemId: "menjemur" },
-  { id: "slot-mencair", title: "Mencair", subtitle: "Padat → Cair", correctItemId: "mencair" },
-  { id: "slot-menyublim", title: "Menyublim", subtitle: "Padat → Gas", correctItemId: "dry_ice" },
-  { id: "slot-mengembun", title: "Mengembun", subtitle: "Gas → Cair", correctItemId: "embun" },
+  { id: "slot-mencair", title: "Mencair", correctItemId: "mencair" },
+  { id: "slot-menyublim", title: "Menyublim", correctItemId: "dry_ice" },
+  { id: "slot-mengembun", title: "Mengembun", correctItemId: "embun" },
+  { id: "slot-menguap", title: "Menguap", correctItemId: "menjemur" },
 ];
