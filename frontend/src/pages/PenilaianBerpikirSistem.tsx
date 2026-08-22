@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useAuthStore } from "../store/authStore";
 import { useCustomDialog } from "../components/CustomDialog";
 import {
@@ -303,23 +303,26 @@ export default function PenilaianBerpikirSistem() {
   ]);
 
   // Fetch all submissions
-  const fetchSubmissions = async (showLoading = true) => {
-    try {
-      if (showLoading) setLoadingSubmissions(true);
-      const data = await getTaskSubmissionsApi(token || "");
-      setSubmissions(data);
-    } catch (err) {
-      console.error("Gagal memuat tugas diskusi:", err);
-    } finally {
-      if (showLoading) setLoadingSubmissions(false);
-    }
-  };
+  const fetchSubmissions = useCallback(
+    async (showLoading = true) => {
+      try {
+        if (showLoading) setLoadingSubmissions(true);
+        const data = await getTaskSubmissionsApi(token || "");
+        setSubmissions(data);
+      } catch (err) {
+        console.error("Gagal memuat tugas diskusi:", err);
+      } finally {
+        if (showLoading) setLoadingSubmissions(false);
+      }
+    },
+    [token],
+  );
 
   useEffect(() => {
     if (token) {
       fetchSubmissions();
     }
-  }, [token]);
+  }, [token, fetchSubmissions]);
 
   // Fetch messages with polling every 5s if in detail view and window is active
   useEffect(() => {

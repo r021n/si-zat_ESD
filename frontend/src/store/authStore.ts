@@ -1,5 +1,12 @@
 import { create } from "zustand";
-import { loginApi, registerApi, getMeApi, updateProfileApi, loginWithGoogleApi, getEnrollStatusApi } from "../api/api";
+import {
+  loginApi,
+  registerApi,
+  getMeApi,
+  updateProfileApi,
+  loginWithGoogleApi,
+  getEnrollStatusApi,
+} from "../api/api";
 
 export interface User {
   id: number;
@@ -22,7 +29,10 @@ interface AuthState {
   enrollDeadline: string | null;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, kelas: string, password: string) => Promise<void>;
-  loginWithGoogle: (idToken: string, kelas?: string) => Promise<{ registered: boolean; email?: string; nama?: string }>;
+  loginWithGoogle: (
+    idToken: string,
+    kelas?: string,
+  ) => Promise<{ registered: boolean; email?: string; nama?: string }>;
   logout: () => void;
   checkAuth: () => Promise<void>;
   updateProfile: (kelas: string, nama: string) => Promise<void>;
@@ -90,7 +100,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   logout: () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-    set({ user: null, token: null, error: null, isEnrolled: null, enrollDeadline: null });
+    set({
+      user: null,
+      token: null,
+      error: null,
+      isEnrolled: null,
+      enrollDeadline: null,
+    });
   },
 
   checkAuth: async () => {
@@ -101,7 +117,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     if (cachedUserStr) {
       try {
         cachedUser = JSON.parse(cachedUserStr);
-      } catch (e) {
+      } catch (_e) {
         // ignore
       }
     }
@@ -124,12 +140,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       get().checkEnrollment();
     } catch (err: any) {
       // Check if it's a network/offline error
-      const isNetworkError = err instanceof TypeError || (err.message && (
-        err.message.includes("Failed to fetch") || 
-        err.message.includes("network") || 
-        err.message.includes("NetworkError") ||
-        err.message.includes("Load failed")
-      ));
+      const isNetworkError =
+        err instanceof TypeError ||
+        (err.message &&
+          (err.message.includes("Failed to fetch") ||
+            err.message.includes("network") ||
+            err.message.includes("NetworkError") ||
+            err.message.includes("Load failed")));
 
       if (!isNetworkError) {
         // Clear token and user ONLY if the token is invalid or expired
@@ -166,7 +183,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       return;
     }
 
-    const isAdmin = user.status.toLowerCase() === "admin" || user.email.toLowerCase().includes("admin");
+    const isAdmin =
+      user.status.toLowerCase() === "admin" ||
+      user.email.toLowerCase().includes("admin");
     if (isAdmin) {
       set({ isEnrolled: true, enrollDeadline: null });
       return;

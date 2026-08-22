@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useAuthStore } from "../store/authStore";
 import { useAppBack } from "../hooks/useAppBack";
 import { getAccessSettingsApi, updateAccessSettingsApi } from "../api/api";
@@ -56,22 +56,7 @@ export default function AdminAccessControl() {
   const [ruleType, setRuleType] = useState<"allow" | "block">("allow");
   const [formError, setFormError] = useState("");
 
-  useEffect(() => {
-    if (!user) {
-      navigate("/auth");
-      return;
-    }
-    const isAdmin =
-      user.status.toLowerCase() === "admin" ||
-      user.email.toLowerCase().includes("admin");
-    if (!isAdmin) {
-      navigate("/menu");
-      return;
-    }
-    fetchSettings();
-  }, [user, navigate]);
-
-  const fetchSettings = async () => {
+  const fetchSettings = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
@@ -87,7 +72,22 @@ export default function AdminAccessControl() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
+
+  useEffect(() => {
+    if (!user) {
+      navigate("/auth");
+      return;
+    }
+    const isAdmin =
+      user.status.toLowerCase() === "admin" ||
+      user.email.toLowerCase().includes("admin");
+    if (!isAdmin) {
+      navigate("/menu");
+      return;
+    }
+    fetchSettings();
+  }, [user, navigate, fetchSettings]);
 
   const handleToggleDay = (dayValue: number) => {
     if (selectedDays.includes(dayValue)) {

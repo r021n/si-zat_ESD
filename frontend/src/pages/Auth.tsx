@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 import Login from "../components/auth/Login";
@@ -44,7 +44,7 @@ export default function Auth() {
         google: {
           webClientId,
           iOSClientId: webClientId,
-          mode: 'online',
+          mode: "online",
         },
       });
     }
@@ -54,34 +54,39 @@ export default function Auth() {
     navigate("/menu");
   };
 
-  const handleGoogleCredentialResponse = async (response: any) => {
-    const idToken = response.credential;
-    if (!idToken) return;
+  const handleGoogleCredentialResponse = useCallback(
+    async (response: any) => {
+      const idToken = response.credential;
+      if (!idToken) return;
 
-    setIsSubmittingGoogle(true);
-    try {
-      const res = await loginWithGoogle(idToken);
-      if (res.registered) {
-        navigate("/menu");
-      } else {
-        // Not registered yet, need to select class
-        setTempIdToken(idToken);
-        setShowClassModal(true);
+      setIsSubmittingGoogle(true);
+      try {
+        const res = await loginWithGoogle(idToken);
+        if (res.registered) {
+          navigate("/menu");
+        } else {
+          // Not registered yet, need to select class
+          setTempIdToken(idToken);
+          setShowClassModal(true);
+        }
+      } catch (err: any) {
+        const errMsg =
+          err?.message ||
+          (typeof err === "object" ? JSON.stringify(err) : String(err));
+        await showAlert(`Error Backend Google Login:\n${errMsg}`);
+      } finally {
+        setIsSubmittingGoogle(false);
       }
-    } catch (err: any) {
-      const errMsg = err?.message || (typeof err === "object" ? JSON.stringify(err) : String(err));
-      await showAlert(`Error Backend Google Login:\n${errMsg}`);
-    } finally {
-      setIsSubmittingGoogle(false);
-    }
-  };
+    },
+    [loginWithGoogle, navigate, showAlert],
+  );
 
   const handleNativeGoogleSignIn = async () => {
     setIsSubmittingGoogle(true);
     try {
-      const res = await SocialLogin.login({ provider: 'google', options: {} });
+      const res = await SocialLogin.login({ provider: "google", options: {} });
       const result = res.result;
-      if (result.responseType === 'offline') {
+      if (result.responseType === "offline") {
         await showAlert("Mode offline tidak didukung.");
         return;
       }
@@ -89,11 +94,16 @@ export default function Auth() {
       if (idToken) {
         await handleGoogleCredentialResponse({ credential: idToken });
       } else {
-        await showAlert("Gagal mendapatkan token autentikasi Google (idToken kosong).");
+        await showAlert(
+          "Gagal mendapatkan token autentikasi Google (idToken kosong).",
+        );
       }
     } catch (err: any) {
       console.error("Google Auth Native Error:", err);
-      const strErr = typeof err === "object" ? (err?.message || JSON.stringify(err)) : String(err);
+      const strErr =
+        typeof err === "object"
+          ? err?.message || JSON.stringify(err)
+          : String(err);
       if (!strErr.toLowerCase().includes("cancel")) {
         await showAlert(`Detail Error Native Google Auth:\n${strErr}`);
       }
@@ -147,6 +157,7 @@ export default function Auth() {
         const btnContainer = document.getElementById("google-signin-btn");
         if (btnContainer) {
           window.google.accounts.id.renderButton(btnContainer, {
+            type: "standard",
             theme: "outline",
             size: "large",
             width: 366,
@@ -177,7 +188,7 @@ export default function Auth() {
     return () => {
       clearTimeout(timeout);
     };
-  }, [mode]);
+  }, [mode, handleGoogleCredentialResponse]);
 
   if (user) return null; // Avoid rendering login/register briefly before redirecting
 
@@ -279,9 +290,7 @@ export default function Auth() {
               >
                 <FcGoogle className="w-5 h-5 shrink-0" />
                 <span>
-                  {isSubmittingGoogle
-                    ? "Memproses..."
-                    : "Masuk dengan Google"}
+                  {isSubmittingGoogle ? "Memproses..." : "Masuk dengan Google"}
                 </span>
               </button>
             ) : (

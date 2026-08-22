@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 import { useAppBack } from "../hooks/useAppBack";
@@ -42,7 +42,6 @@ export default function Materi() {
     return saved ? Math.min(parseInt(saved, 10), MATERI_SLIDES.length - 1) : 0;
   });
 
-
   const [page4Selected, setPage4Selected] = useState<string | null>(() => {
     return localStorage.getItem("sizat_materi_p4_selected") || null;
   });
@@ -62,7 +61,9 @@ export default function Materi() {
     if (saved) {
       try {
         return JSON.parse(saved);
-      } catch (e) {}
+      } catch (_e) {
+        // ignore JSON parse error
+      }
     }
     return { "slot-padat": null, "slot-cair": null, "slot-gas": null };
   });
@@ -82,7 +83,9 @@ export default function Materi() {
     if (saved) {
       try {
         return JSON.parse(saved);
-      } catch (e) {}
+      } catch (_e) {
+        // ignore JSON parse error
+      }
     }
     return {
       "slot-menguap": null,
@@ -137,14 +140,15 @@ export default function Materi() {
     getMateriProgressApi(authToken)
       .then((res) => {
         if (res && res.status === "success" && res.progress) {
-          const { lastPage, maxUnlockedIndex: backendMaxUnlocked } = res.progress;
+          const { lastPage, maxUnlockedIndex: backendMaxUnlocked } =
+            res.progress;
           const validLastPage = Math.min(
             Math.max(0, lastPage),
-            MATERI_SLIDES.length - 1
+            MATERI_SLIDES.length - 1,
           );
           const validMaxUnlocked = Math.min(
             Math.max(0, backendMaxUnlocked, validLastPage),
-            MATERI_SLIDES.length - 1
+            MATERI_SLIDES.length - 1,
           );
 
           setCurrentPage(validLastPage);
@@ -176,7 +180,6 @@ export default function Materi() {
 
     return () => clearTimeout(timer);
   }, [currentPage, maxUnlockedIndex, token]);
-
 
   // Immediately unlock next page when landing on current page (except interactive pages requiring correct answer)
   useEffect(() => {
@@ -337,57 +340,6 @@ export default function Materi() {
     }
   }, [currentPage, currentSlide.type]);
 
-  // Keyboard navigation
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (showIndexDrawer) return;
-      if (e.key === "ArrowRight") {
-        handleNext();
-      } else if (e.key === "ArrowLeft") {
-        handlePrev();
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [
-    currentPage,
-    maxUnlockedIndex,
-    showIndexDrawer,
-    page4Submitted,
-    page4Selected,
-    page7Submitted,
-    page7Assignments,
-    page14Submitted,
-    page14Assignments,
-    page17Submitted,
-    page17Selected,
-  ]);
-
-  // Touch swipe navigation
-  const handleTouchStart = (e: React.TouchEvent) => {
-    touchStartRef.current = {
-      x: e.targetTouches[0].clientX,
-      y: e.targetTouches[0].clientY,
-    };
-  };
-
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    if (!touchStartRef.current) return;
-    const touchEndX = e.changedTouches[0].clientX;
-    const touchEndY = e.changedTouches[0].clientY;
-    const diffX = touchStartRef.current.x - touchEndX;
-    const diffY = touchStartRef.current.y - touchEndY;
-
-    if (Math.abs(diffX) > Math.abs(diffY) * 1.2 && Math.abs(diffX) > 50) {
-      if (diffX > 50) {
-        handleNext();
-      } else if (diffX < -50) {
-        handlePrev();
-      }
-    }
-    touchStartRef.current = null;
-  };
-
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => {
@@ -395,7 +347,7 @@ export default function Materi() {
     }, 2500);
   };
 
-  const handleNext = () => {
+  const handleNext = useCallback(() => {
     if (currentPage === 3) {
       if (!page4Submitted) {
         showToast("Pilih dan kirim jawaban terlebih dahulu untuk melanjutkan!");
@@ -459,12 +411,62 @@ export default function Materi() {
         setCurrentPage((prev) => prev + 1);
       }
     }
-  };
+  }, [
+    currentPage,
+    maxUnlockedIndex,
+    page4Submitted,
+    page4Selected,
+    page7Submitted,
+    page7Assignments,
+    page14Submitted,
+    page14Assignments,
+    page17Submitted,
+    page17Selected,
+  ]);
 
-  const handlePrev = () => {
+  const handlePrev = useCallback(() => {
     if (currentPage > 0) {
       setCurrentPage((prev) => prev - 1);
     }
+  }, [currentPage]);
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (showIndexDrawer) return;
+      if (e.key === "ArrowRight") {
+        handleNext();
+      } else if (e.key === "ArrowLeft") {
+        handlePrev();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [showIndexDrawer, handleNext, handlePrev]);
+
+  // Touch swipe navigation
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartRef.current = {
+      x: e.targetTouches[0].clientX,
+      y: e.targetTouches[0].clientY,
+    };
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!touchStartRef.current) return;
+    const touchEndX = e.changedTouches[0].clientX;
+    const touchEndY = e.changedTouches[0].clientY;
+    const diffX = touchStartRef.current.x - touchEndX;
+    const diffY = touchStartRef.current.y - touchEndY;
+
+    if (Math.abs(diffX) > Math.abs(diffY) * 1.2 && Math.abs(diffX) > 50) {
+      if (diffX > 50) {
+        handleNext();
+      } else if (diffX < -50) {
+        handlePrev();
+      }
+    }
+    touchStartRef.current = null;
   };
 
   const handleJumpToPage = (index: number) => {

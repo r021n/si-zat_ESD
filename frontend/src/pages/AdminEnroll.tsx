@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useAuthStore } from "../store/authStore";
 import { useAppBack } from "../hooks/useAppBack";
 import {
@@ -35,27 +35,21 @@ export default function AdminEnroll() {
   const [currentDeadline, setCurrentDeadline] = useState("");
   const [newDeadline, setNewDeadline] = useState("");
   const [enrollList, setEnrollList] = useState<
-    { id: number; email: string; nama: string; kelas: string; isEnrolled: boolean; enrolledAt: string | null }[]
+    {
+      id: number;
+      email: string;
+      nama: string;
+      kelas: string;
+      isEnrolled: boolean;
+      enrolledAt: string | null;
+    }[]
   >([]);
-  const [filterStatus, setFilterStatus] = useState<"all" | "enrolled" | "not-enrolled">("all");
+  const [filterStatus, setFilterStatus] = useState<
+    "all" | "enrolled" | "not-enrolled"
+  >("all");
   const [revokingId, setRevokingId] = useState<number | null>(null);
 
-  useEffect(() => {
-    if (!user) {
-      navigate("/auth");
-      return;
-    }
-    const isAdmin =
-      user.status.toLowerCase() === "admin" ||
-      user.email.toLowerCase().includes("admin");
-    if (!isAdmin) {
-      navigate("/menu");
-      return;
-    }
-    fetchData();
-  }, [user, navigate]);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
@@ -76,7 +70,22 @@ export default function AdminEnroll() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
+
+  useEffect(() => {
+    if (!user) {
+      navigate("/auth");
+      return;
+    }
+    const isAdmin =
+      user.status.toLowerCase() === "admin" ||
+      user.email.toLowerCase().includes("admin");
+    if (!isAdmin) {
+      navigate("/menu");
+      return;
+    }
+    fetchData();
+  }, [user, navigate, fetchData]);
 
   const handleGenerate = async () => {
     if (!newDeadline) {
@@ -128,7 +137,9 @@ export default function AdminEnroll() {
       const res = await revokeEnrollApi(token, userId);
       if (res.status === "success") {
         setEnrollList((prev) =>
-          prev.map((s) => (s.id === userId ? { ...s, isEnrolled: false, enrolledAt: null } : s)),
+          prev.map((s) =>
+            s.id === userId ? { ...s, isEnrolled: false, enrolledAt: null } : s,
+          ),
         );
         setSuccessMsg(res.message);
         setTimeout(() => setSuccessMsg(""), 3000);
@@ -157,7 +168,9 @@ export default function AdminEnroll() {
     });
   };
 
-  const isExpired = currentDeadline ? new Date() > new Date(currentDeadline) : false;
+  const isExpired = currentDeadline
+    ? new Date() > new Date(currentDeadline)
+    : false;
 
   const enrolledCount = enrollList.filter((s) => s.isEnrolled).length;
   const filteredList = enrollList.filter((s) => {
@@ -250,15 +263,21 @@ export default function AdminEnroll() {
 
                   <div className="flex items-center gap-2 text-[10px]">
                     <LuClock size={12} className="text-[#9C98A6]" />
-                    <span className={`font-bold ${isExpired ? "text-[#D95276]" : "text-[#9C98A6]"}`}>
-                      {isExpired ? "Expired" : "Berlaku hingga:"} {formatDeadline(currentDeadline)}
+                    <span
+                      className={`font-bold ${
+                        isExpired ? "text-[#D95276]" : "text-[#9C98A6]"
+                      }`}
+                    >
+                      {isExpired ? "Expired" : "Berlaku hingga:"}{" "}
+                      {formatDeadline(currentDeadline)}
                     </span>
                   </div>
 
                   <div className="flex items-center gap-2 text-[10px]">
                     <LuCircleCheck size={12} className="text-[#2C8578]" />
                     <span className="font-bold text-[#9C98A6]">
-                      {enrolledCount} dari {enrollList.length} siswa sudah enroll
+                      {enrolledCount} dari {enrollList.length} siswa sudah
+                      enroll
                     </span>
                   </div>
                 </div>
@@ -303,8 +322,12 @@ export default function AdminEnroll() {
                   disabled={generating || !newDeadline}
                   className="w-full py-3 bg-[#8C66FF] text-white font-extrabold uppercase tracking-wider text-[10px] rounded-full shadow-md shadow-purple-100 cursor-pointer active:scale-95 transition-all flex items-center justify-center gap-2 hover:bg-[#7b55f0] disabled:opacity-70 disabled:cursor-not-allowed"
                 >
-                  <LuRefreshCw className={`text-xs ${generating ? "animate-spin" : ""}`} />
-                  <span>{generating ? "Membuat..." : "Generate Kode Baru"}</span>
+                  <LuRefreshCw
+                    className={`text-xs ${generating ? "animate-spin" : ""}`}
+                  />
+                  <span>
+                    {generating ? "Membuat..." : "Generate Kode Baru"}
+                  </span>
                 </button>
               </div>
             </div>
@@ -327,19 +350,25 @@ export default function AdminEnroll() {
 
               {/* Filter Tabs */}
               <div className="flex gap-2">
-                {(["all", "enrolled", "not-enrolled"] as const).map((status) => (
-                  <button
-                    key={status}
-                    onClick={() => setFilterStatus(status)}
-                    className={`flex-1 py-2 text-[9px] font-extrabold uppercase tracking-wider rounded-xl transition-all cursor-pointer ${
-                      filterStatus === status
-                        ? "bg-[#8C66FF] text-white shadow-md shadow-purple-100"
-                        : "bg-[#FAF9FF] border border-[#F0EDFF] text-[#9C98A6]"
-                    }`}
-                  >
-                    {status === "all" ? "Semua" : status === "enrolled" ? "Enrolled" : "Belum"}
-                  </button>
-                ))}
+                {(["all", "enrolled", "not-enrolled"] as const).map(
+                  (status) => (
+                    <button
+                      key={status}
+                      onClick={() => setFilterStatus(status)}
+                      className={`flex-1 py-2 text-[9px] font-extrabold uppercase tracking-wider rounded-xl transition-all cursor-pointer ${
+                        filterStatus === status
+                          ? "bg-[#8C66FF] text-white shadow-md shadow-purple-100"
+                          : "bg-[#FAF9FF] border border-[#F0EDFF] text-[#9C98A6]"
+                      }`}
+                    >
+                      {status === "all"
+                        ? "Semua"
+                        : status === "enrolled"
+                        ? "Enrolled"
+                        : "Belum"}
+                    </button>
+                  ),
+                )}
               </div>
 
               <div className="flex flex-col gap-2.5">
@@ -362,7 +391,10 @@ export default function AdminEnroll() {
                         </span>
                         {siswa.isEnrolled && siswa.enrolledAt && (
                           <span className="text-[8px] text-[#2C8578] font-bold">
-                            Enrolled: {new Date(siswa.enrolledAt).toLocaleDateString("id-ID")}
+                            Enrolled:{" "}
+                            {new Date(siswa.enrolledAt).toLocaleDateString(
+                              "id-ID",
+                            )}
                           </span>
                         )}
                       </div>
@@ -388,7 +420,9 @@ export default function AdminEnroll() {
 
                         {siswa.isEnrolled && (
                           <button
-                            onClick={() => handleRevoke(siswa.id, siswa.nama || siswa.email)}
+                            onClick={() =>
+                              handleRevoke(siswa.id, siswa.nama || siswa.email)
+                            }
                             disabled={revokingId === siswa.id}
                             className="w-7 h-7 bg-white text-[#D95276] border border-[#FFEBF0] rounded-lg flex items-center justify-center shadow-sm cursor-pointer active:bg-[#FFEBF0] disabled:opacity-50"
                             title="Revoke Enrollment"

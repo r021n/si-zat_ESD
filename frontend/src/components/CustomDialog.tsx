@@ -170,6 +170,7 @@ export function CustomDialogProvider({ children }: { children: ReactNode }) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useCustomDialog() {
   const context = useContext(CustomDialogContext);
   if (!context) {

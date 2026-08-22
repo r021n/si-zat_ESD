@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useAuthStore } from "../store/authStore";
 import { useAppBack } from "../hooks/useAppBack";
 import {
@@ -46,13 +46,7 @@ export default function AdminMenu() {
     }
   }, [user, navigate]);
 
-  useEffect(() => {
-    if (showSiswaInsights && token) {
-      fetchSiswaList();
-    }
-  }, [showSiswaInsights, token]);
-
-  const fetchSiswaList = async () => {
+  const fetchSiswaList = useCallback(async () => {
     setLoadingSiswa(true);
     setSiswaError("");
     try {
@@ -66,7 +60,13 @@ export default function AdminMenu() {
     } finally {
       setLoadingSiswa(false);
     }
-  };
+  }, [token]);
+
+  useEffect(() => {
+    if (showSiswaInsights && token) {
+      fetchSiswaList();
+    }
+  }, [showSiswaInsights, token, fetchSiswaList]);
 
   const handleOpenAnalytics = async (siswa: any) => {
     setSelectedSiswa(siswa);

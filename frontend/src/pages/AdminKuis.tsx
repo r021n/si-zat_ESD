@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 import { useAppBack } from "../hooks/useAppBack";
@@ -121,7 +121,7 @@ export default function AdminKuis() {
   }, [user, navigate]);
 
   // Load and Seed Backend Data
-  const loadQuizzes = async () => {
+  const loadQuizzes = useCallback(async () => {
     if (!token) return;
     setLoading(true);
     try {
@@ -237,11 +237,11 @@ export default function AdminKuis() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
 
   useEffect(() => {
     loadQuizzes();
-  }, [token]);
+  }, [loadQuizzes]);
 
   if (!user) return null;
 

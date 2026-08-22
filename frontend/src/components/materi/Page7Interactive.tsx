@@ -39,17 +39,14 @@ export default function Page7Interactive({
     setSelectedLeftId(null);
   };
 
-  const handleUnassign = (slotId: string) => {
-    if (isSubmitted) return;
-    setAssignments((prev) => ({ ...prev, [slotId]: null }));
-  };
-
   const handleSlotClick = (slotId: string) => {
     if (isSubmitted) return;
     if (selectedLeftId) {
       handleAssign(slotId, selectedLeftId);
     } else if (assignments[slotId]) {
-      handleUnassign(slotId);
+      const currentItem = assignments[slotId];
+      setAssignments((prev) => ({ ...prev, [slotId]: null }));
+      setSelectedLeftId(currentItem);
     }
   };
 
@@ -60,7 +57,7 @@ export default function Page7Interactive({
     PUZZLE_SLOTS.every((slot) => assignments[slot.id] === slot.correctItemId);
 
   return (
-    <div className="relative w-full h-full flex items-center justify-center bg-white rounded-2xl overflow-hidden">
+    <div className="relative w-full h-full flex items-center justify-center bg-white rounded-2xl overflow-hidden select-none">
       <div className="relative max-h-full max-w-full aspect-9/16 flex items-center justify-center">
         <img
           src="/materi/7_polos.png"
@@ -68,201 +65,242 @@ export default function Page7Interactive({
           className="w-full h-full object-contain pointer-events-none select-none"
         />
 
-        {/* Minimalist interactive overlay over 7_polos.png */}
+        {/* --- MAIN PUZZLE BOARD (Inside the blue frame of 7_polos.png) --- */}
         <div
-          className="absolute flex flex-col justify-between overflow-y-auto text-left p-3 text-[#2C2B30] z-10 custom-scrollbar space-y-2.5"
+          className="absolute flex flex-col justify-between z-10"
           style={{
-            top: "13%",
-            left: "5%",
-            width: "90%",
-            height: "80%",
+            top: "19.5%",
+            left: "13%",
+            width: "74%",
+            height: "36.5%",
           }}
         >
-          {/* Unassigned Pieces Pool */}
-          <div className="bg-[#FAF9FF] border border-[#F0EDFF] rounded-2xl p-2 shadow-xs">
-            <p className="text-[10px] sm:text-[11px] font-bold text-[#8C66FF] mb-0.5">
-              Partikel:
-            </p>
-            <p className="text-[8px] sm:text-[9px] text-[#9C98A6] mb-1 italic">
-              Tap kartu, lalu tap lokasi penempatan
-            </p>
+          {PUZZLE_SLOTS.map((slot) => {
+            const assignedItemId = assignments[slot.id];
+            const assignedItem = PUZZLE_ITEMS.find(
+              (it) => it.id === assignedItemId,
+            );
+            const isCorrectSlot =
+              isSubmitted && assignedItemId === slot.correctItemId;
+            const isWrongSlot =
+              isSubmitted &&
+              assignedItemId !== null &&
+              assignedItemId !== slot.correctItemId;
 
-            <div className="grid grid-cols-3 gap-2 min-h-12 items-center">
-              {unassignedItems.length === 0 ? (
-                <div className="col-span-3 text-center py-1.5 text-[9.5px] text-emerald-600 font-semibold italic bg-emerald-50 rounded-xl border border-emerald-100">
-                  Terpasang semua ✓
+            return (
+              <div
+                key={slot.id}
+                className="flex items-center justify-between w-full h-[28%]"
+              >
+                {/* --- Left Puzzle Card (Drop Slot / Particle Image) --- */}
+                <div
+                  onClick={() => handleSlotClick(slot.id)}
+                  className={`w-[47%] h-full rounded-xl sm:rounded-2xl relative flex items-center justify-center p-1 sm:p-1.5 transition-all ${
+                    isSubmitted
+                      ? isCorrectSlot
+                        ? "bg-[#FEF0F0] border-2 border-[#137333] shadow-xs"
+                        : isWrongSlot
+                        ? "bg-[#FEF0F0] border-2 border-[#C5221F] shadow-xs"
+                        : "bg-[#FEF0F0] border-2 border-[#FA8E97]"
+                      : assignedItem
+                      ? "bg-[#FEF0F0] border-2 border-[#FA8E97] shadow-xs cursor-pointer hover:scale-[1.02] active:scale-98"
+                      : selectedLeftId
+                      ? "bg-[#FFF5F6] border-2 border-dashed border-[#8C66FF] ring-2 ring-[#8C66FF]/30 cursor-pointer animate-pulse"
+                      : "bg-[#FFF5F6] border-2 border-dashed border-[#FA8E97]/70 cursor-pointer hover:border-[#FA8E97] hover:bg-[#FEF0F0]/50"
+                  }`}
+                >
+                  {assignedItem ? (
+                    <div className="w-full h-full flex items-center justify-center relative">
+                      <img
+                        src={assignedItem.image}
+                        alt={assignedItem.label}
+                        className="w-full max-h-full object-contain pointer-events-none"
+                      />
+                      {/* Jigsaw Tab (protruding semi-circle on right edge) */}
+                      <div
+                        className={`w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 rounded-full border-2 border-l-0 absolute -right-2 sm:-right-2.5 md:-right-3 top-1/2 -translate-y-1/2 z-20 transition-all ${
+                          isSubmitted
+                            ? isCorrectSlot
+                              ? "bg-[#FEF0F0] border-[#137333]"
+                              : isWrongSlot
+                              ? "bg-[#FEF0F0] border-[#C5221F]"
+                              : "bg-[#FEF0F0] border-[#FA8E97]"
+                            : "bg-[#FEF0F0] border-[#FA8E97]"
+                        }`}
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center text-center">
+                      <span className="text-[8.5px] sm:text-[9.5px] md:text-[10.5px] text-[#FA8E97] font-bold leading-tight">
+                        {selectedLeftId ? "Pasang di sini" : "+ Pasang"}
+                      </span>
+                      {/* Subtle tab outline on empty slot */}
+                      <div className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 rounded-full border-2 border-l-0 border-dashed border-[#FA8E97]/60 bg-[#FFF5F6] absolute -right-2 sm:-right-2.5 md:-right-3 top-1/2 -translate-y-1/2 z-20 pointer-events-none" />
+                    </div>
+                  )}
                 </div>
-              ) : (
-                unassignedItems.map((item) => {
-                  const isSelected = selectedLeftId === item.id;
+
+                {/* --- Right Puzzle Card (Title: Zat Padat / Cair / Gas) --- */}
+                <div
+                  className={`w-[47%] h-full rounded-xl sm:rounded-2xl relative flex items-center justify-center p-1 sm:p-2 text-center transition-all bg-[#FEF0F0] border-2 ${
+                    isSubmitted
+                      ? isCorrectSlot
+                        ? "border-[#137333] text-[#137333]"
+                        : isWrongSlot
+                        ? "border-[#C5221F] text-[#C5221F]"
+                        : "border-[#FA8E97] text-[#1F2227]"
+                      : "border-[#FA8E97] text-[#1F2227]"
+                  }`}
+                >
+                  {/* Jigsaw Socket (indented semi-circle on left edge) */}
+                  <div
+                    className={`w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 rounded-full bg-white border-2 border-l-transparent border-t-2 border-r-2 border-b-2 absolute -left-2 sm:-left-2.5 md:-left-3 top-1/2 -translate-y-1/2 z-20 pointer-events-none transition-all ${
+                      isSubmitted
+                        ? isCorrectSlot
+                          ? "border-t-[#137333] border-r-[#137333] border-b-[#137333]"
+                          : isWrongSlot
+                          ? "border-t-[#C5221F] border-r-[#C5221F] border-b-[#C5221F]"
+                          : "border-t-[#FA8E97] border-r-[#FA8E97] border-b-[#FA8E97]"
+                        : "border-t-[#FA8E97] border-r-[#FA8E97] border-b-[#FA8E97]"
+                    }`}
+                  />
+
+                  <span className="font-bold text-[11px] sm:text-xs md:text-sm text-[#1F2227] tracking-tight z-10 select-none">
+                    {slot.title}
+                  </span>
+
+                  {/* Status Indicator Icon */}
+                  {isSubmitted && (
+                    <div className="absolute right-1.5 sm:right-2 top-1/2 -translate-y-1/2 z-20">
+                      {isCorrectSlot ? (
+                        <CheckIcon size={16} className="text-[#137333]" />
+                      ) : isWrongSlot ? (
+                        <XIcon size={16} className="text-[#C5221F]" />
+                      ) : null}
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* --- BOTTOM INTERACTIVE CONTROLS & PIECE SELECTION DOCK --- */}
+        <div
+          className="absolute flex flex-col justify-between z-10"
+          style={{
+            top: "61.5%",
+            left: "8%",
+            width: "84%",
+            height: "28%",
+          }}
+        >
+          {/* Piece Selector Dock */}
+          <div className="bg-white/95 backdrop-blur-xs border border-purple-100 rounded-2xl p-2 sm:p-2.5 shadow-sm">
+            <div className="flex items-center justify-between mb-1 sm:mb-1.5">
+              <p className="text-[10px] sm:text-[11px] font-bold text-[#8C66FF]">
+                Pilihan Partikel:
+              </p>
+              <p className="text-[8px] sm:text-[9px] text-[#9C98A6] italic">
+                {isSubmitted
+                  ? "Lihat hasil penilaian di atas"
+                  : unassignedItems.length > 0
+                  ? "Ketuk partikel lalu pasangkan"
+                  : "Semua partikel terpasang ✓"}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-3 gap-1.5 sm:gap-2 items-center">
+              {PUZZLE_ITEMS.map((item) => {
+                const isAssigned = assignedItemIds.includes(item.id);
+                const isSelected = selectedLeftId === item.id;
+
+                if (isAssigned) {
                   return (
                     <div
                       key={item.id}
-                      onClick={() => {
-                        if (isSubmitted) return;
-                        setSelectedLeftId(isSelected ? null : item.id);
-                      }}
-                      className={`relative bg-[#FFF0F3] border-2 rounded-xl p-1 flex items-center justify-center cursor-pointer transition-all ${
-                        isSelected
-                          ? "border-[#8C66FF] ring-2 ring-[#8C66FF]/40 scale-105 shadow-md"
-                          : "border-[#FFB3C1] hover:border-[#FF8FA3] hover:scale-102 shadow-xs"
-                      }`}
+                      className="h-10 sm:h-11 rounded-xl border border-dashed border-purple-200 bg-purple-50/50 flex flex-col items-center justify-center opacity-60"
                     >
-                      <img
-                        src={item.image}
-                        alt={item.label}
-                        className="w-full h-7 sm:h-9 object-contain pointer-events-none"
-                      />
-                      {/* Semi-circle tab on right edge */}
-                      <div className="w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-full bg-[#FFF0F3] border-2 border-l-0 border-[#FFB3C1] absolute -right-1.5 top-1/2 -translate-y-1/2 z-20" />
+                      <span className="text-[8px] sm:text-[9px] text-purple-500 font-semibold">
+                        Terpasang ✓
+                      </span>
                     </div>
                   );
-                })
-              )}
+                }
+
+                return (
+                  <div
+                    key={item.id}
+                    onClick={() => {
+                      if (isSubmitted) return;
+                      setSelectedLeftId(isSelected ? null : item.id);
+                    }}
+                    className={`relative bg-[#FEF0F0] border-2 rounded-xl p-1 h-10 sm:h-11 flex items-center justify-center cursor-pointer transition-all ${
+                      isSelected
+                        ? "border-[#8C66FF] ring-2 ring-[#8C66FF]/40 scale-105 shadow-md"
+                        : "border-[#FA8E97] hover:border-[#FF6B81] hover:scale-102 shadow-xs"
+                    }`}
+                  >
+                    <img
+                      src={item.image}
+                      alt={item.label}
+                      className="w-full max-h-full object-contain pointer-events-none"
+                    />
+                    {/* Tab protrusion */}
+                    <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-[#FEF0F0] border-2 border-l-0 border-[#FA8E97] absolute -right-1.5 top-1/2 -translate-y-1/2 z-20" />
+                  </div>
+                );
+              })}
             </div>
           </div>
 
-          {/* Puzzle Target Rows */}
-          <div className="space-y-2 flex-1 flex flex-col justify-center">
-            {PUZZLE_SLOTS.map((slot) => {
-              const assignedItemId = assignments[slot.id];
-              const assignedItem = PUZZLE_ITEMS.find(
-                (it) => it.id === assignedItemId,
-              );
-              const isCorrectSlot =
-                isSubmitted && assignedItemId === slot.correctItemId;
-              const isWrongSlot =
-                isSubmitted &&
-                assignedItemId !== null &&
-                assignedItemId !== slot.correctItemId;
-
-              return (
-                <div key={slot.id} className="flex items-center gap-1.5 w-full">
-                  {/* Left Drop Zone Slot */}
-                  <div
-                    onClick={() => handleSlotClick(slot.id)}
-                    className={`flex-1 h-11 sm:h-13 rounded-2xl relative flex items-center justify-center p-1 transition-all border-2 ${
-                      isSubmitted
-                        ? isCorrectSlot
-                          ? "bg-[#E6F4EA] border-[#137333]"
-                          : isWrongSlot
-                          ? "bg-[#FCE8E6] border-[#C5221F]"
-                          : "bg-[#F8F9FA] border-slate-200"
-                        : assignedItem
-                        ? "bg-[#FFF0F3] border-[#FFB3C1] shadow-sm cursor-pointer hover:brightness-95"
-                        : "bg-[#FAF9FF] border-dashed border-[#DCD6F7] cursor-pointer hover:bg-purple-50/50"
-                    }`}
-                  >
-                    {assignedItem ? (
-                      <div className="w-full h-full flex items-center justify-center relative">
-                        <img
-                          src={assignedItem.image}
-                          alt={assignedItem.label}
-                          className="w-full h-7 sm:h-9 object-contain pointer-events-none"
-                        />
-                        {/* Semi-circle tab sticking out right to snap into right slot cutout */}
-                        <div
-                          className={`w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-full border-2 border-l-0 absolute -right-2.5 sm:-right-3 top-1/2 -translate-y-1/2 z-20 ${
-                            isSubmitted
-                              ? isCorrectSlot
-                                ? "bg-[#E6F4EA] border-[#137333]"
-                                : isWrongSlot
-                                ? "bg-[#FCE8E6] border-[#C5221F]"
-                                : "bg-[#FFF0F3] border-[#FFB3C1]"
-                              : "bg-[#FFF0F3] border-[#FFB3C1]"
-                          }`}
-                        />
-                      </div>
-                    ) : (
-                      <span className="text-[9px] sm:text-[10px] text-[#9C98A6] font-semibold text-center">
-                        Tap di sini
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Right Target Card ("Zat Padat" / "Zat Cair" / "Zat Gas") */}
-                  <div
-                    className={`w-[48%] h-11 sm:h-13 rounded-2xl relative flex items-center justify-center p-2 text-center transition-all border-2 ${
-                      isSubmitted
-                        ? isCorrectSlot
-                          ? "bg-[#E6F4EA] border-[#137333] text-[#137333]"
-                          : isWrongSlot
-                          ? "bg-[#FCE8E6] border-[#C5221F] text-[#C5221F]"
-                          : "bg-[#FFF0F3] border-[#FFB3C1] text-[#2C2B30]"
-                        : "bg-[#FFF0F3] border-[#FFB3C1] text-[#2C2B30]"
-                    }`}
-                  >
-                    {/* Semi-circle cutout on left edge for tab entry */}
-                    <div
-                      className={`w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-full border-2 border-r-0 absolute -left-1.5 sm:-left-2 top-1/2 -translate-y-1/2 z-10 ${
-                        isSubmitted
-                          ? isCorrectSlot
-                            ? "bg-[#E6F4EA] border-[#137333]"
-                            : isWrongSlot
-                            ? "bg-[#FCE8E6] border-[#C5221F]"
-                            : "bg-white border-[#FFB3C1]"
-                          : "bg-white border-[#FFB3C1]"
-                      }`}
-                    />
-
-                    <span className="font-extrabold text-xs sm:text-sm tracking-wide z-20">
-                      {slot.title}
-                    </span>
-
-                    {/* Status Badge Icon */}
-                    {isSubmitted && (
-                      <div className="absolute right-2 top-1/2 -translate-y-1/2">
-                        {isCorrectSlot ? (
-                          <CheckIcon size={15} className="text-[#137333]" />
-                        ) : isWrongSlot ? (
-                          <XIcon size={15} className="text-[#C5221F]" />
-                        ) : null}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Controls & Submission Result Feedback */}
+          {/* Submission & Reset Controls */}
           {!isSubmitted ? (
-            <div className="pt-0.5">
+            <div>
               <button
                 type="button"
                 disabled={!allAssigned}
                 onClick={onSubmit}
-                className={`w-full py-2 px-3 rounded-xl font-extrabold text-[11px] sm:text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-md ${
+                className={`w-full py-2 sm:py-2.5 px-3 rounded-xl sm:rounded-2xl font-extrabold text-[11px] sm:text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-md ${
                   allAssigned
-                    ? "bg-linear-to-r from-[#8C66FF] to-[#6039DF] text-white cursor-pointer hover:brightness-110 active:scale-95 shadow-purple-200"
+                    ? "bg-linear-to-r from-[#8C66FF] to-[#6039DF] text-white cursor-pointer hover:brightness-110 active:scale-98 shadow-purple-200"
                     : "bg-slate-200 text-slate-400 cursor-not-allowed shadow-none"
                 }`}
               >
-                <SendIcon size={13} /> Kirim Jawaban
+                <SendIcon size={14} /> Kirim Jawaban
               </button>
             </div>
           ) : (
             <div
-              className={`p-2 rounded-xl border-2 shadow-xs animate-fade-in flex items-center justify-between gap-2 ${
+              className={`p-2 sm:p-2.5 rounded-xl sm:rounded-2xl border-2 shadow-xs animate-fade-in flex items-center justify-between gap-2 ${
                 isAllCorrect
                   ? "bg-[#E6F4EA] border-[#137333] text-[#137333]"
                   : "bg-[#FCE8E6] border-[#C5221F] text-[#C5221F]"
               }`}
             >
-              <span className="font-bold text-[10.5px] sm:text-xs pl-1">
-                {isAllCorrect ? "Benar semua! 🎉" : "Ada yang kurang tepat"}
-              </span>
+              <div className="flex items-center gap-1.5 pl-1">
+                {isAllCorrect ? (
+                  <CheckIcon size={16} className="text-[#137333] shrink-0" />
+                ) : (
+                  <XIcon size={16} className="text-[#C5221F] shrink-0" />
+                )}
+                <span className="font-bold text-[10px] sm:text-xs leading-tight">
+                  {isAllCorrect
+                    ? "Benar semua! 🎉"
+                    : "Ada yang belum tepat, coba lagi!"}
+                </span>
+              </div>
 
               <button
                 type="button"
                 onClick={onReset}
-                className={`px-3 py-1 font-extrabold text-[10px] rounded-lg cursor-pointer transition-all flex items-center gap-1 shadow-xs active:scale-95 ${
+                className={`px-3 py-1.5 font-extrabold text-[10.5px] rounded-xl cursor-pointer transition-all flex items-center gap-1 shadow-xs active:scale-95 shrink-0 ${
                   isAllCorrect
                     ? "bg-emerald-600 text-white hover:bg-emerald-700"
                     : "bg-[#C5221F] text-white hover:bg-red-700"
                 }`}
               >
-                <RotateCcwIcon size={10} /> Ulangi
+                <RotateCcwIcon size={11} /> Ulangi
               </button>
             </div>
           )}
