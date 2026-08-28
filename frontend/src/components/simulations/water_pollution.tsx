@@ -81,10 +81,10 @@ export default function SimulasiPencemaranAir() {
   // --- STATE UNTUK KONTROL UI ---
   const [running, setRunning] = useState<boolean>(false);
   const [checkIndustri, setCheckIndustri] = useState<boolean>(false);
-  const [slideIndustri, setSlideIndustri] = useState<number>(50);
+  const [slideIndustri, setSlideIndustri] = useState<number>(10);
   const [checkDomestik, setCheckDomestik] = useState<boolean>(false);
-  const [slideDomestik, setSlideDomestik] = useState<number>(50);
-  const [slideAliran, setSlideAliran] = useState<number>(5);
+  const [slideDomestik, setSlideDomestik] = useState<number>(10);
+  const [slideAliran, setSlideAliran] = useState<number>(1);
   const [isHudExpanded, setIsHudExpanded] = useState<boolean>(false);
   const hudTimerRef = useRef<any>(null);
 
@@ -756,9 +756,9 @@ export default function SimulasiPencemaranAir() {
 
     setCheckIndustri(false);
     setCheckDomestik(false);
-    setSlideIndustri(50);
-    setSlideDomestik(50);
-    setSlideAliran(5);
+    setSlideIndustri(10);
+    setSlideDomestik(10);
+    setSlideAliran(1);
 
     const canvas = canvasRef.current;
     if (canvas) {

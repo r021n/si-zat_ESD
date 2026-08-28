@@ -97,8 +97,8 @@ export default function SimulasiPencemaranTanah() {
   // --- REACT CONTROL STATES ---
   const [running, setRunning] = useState<boolean>(false);
   const [trashType, setTrashType] = useState<TrashType>("organik");
-  const [jumlahSampah, setJumlahSampah] = useState<number>(20);
-  const [hujan, setHujan] = useState<number>(4);
+  const [jumlahSampah, setJumlahSampah] = useState<number>(10);
+  const [hujan, setHujan] = useState<number>(0);
   const [isHudExpanded, setIsHudExpanded] = useState<boolean>(false);
   const hudTimerRef = useRef<any>(null);
 
@@ -1766,8 +1766,8 @@ export default function SimulasiPencemaranTanah() {
     simTimeRef.current = 0;
     simStateRef.current = { ...INITIAL_VALUES };
     setTrashType("organik");
-    setJumlahSampah(20);
-    setHujan(4);
+    setJumlahSampah(10);
+    setHujan(0);
 
     const canvas = canvasRef.current;
     if (canvas) populateSim(canvas.width, canvas.height);

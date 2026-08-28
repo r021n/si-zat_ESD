@@ -85,8 +85,8 @@ export default function SimulasiPencemaranUdara() {
   const [checkKendaraan, setCheckKendaraan] = useState<boolean>(false);
   const [checkPabrik, setCheckPabrik] = useState<boolean>(false);
   const [checkSampah, setCheckSampah] = useState<boolean>(false);
-  const [slideAsap, setSlideAsap] = useState<number>(2); // 1: Sedikit, 2: Sedang, 3: Banyak
-  const [slideAngin, setSlideAngin] = useState<number>(5); // 1-10
+  const [slideAsap, setSlideAsap] = useState<number>(1); // 1: Sedikit, 2: Sedang, 3: Banyak
+  const [slideAngin, setSlideAngin] = useState<number>(1); // 1-10
   const [isHudExpanded, setIsHudExpanded] = useState<boolean>(false);
   const hudTimerRef = useRef<any>(null);
 
@@ -822,8 +822,8 @@ export default function SimulasiPencemaranUdara() {
     setCheckKendaraan(false);
     setCheckPabrik(false);
     setCheckSampah(false);
-    setSlideAsap(2);
-    setSlideAngin(5);
+    setSlideAsap(1);
+    setSlideAngin(1);
 
     const canvas = canvasRef.current;
     if (canvas) populateSim(canvas.width, canvas.height);
