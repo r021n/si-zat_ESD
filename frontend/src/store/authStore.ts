@@ -56,8 +56,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
       set({ user: data.user, token: data.token, loading: false });
-      // Check enrollment after login
-      setTimeout(() => get().checkEnrollment(), 0);
+      await get().checkEnrollment();
     } catch (err: any) {
       set({ error: err.message, loading: false });
       throw err;
@@ -71,8 +70,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
       set({ user: data.user, token: data.token, loading: false });
-      // New users are not enrolled
-      set({ isEnrolled: false });
+      await get().checkEnrollment();
     } catch (err: any) {
       set({ error: err.message, loading: false });
       throw err;
@@ -87,6 +85,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         localStorage.setItem("token", data.token);
         localStorage.setItem("user", JSON.stringify(data.user));
         set({ user: data.user, token: data.token, loading: false });
+        await get().checkEnrollment();
       } else {
         set({ loading: false });
       }
@@ -135,9 +134,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       const data = await getMeApi(token);
       localStorage.setItem("user", JSON.stringify(data.user));
+      // Check enrollment before marking initialized so UI has complete data
+      await get().checkEnrollment();
       set({ user: data.user, token, initialized: true });
-      // Check enrollment after successful auth
-      get().checkEnrollment();
     } catch (err: any) {
       // Check if it's a network/offline error
       const isNetworkError =

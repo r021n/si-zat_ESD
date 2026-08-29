@@ -298,8 +298,8 @@ export default function MainMenu({ onNavigate }: MainMenuProps) {
             Modul Aktivitas
           </p>
 
-          {/* Enroll CTA Card - only for non-enrolled non-admin students */}
-          {!isEnrolled && !isAdmin && (
+          {/* Enroll CTA Card - only for non-enrolled non-admin students (hide while loading) */}
+          {isEnrolled !== null && !isEnrolled && !isAdmin && (
             <button
               onClick={() => {
                 setEnrollCode("");
@@ -496,6 +496,11 @@ export default function MainMenu({ onNavigate }: MainMenuProps) {
                     Anda sekarang bisa mengakses materi, kuis, dan simulasi.
                   </p>
                 </div>
+              </div>
+            ) : isEnrolled === null ? (
+              <div className="flex flex-col items-center gap-3 py-6">
+                <div className="w-8 h-8 border-2 border-[#8C66FF] border-t-transparent rounded-full animate-spin"></div>
+                <p className="text-xs text-[#9C98A6] font-medium">Memuat data enrollment...</p>
               </div>
             ) : (
               <>

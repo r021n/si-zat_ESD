@@ -6,7 +6,7 @@ import { LuKeyRound, LuLogOut, LuCircleCheck } from "react-icons/lu";
 
 export default function EnrollPage() {
   const navigate = useNavigate();
-  const { user, logout, enrollDeadline, setEnrolled } = useAuthStore();
+  const { user, logout, isEnrolled, enrollDeadline, setEnrolled } = useAuthStore();
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -68,6 +68,21 @@ export default function EnrollPage() {
   };
 
   if (!user) return null;
+
+  if (isEnrolled === null) {
+    return (
+      <div className="w-full min-h-screen bg-[#FAF9FF] flex justify-center items-center text-[#2C2B30] font-sans select-none overflow-hidden relative">
+        <div className="absolute top-[-10%] right-[-10%] w-50 h-50 bg-[#FFEBF0] rounded-full filter blur-2xl opacity-65"></div>
+        <div className="absolute bottom-[-10%] left-[-10%] w-50 h-50 bg-[#E9E4FF] rounded-full filter blur-2xl opacity-65"></div>
+        <div className="w-full max-w-107.5 min-h-screen flex flex-col justify-center items-center px-6 py-12 z-10 text-center">
+          <div className="bg-white rounded-4xl p-8 shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-[#F0EDFF] flex flex-col items-center gap-6">
+            <div className="w-8 h-8 border-2 border-[#8C66FF] border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-xs text-[#9C98A6] font-medium">Memuat data enrollment...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (success) {
     return (

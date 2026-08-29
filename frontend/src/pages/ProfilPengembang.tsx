@@ -10,11 +10,7 @@ import unsLogo from "../assets/uns_logo.webp";
 export default function ProfilPengembang() {
   const navigate = useNavigate();
   const goBack = useAppBack();
-  const { user, checkAuth } = useAuthStore();
-
-  useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
+  const { user } = useAuthStore();
 
   useEffect(() => {
     if (!user) {
