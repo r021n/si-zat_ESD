@@ -18,6 +18,8 @@ import {
   FaHeadSideMask,
   FaChartBar,
   FaArrowLeft,
+  FaCircleInfo,
+  FaXmark,
 } from "react-icons/fa6";
 
 // --- DEFINISI INTERFACE & TYPE ---
@@ -101,6 +103,7 @@ export default function SimulasiPencemaranUdara() {
   const [slideAsap, setSlideAsap] = useState<number>(1); // 1: Sedikit, 2: Sedang, 3: Banyak
   const [slideAngin, setSlideAngin] = useState<number>(1); // 1-10
   const [isHudExpanded, setIsHudExpanded] = useState<boolean>(false);
+  const [isLegendOpen, setIsLegendOpen] = useState<boolean>(false);
   const hudTimerRef = useRef<any>(null);
 
   const openHud = () => {
@@ -1227,14 +1230,28 @@ export default function SimulasiPencemaranUdara() {
         </section>
 
         {/* KOLOM 3: REAL-TIME GRAPH METRICS */}
-        <section className="col-span-4 bg-white border border-slate-200 rounded-xl p-3 flex flex-col h-full overflow-hidden">
+        <section className="col-span-4 bg-white border border-slate-200 rounded-xl p-3 flex flex-col h-full overflow-hidden relative">
           <h2 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex justify-between items-center shrink-0 mb-4">
-            <span>
+            <span className="flex items-center gap-1.5">
               <FaChartBar className="text-sky-500" /> Grafik Kualitas Udara
             </span>
-            <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest bg-slate-100 px-1.5 py-0.5 rounded">
-              Real-Time
-            </span>
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => setIsLegendOpen(!isLegendOpen)}
+                className={`px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider flex items-center gap-1 border transition-all cursor-pointer select-none ${
+                  isLegendOpen
+                    ? "bg-sky-600 text-white border-sky-600 shadow-xs"
+                    : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100 hover:text-slate-800"
+                }`}
+                title={isLegendOpen ? "Sembunyikan Keterangan" : "Tampilkan Keterangan Parameter"}
+              >
+                <FaCircleInfo className="text-[10px]" />
+                <span>Info</span>
+              </button>
+              <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest bg-slate-100 px-1.5 py-0.5 rounded">
+                Real-Time
+              </span>
+            </div>
           </h2>
 
           <div className="flex-1 flex flex-col min-h-0 relative mt-2 select-none">
@@ -1371,30 +1388,52 @@ export default function SimulasiPencemaranUdara() {
             </div>
           </div>
 
-          {/* Keterangan Parameter Grafik */}
-          <div className="mt-2 pt-2 border-t border-slate-100 text-center shrink-0">
-            <span className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 text-center">
-              Keterangan Parameter Grafik
-            </span>
-            <p className="text-[10px] leading-relaxed text-slate-600 text-center font-semibold">
-              <span className="inline-block mx-1.5">
-                <strong className="text-emerald-600">AQI:</strong> Indeks
-                Kualitas Udara
-              </span>
-              <span className="inline-block mx-1.5">
-                <strong className="text-emerald-600">PM2.5:</strong> Partikel
-                Debu Halus
-              </span>
-              <span className="inline-block mx-1.5">
-                <strong className="text-cyan-600">CO2:</strong> Karbon Dioksida
-              </span>
-              <span className="inline-block mx-1.5">
-                <strong className="text-sky-600">CO:</strong> Karbon Monoksida
-              </span>
-              <span className="inline-block mx-1.5">
-                <strong className="text-blue-600">O2:</strong> Oksigen Udara
-              </span>
-            </p>
+          {/* Modal Keterangan Parameter Grafik */}
+          <div
+            className={`absolute top-10 right-2 z-30 w-auto min-w-[210px] max-w-[calc(100%-16px)] sm:max-w-[260px] bg-white/95 backdrop-blur-md border border-slate-200/90 shadow-xl rounded-xl p-2.5 transition-all duration-300 origin-top-right ${
+              isLegendOpen
+                ? "scale-100 opacity-100 pointer-events-auto"
+                : "scale-90 opacity-0 pointer-events-none"
+            }`}
+          >
+            <div className="flex items-center justify-between border-b border-slate-100 pb-1.5 mb-1.5">
+              <div className="flex items-center gap-1.5">
+                <FaCircleInfo className="text-sky-600 text-[11px]" />
+                <span className="text-[10px] font-bold text-slate-700 uppercase tracking-wider">
+                  Keterangan Parameter
+                </span>
+              </div>
+              <button
+                onClick={() => setIsLegendOpen(false)}
+                className="w-4 h-4 rounded flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                title="Tutup Keterangan"
+              >
+                <FaXmark className="text-[10px]" />
+              </button>
+            </div>
+
+            <div className="space-y-1 text-[9.5px]">
+              <div className="flex items-center justify-between gap-2 bg-slate-50/90 px-2 py-0.5 rounded border border-slate-100/70">
+                <span className="font-bold text-emerald-600">AQI</span>
+                <span className="text-slate-600 font-medium">Indeks Kualitas Udara</span>
+              </div>
+              <div className="flex items-center justify-between gap-2 bg-slate-50/90 px-2 py-0.5 rounded border border-slate-100/70">
+                <span className="font-bold text-teal-600">PM2.5</span>
+                <span className="text-slate-600 font-medium">Partikel Debu (µg/m³)</span>
+              </div>
+              <div className="flex items-center justify-between gap-2 bg-slate-50/90 px-2 py-0.5 rounded border border-slate-100/70">
+                <span className="font-bold text-cyan-600">CO2</span>
+                <span className="text-slate-600 font-medium">Karbon Dioksida (ppm)</span>
+              </div>
+              <div className="flex items-center justify-between gap-2 bg-slate-50/90 px-2 py-0.5 rounded border border-slate-100/70">
+                <span className="font-bold text-sky-600">CO</span>
+                <span className="text-slate-600 font-medium">Karbon Monoksida (ppm)</span>
+              </div>
+              <div className="flex items-center justify-between gap-2 bg-slate-50/90 px-2 py-0.5 rounded border border-slate-100/70">
+                <span className="font-bold text-blue-600">O2</span>
+                <span className="text-slate-600 font-medium">Oksigen Udara (% Vol)</span>
+              </div>
+            </div>
           </div>
         </section>
       </main>

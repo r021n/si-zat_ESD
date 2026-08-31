@@ -15,6 +15,8 @@ import {
   FaEye,
   FaChartBar,
   FaArrowLeft,
+  FaCircleInfo,
+  FaXmark,
 } from "react-icons/fa6";
 import { IoSparkles } from "react-icons/io5";
 
@@ -99,6 +101,7 @@ export default function SimulasiPencemaranAir() {
   const [slideDomestik, setSlideDomestik] = useState<number>(10);
   const [slideAliran, setSlideAliran] = useState<number>(1);
   const [isHudExpanded, setIsHudExpanded] = useState<boolean>(false);
+  const [isLegendOpen, setIsLegendOpen] = useState<boolean>(false);
   const hudTimerRef = useRef<any>(null);
 
   const openHud = () => {
@@ -1126,14 +1129,28 @@ export default function SimulasiPencemaranAir() {
         </section>
 
         {/* KOLOM 3: REAL-TIME BAR CHART */}
-        <section className="col-span-4 bg-white border border-slate-200 rounded-xl p-3 flex flex-col h-full overflow-hidden">
+        <section className="col-span-4 bg-white border border-slate-200 rounded-xl p-3 flex flex-col h-full overflow-hidden relative">
           <h2 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex justify-between items-center shrink-0 mb-4">
-            <span>
+            <span className="flex items-center gap-1.5">
               <FaChartBar className="text-sky-500" /> Grafik Kualitas Air
             </span>
-            <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest bg-slate-100 px-1.5 py-0.5 rounded">
-              Real-Time
-            </span>
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => setIsLegendOpen(!isLegendOpen)}
+                className={`px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider flex items-center gap-1 border transition-all cursor-pointer select-none ${
+                  isLegendOpen
+                    ? "bg-sky-600 text-white border-sky-600 shadow-xs"
+                    : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100 hover:text-slate-800"
+                }`}
+                title={isLegendOpen ? "Sembunyikan Keterangan" : "Tampilkan Keterangan Parameter"}
+              >
+                <FaCircleInfo className="text-[10px]" />
+                <span>Info</span>
+              </button>
+              <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest bg-slate-100 px-1.5 py-0.5 rounded">
+                Real-Time
+              </span>
+            </div>
           </h2>
 
           <div className="flex-1 flex flex-col min-h-0 relative mt-2 select-none">
@@ -1270,18 +1287,52 @@ export default function SimulasiPencemaranAir() {
             </div>
           </div>
 
-          {/* Keterangan Parameter Grafik */}
-          <div className="mt-2 pt-2 border-t border-slate-100 text-center shrink-0">
-            <span className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 text-center">
-              Keterangan Parameter Grafik
-            </span>
-            <p className="text-[10px] leading-relaxed text-slate-600 text-center font-semibold">
-              <span className="inline-block mx-1.5"><strong className="text-emerald-600">DO:</strong> Oksigen Terlarut</span>
-              <span className="inline-block mx-1.5"><strong className="text-blue-600">pH:</strong> Keasaman Air</span>
-              <span className="inline-block mx-1.5"><strong className="text-amber-600">BOD:</strong> Kebutuhan Oksigen Biologis</span>
-              <span className="inline-block mx-1.5"><strong className="text-orange-600">COD:</strong> Kebutuhan Oksigen Kimiawi</span>
-              <span className="inline-block mx-1.5"><strong className="text-rose-600">Polutan:</strong> Tingkat Pencemar</span>
-            </p>
+          {/* Modal Keterangan Parameter Grafik */}
+          <div
+            className={`absolute top-10 right-2 z-30 w-auto min-w-[210px] max-w-[calc(100%-16px)] sm:max-w-[260px] bg-white/95 backdrop-blur-md border border-slate-200/90 shadow-xl rounded-xl p-2.5 transition-all duration-300 origin-top-right ${
+              isLegendOpen
+                ? "scale-100 opacity-100 pointer-events-auto"
+                : "scale-90 opacity-0 pointer-events-none"
+            }`}
+          >
+            <div className="flex items-center justify-between border-b border-slate-100 pb-1.5 mb-1.5">
+              <div className="flex items-center gap-1.5">
+                <FaCircleInfo className="text-sky-600 text-[11px]" />
+                <span className="text-[10px] font-bold text-slate-700 uppercase tracking-wider">
+                  Keterangan Parameter
+                </span>
+              </div>
+              <button
+                onClick={() => setIsLegendOpen(false)}
+                className="w-4 h-4 rounded flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                title="Tutup Keterangan"
+              >
+                <FaXmark className="text-[10px]" />
+              </button>
+            </div>
+
+            <div className="space-y-1 text-[9.5px]">
+              <div className="flex items-center justify-between gap-2 bg-slate-50/90 px-2 py-0.5 rounded border border-slate-100/70">
+                <span className="font-bold text-emerald-600">DO</span>
+                <span className="text-slate-600 font-medium">Oksigen Terlarut</span>
+              </div>
+              <div className="flex items-center justify-between gap-2 bg-slate-50/90 px-2 py-0.5 rounded border border-slate-100/70">
+                <span className="font-bold text-blue-600">pH</span>
+                <span className="text-slate-600 font-medium">Keasaman Air</span>
+              </div>
+              <div className="flex items-center justify-between gap-2 bg-slate-50/90 px-2 py-0.5 rounded border border-slate-100/70">
+                <span className="font-bold text-amber-600">BOD</span>
+                <span className="text-slate-600 font-medium">Kebutuhan Oksigen Biologis</span>
+              </div>
+              <div className="flex items-center justify-between gap-2 bg-slate-50/90 px-2 py-0.5 rounded border border-slate-100/70">
+                <span className="font-bold text-orange-600">COD</span>
+                <span className="text-slate-600 font-medium">Kebutuhan Oksigen Kimiawi</span>
+              </div>
+              <div className="flex items-center justify-between gap-2 bg-slate-50/90 px-2 py-0.5 rounded border border-slate-100/70">
+                <span className="font-bold text-rose-600">Polutan</span>
+                <span className="text-slate-600 font-medium">Tingkat Pencemar</span>
+              </div>
+            </div>
           </div>
         </section>
       </main>

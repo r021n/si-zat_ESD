@@ -16,6 +16,8 @@ import {
   FaMountainSun,
   FaChartBar,
   FaArrowLeft,
+  FaCircleInfo,
+  FaXmark,
 } from "react-icons/fa6";
 
 // --- DEFINISI INTERFACE & TYPE ---
@@ -113,6 +115,7 @@ export default function SimulasiPencemaranTanah() {
   const [jumlahSampah, setJumlahSampah] = useState<number>(10);
   const [hujan, setHujan] = useState<number>(0);
   const [isHudExpanded, setIsHudExpanded] = useState<boolean>(false);
+  const [isLegendOpen, setIsLegendOpen] = useState<boolean>(false);
   const hudTimerRef = useRef<any>(null);
 
   const openHud = () => {
@@ -2131,14 +2134,28 @@ export default function SimulasiPencemaranTanah() {
         </section>
 
         {/* KOLOM 3: GRAFIK PARAMETER */}
-        <section className="col-span-4 bg-white border border-slate-200 rounded-xl p-3 flex flex-col h-full overflow-hidden">
+        <section className="col-span-4 bg-white border border-slate-200 rounded-xl p-3 flex flex-col h-full overflow-hidden relative">
           <h2 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex justify-between items-center shrink-0 mb-4">
-            <span>
+            <span className="flex items-center gap-1.5">
               <FaChartBar className="text-emerald-600" /> Kondisi Tanah dan Air
             </span>
-            <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest bg-slate-100 px-1.5 py-0.5 rounded">
-              Real-Time
-            </span>
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => setIsLegendOpen(!isLegendOpen)}
+                className={`px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider flex items-center gap-1 border transition-all cursor-pointer select-none ${
+                  isLegendOpen
+                    ? "bg-emerald-600 text-white border-emerald-600 shadow-xs"
+                    : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100 hover:text-slate-800"
+                }`}
+                title={isLegendOpen ? "Sembunyikan Keterangan" : "Tampilkan Keterangan Parameter"}
+              >
+                <FaCircleInfo className="text-[10px]" />
+                <span>Info</span>
+              </button>
+              <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest bg-slate-100 px-1.5 py-0.5 rounded">
+                Real-Time
+              </span>
+            </div>
           </h2>
 
           <div className="flex-1 flex flex-col min-h-0 relative mt-2 select-none">
@@ -2275,18 +2292,52 @@ export default function SimulasiPencemaranTanah() {
             </div>
           </div>
 
-          {/* Keterangan Parameter Grafik */}
-          <div className="mt-2 pt-2 border-t border-slate-100 text-center shrink-0">
-            <span className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 text-center">
-              Keterangan Parameter Grafik
-            </span>
-            <p className="text-[10px] leading-relaxed text-slate-600 text-center font-semibold">
-              <span className="inline-block mx-1.5"><strong className="text-emerald-600">pH:</strong> Keasaman Tanah</span>
-              <span className="inline-block mx-1.5"><strong className="text-lime-600">Kesuburan:</strong> Kadar Unsur Hara</span>
-              <span className="inline-block mx-1.5"><strong className="text-amber-600">Akar:</strong> Kesehatan Perakaran</span>
-              <span className="inline-block mx-1.5"><strong className="text-rose-600">Racun:</strong> Konsentrasi Kontaminan</span>
-              <span className="inline-block mx-1.5"><strong className="text-sky-600">Panen:</strong> Estimasi Hasil Panen</span>
-            </p>
+          {/* Modal Keterangan Parameter Grafik */}
+          <div
+            className={`absolute top-10 right-2 z-30 w-auto min-w-[210px] max-w-[calc(100%-16px)] sm:max-w-[260px] bg-white/95 backdrop-blur-md border border-slate-200/90 shadow-xl rounded-xl p-2.5 transition-all duration-300 origin-top-right ${
+              isLegendOpen
+                ? "scale-100 opacity-100 pointer-events-auto"
+                : "scale-90 opacity-0 pointer-events-none"
+            }`}
+          >
+            <div className="flex items-center justify-between border-b border-slate-100 pb-1.5 mb-1.5">
+              <div className="flex items-center gap-1.5">
+                <FaCircleInfo className="text-emerald-600 text-[11px]" />
+                <span className="text-[10px] font-bold text-slate-700 uppercase tracking-wider">
+                  Keterangan Parameter
+                </span>
+              </div>
+              <button
+                onClick={() => setIsLegendOpen(false)}
+                className="w-4 h-4 rounded flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                title="Tutup Keterangan"
+              >
+                <FaXmark className="text-[10px]" />
+              </button>
+            </div>
+
+            <div className="space-y-1 text-[9.5px]">
+              <div className="flex items-center justify-between gap-2 bg-slate-50/90 px-2 py-0.5 rounded border border-slate-100/70">
+                <span className="font-bold text-emerald-600">pH</span>
+                <span className="text-slate-600 font-medium">Keasaman Tanah</span>
+              </div>
+              <div className="flex items-center justify-between gap-2 bg-slate-50/90 px-2 py-0.5 rounded border border-slate-100/70">
+                <span className="font-bold text-lime-600">Kesuburan</span>
+                <span className="text-slate-600 font-medium">Kadar Unsur Hara</span>
+              </div>
+              <div className="flex items-center justify-between gap-2 bg-slate-50/90 px-2 py-0.5 rounded border border-slate-100/70">
+                <span className="font-bold text-amber-600">Akar</span>
+                <span className="text-slate-600 font-medium">Kesehatan Perakaran</span>
+              </div>
+              <div className="flex items-center justify-between gap-2 bg-slate-50/90 px-2 py-0.5 rounded border border-slate-100/70">
+                <span className="font-bold text-rose-600">Racun</span>
+                <span className="text-slate-600 font-medium">Konsentrasi Kontaminan</span>
+              </div>
+              <div className="flex items-center justify-between gap-2 bg-slate-50/90 px-2 py-0.5 rounded border border-slate-100/70">
+                <span className="font-bold text-sky-600">Panen</span>
+                <span className="text-slate-600 font-medium">Estimasi Hasil Panen</span>
+              </div>
+            </div>
           </div>
         </section>
       </main>
