@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ScreenOrientation } from "@capacitor/screen-orientation";
+import { useImmersiveMode } from "../../hooks/useImmersiveMode";
 import {
   FaWind,
   FaPlay,
@@ -40,6 +41,7 @@ const INITIAL_VALUES: SimState = {
 
 export default function SimulasiPencemaranUdara() {
   const navigate = useNavigate();
+  const { enterImmersive, exitImmersive } = useImmersiveMode();
 
   // Dynamically lock orientation to landscape on mount and restore to portrait on unmount
   useEffect(() => {
@@ -48,6 +50,12 @@ export default function SimulasiPencemaranUdara() {
         await ScreenOrientation.lock({ orientation: "landscape" });
       } catch (err) {
         console.warn("ScreenOrientation lock failed or not supported:", err);
+      }
+
+      try {
+        await enterImmersive();
+      } catch (err) {
+        console.warn("Immersive mode failed:", err);
       }
 
       const sessionKey = `refreshed-${window.location.hash}`;
@@ -63,6 +71,11 @@ export default function SimulasiPencemaranUdara() {
 
     return () => {
       const unlockOrientation = async () => {
+        try {
+          await exitImmersive();
+        } catch (err) {
+          console.warn("Immersive exit failed:", err);
+        }
         try {
           await ScreenOrientation.lock({ orientation: "portrait" });
         } catch {
