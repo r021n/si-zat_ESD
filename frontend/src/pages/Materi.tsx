@@ -20,8 +20,6 @@ import {
 import {
   LOCAL_STORAGE_KEY,
   MATERI_SLIDES,
-  PUZZLE_SLOTS,
-  PAGE14_PUZZLE_SLOTS,
 } from "../components/materi/constants";
 import Page4Interactive from "../components/materi/Page4Interactive";
 import Page7Interactive from "../components/materi/Page7Interactive";
@@ -100,7 +98,7 @@ export default function Materi() {
     if (saved === "true") return true;
     const savedMax = localStorage.getItem(LOCAL_STORAGE_KEY);
     const maxIdx = savedMax ? parseInt(savedMax, 10) : 0;
-    return maxIdx >= 13;
+    return maxIdx >= 14;
   });
 
   const [page17Selected, setPage17Selected] = useState<string | null>(() => {
@@ -181,28 +179,22 @@ export default function Materi() {
     return () => clearTimeout(timer);
   }, [currentPage, maxUnlockedIndex, token]);
 
-  // Immediately unlock next page when landing on current page (except interactive pages requiring correct answer)
+  // Immediately unlock next page when landing on current page (except interactive pages requiring submission)
   useEffect(() => {
     if (
       currentPage >= maxUnlockedIndex &&
       currentPage < MATERI_SLIDES.length - 1
     ) {
-      if (currentPage === 3 && (!page4Submitted || page4Selected !== "B")) {
+      if (currentPage === 3 && !page4Submitted) {
         return;
       }
-      const isPage7Correct = PUZZLE_SLOTS.every(
-        (slot) => page7Assignments[slot.id] === slot.correctItemId,
-      );
-      if (currentPage === 6 && (!page7Submitted || !isPage7Correct)) {
+      if (currentPage === 6 && !page7Submitted) {
         return;
       }
-      const isPage14Correct = PAGE14_PUZZLE_SLOTS.every(
-        (slot) => page14Assignments[slot.id] === slot.correctItemId,
-      );
-      if (currentPage === 13 && (!page14Submitted || !isPage14Correct)) {
+      if (currentPage === 13 && !page14Submitted) {
         return;
       }
-      if (currentPage === 16 && (!page17Submitted || page17Selected !== "B")) {
+      if (currentPage === 16 && !page17Submitted) {
         return;
       }
       setMaxUnlockedIndex(currentPage + 1);
@@ -211,13 +203,9 @@ export default function Materi() {
     currentPage,
     maxUnlockedIndex,
     page4Submitted,
-    page4Selected,
     page7Submitted,
-    page7Assignments,
     page14Submitted,
-    page14Assignments,
     page17Submitted,
-    page17Selected,
   ]);
 
   // Persist unlocked state & page-specific selections to localStorage
@@ -290,7 +278,7 @@ export default function Materi() {
   const handleSubmitPage4 = () => {
     if (!page4Selected) return;
     setPage4Submitted(true);
-    if (page4Selected === "B" && maxUnlockedIndex < 4) {
+    if (maxUnlockedIndex < 4) {
       setMaxUnlockedIndex(4);
     }
   };
@@ -301,10 +289,7 @@ export default function Materi() {
     );
     if (!allAssigned) return;
     setPage7Submitted(true);
-    const isAllCorrect = PUZZLE_SLOTS.every(
-      (slot) => page7Assignments[slot.id] === slot.correctItemId,
-    );
-    if (isAllCorrect && maxUnlockedIndex < 7) {
+    if (maxUnlockedIndex < 7) {
       setMaxUnlockedIndex(7);
     }
   };
@@ -315,18 +300,15 @@ export default function Materi() {
     );
     if (!allAssigned) return;
     setPage14Submitted(true);
-    const isAllCorrect = PAGE14_PUZZLE_SLOTS.every(
-      (slot) => page14Assignments[slot.id] === slot.correctItemId,
-    );
-    if (isAllCorrect && maxUnlockedIndex < 13) {
-      setMaxUnlockedIndex(13);
+    if (maxUnlockedIndex < 14) {
+      setMaxUnlockedIndex(14);
     }
   };
 
   const handleSubmitPage17 = () => {
     if (!page17Selected) return;
     setPage17Submitted(true);
-    if (page17Selected === "B" && maxUnlockedIndex < 17) {
+    if (maxUnlockedIndex < 17) {
       setMaxUnlockedIndex(17);
     }
   };
@@ -349,60 +331,30 @@ export default function Materi() {
 
   const handleNext = useCallback(() => {
     if (currentPage === 3) {
-      if (!page4Submitted) {
+      if (!page4Submitted && maxUnlockedIndex <= 3) {
         showToast("Pilih dan kirim jawaban terlebih dahulu untuk melanjutkan!");
-        return;
-      }
-      if (page4Selected !== "B") {
-        showToast(
-          "Jawabanmu masih kurang tepat! Tekan 'Ulangi' dan pilih jawaban yang benar.",
-        );
         return;
       }
     }
     if (currentPage === 6) {
-      if (!page7Submitted) {
+      if (!page7Submitted && maxUnlockedIndex <= 6) {
         showToast(
           "Hubungkan semua potongan puzzle dan kirim jawaban terlebih dahulu!",
-        );
-        return;
-      }
-      const isAllCorrect = PUZZLE_SLOTS.every(
-        (slot) => page7Assignments[slot.id] === slot.correctItemId,
-      );
-      if (!isAllCorrect) {
-        showToast(
-          "Jawaban puzzle masih kurang tepat! Tekan 'Ulangi' dan perbaiki posisinya.",
         );
         return;
       }
     }
     if (currentPage === 13) {
-      if (!page14Submitted) {
+      if (!page14Submitted && maxUnlockedIndex <= 13) {
         showToast(
           "Hubungkan semua potongan puzzle dan kirim jawaban terlebih dahulu!",
         );
         return;
       }
-      const isAllCorrect = PAGE14_PUZZLE_SLOTS.every(
-        (slot) => page14Assignments[slot.id] === slot.correctItemId,
-      );
-      if (!isAllCorrect) {
-        showToast(
-          "Jawaban puzzle masih kurang tepat! Tekan 'Ulangi' dan perbaiki posisinya.",
-        );
-        return;
-      }
     }
     if (currentPage === 16) {
-      if (!page17Submitted) {
+      if (!page17Submitted && maxUnlockedIndex <= 16) {
         showToast("Pilih dan kirim jawaban terlebih dahulu untuk melanjutkan!");
-        return;
-      }
-      if (page17Selected !== "B") {
-        showToast(
-          "Jawabanmu masih kurang tepat! Tekan 'Ulangi' dan pilih jawaban yang benar.",
-        );
         return;
       }
     }
@@ -415,13 +367,9 @@ export default function Materi() {
     currentPage,
     maxUnlockedIndex,
     page4Submitted,
-    page4Selected,
     page7Submitted,
-    page7Assignments,
     page14Submitted,
-    page14Assignments,
     page17Submitted,
-    page17Selected,
   ]);
 
   const handlePrev = useCallback(() => {

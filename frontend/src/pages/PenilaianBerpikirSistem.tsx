@@ -164,6 +164,7 @@ export default function PenilaianBerpikirSistem() {
   const [newMessage, setNewMessage] = useState<string>("");
   const [loadingMessages, setLoadingMessages] = useState<boolean>(false);
   const chatEndRef = useRef<HTMLDivElement | null>(null);
+  const prevMessagesLengthRef = useRef<number>(0);
 
   // Upload Form State
   const [title, setTitle] = useState<string>("");
@@ -328,8 +329,11 @@ export default function PenilaianBerpikirSistem() {
   useEffect(() => {
     if (activeView !== "detail" || !selectedSubmission) {
       setMessages([]);
+      prevMessagesLengthRef.current = 0;
       return;
     }
+
+    prevMessagesLengthRef.current = 0;
 
     const fetchMessages = async (showLoading = false) => {
       try {
@@ -338,7 +342,16 @@ export default function PenilaianBerpikirSistem() {
           token || "",
           selectedSubmission.id,
         );
-        setMessages(data);
+        setMessages((prev) => {
+          if (
+            prev.length === data.length &&
+            (prev.length === 0 ||
+              prev[prev.length - 1]?.id === data[data.length - 1]?.id)
+          ) {
+            return prev;
+          }
+          return data;
+        });
       } catch (err) {
         console.error("Gagal memuat pesan diskusi:", err);
       } finally {
@@ -357,9 +370,12 @@ export default function PenilaianBerpikirSistem() {
     return () => clearInterval(interval);
   }, [activeView, selectedSubmission, token]);
 
-  // Scroll to bottom when messages change
+  // Scroll to bottom only when new messages are added
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (messages.length > prevMessagesLengthRef.current) {
+      chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+    prevMessagesLengthRef.current = messages.length;
   }, [messages]);
 
   // Handle send message
@@ -453,15 +469,30 @@ export default function PenilaianBerpikirSistem() {
   };
 
   // Handle delete task
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (
+    id: string,
+    taskTitle?: string,
+    studentName?: string,
+  ) => {
+    const confirmMessage = taskTitle
+      ? `Apakah Anda yakin ingin menghapus pengumpulan tugas "${taskTitle}"${
+          studentName ? ` oleh ${studentName}` : ""
+        }? Seluruh diskusi terkait tugas ini juga akan terhapus.`
+      : "Apakah Anda yakin ingin menghapus pengumpulan tugas ini?";
+
     const confirmDelete = await showConfirm(
-      "Apakah Anda yakin ingin menghapus pengumpulan tugas ini?",
+      confirmMessage,
+      "Konfirmasi Hapus Tugas",
     );
     if (!confirmDelete) return;
 
     try {
       await deleteTaskSubmissionApi(token || "", id);
-      setSubmissions(submissions.filter((s) => s.id !== id));
+      setSubmissions((prev) => prev.filter((s) => s.id !== id));
+      if (selectedSubmission?.id === id) {
+        setSelectedSubmission(null);
+        setActiveView("list");
+      }
       await showAlert("Tugas berhasil dihapus!");
     } catch (err: any) {
       await showAlert(err.message || "Gagal menghapus tugas.");
@@ -622,9 +653,28 @@ export default function PenilaianBerpikirSistem() {
                             <span className="text-[9px] font-bold uppercase bg-[#E8E5FF] text-[#635BFF] px-2.5 py-0.5 rounded-full">
                               Kelas {sub.studentClass}
                             </span>
-                            <span className="text-[9px] text-[#9C98A6] font-semibold">
-                              {sub.submittedAt.split(",")[0]}
-                            </span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[9px] text-[#9C98A6] font-semibold">
+                                {sub.submittedAt.split(",")[0]}
+                              </span>
+                              {isAdmin && (
+                                <button
+                                  type="button"
+                                  title="Hapus Submission (Khusus Admin)"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDelete(
+                                      sub.id,
+                                      sub.title,
+                                      sub.studentName,
+                                    );
+                                  }}
+                                  className="w-6.5 h-6.5 rounded-lg bg-[#FFF0F3] hover:bg-[#FFE0E6] text-[#D95276] border border-[#FFD0DC] flex items-center justify-center transition-colors cursor-pointer active:scale-90 shrink-0"
+                                >
+                                  <LuTrash2 size={12} />
+                                </button>
+                              )}
+                            </div>
                           </div>
 
                           <h3 className="text-xs font-extrabold text-[#2C2B30] tracking-wide leading-snug">
@@ -707,6 +757,22 @@ export default function PenilaianBerpikirSistem() {
                       <span className="text-[9px] text-[#9C98A6] font-semibold">
                         ⏱ {selectedSubmission.submittedAt}
                       </span>
+                      {isAdmin && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleDelete(
+                              selectedSubmission.id,
+                              selectedSubmission.title,
+                              selectedSubmission.studentName,
+                            )
+                          }
+                          className="text-[9px] font-bold uppercase text-[#D95276] hover:text-[#b53a59] cursor-pointer flex items-center gap-1 bg-[#FFEBF0] border border-[#FFD0DC] px-2 py-0.5 rounded-full transition-none active:bg-[#ffd1dd]"
+                          title="Hapus tugas ini (Khusus Admin)"
+                        >
+                          <LuTrash2 size={10} /> Hapus
+                        </button>
+                      )}
                       <button
                         type="button"
                         onClick={() => setIsTaskCollapsed(true)}
@@ -995,7 +1061,13 @@ export default function PenilaianBerpikirSistem() {
                           </h3>
                           <button
                             type="button"
-                            onClick={() => handleDelete(sub.id)}
+                            onClick={() =>
+                              handleDelete(
+                                sub.id,
+                                sub.title,
+                                sub.studentName,
+                              )
+                            }
                             className="text-[9px] font-bold uppercase text-[#D95276] hover:text-[#b53a59] cursor-pointer flex items-center gap-1 bg-[#FFEBF0] px-2.5 py-1 rounded-full transition-none active:bg-[#ffd1dd]"
                           >
                             <LuTrash2 size={10} /> Hapus

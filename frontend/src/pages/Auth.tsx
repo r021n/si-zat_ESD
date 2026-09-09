@@ -317,13 +317,19 @@ export default function Auth() {
               </p>
             </div>
 
-            <form onSubmit={handleClassSubmit} className="flex flex-col gap-4">
+            <form onSubmit={handleClassSubmit} translate="no" className="flex flex-col gap-4">
               <div className="flex flex-col gap-1.5">
-                <label className="text-[9px] font-extrabold uppercase tracking-widest text-[#9C98A6] pl-1">
+                <label htmlFor="modal-input-kelas" className="text-[9px] font-extrabold uppercase tracking-widest text-[#9C98A6] pl-1">
                   Kelas
                 </label>
                 <input
+                  id="modal-input-kelas"
+                  name="kelas"
                   type="text"
+                  dir="ltr"
+                  autoComplete="off"
+                  autoCorrect="off"
+                  spellCheck={false}
                   value={inputKelas}
                   onChange={(e) => setInputKelas(e.target.value)}
                   placeholder="Contoh: XII MIPA 1"

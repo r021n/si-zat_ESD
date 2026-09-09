@@ -207,6 +207,7 @@ tasks.delete('/submissions/:id', async (c: any) => {
       return c.json({ error: 'Akses ditolak. Anda tidak berhak menghapus tugas ini.' }, 403)
     }
 
+    await db.delete(taskDiscussions).where(eq(taskDiscussions.taskSubmissionId, id))
     await db.delete(taskSubmissions).where(eq(taskSubmissions.id, id))
     return c.json({ success: true, message: 'Tugas berhasil dihapus.' })
   } catch (error: any) {

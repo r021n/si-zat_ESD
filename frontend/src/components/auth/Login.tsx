@@ -27,14 +27,21 @@ export default function Login({ onSuccess }: LoginProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+    <form onSubmit={handleSubmit} translate="no" className="flex flex-col gap-4">
       {/* Email Input */}
       <div className="flex flex-col gap-1">
-        <label className="text-[9px] font-extrabold uppercase tracking-widest text-[#9C98A6] pl-1">
+        <label htmlFor="login-email" className="text-[9px] font-extrabold uppercase tracking-widest text-[#9C98A6] pl-1">
           Email
         </label>
         <input
+          id="login-email"
+          name="email"
           type="email"
+          dir="ltr"
+          autoComplete="email"
+          autoCapitalize="none"
+          autoCorrect="off"
+          spellCheck={false}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
@@ -44,12 +51,19 @@ export default function Login({ onSuccess }: LoginProps) {
 
       {/* Password Input */}
       <div className="flex flex-col gap-1">
-        <label className="text-[9px] font-extrabold uppercase tracking-widest text-[#9C98A6] pl-1">
+        <label htmlFor="login-password" className="text-[9px] font-extrabold uppercase tracking-widest text-[#9C98A6] pl-1">
           Password
         </label>
         <div className="relative flex items-center">
           <input
+            id="login-password"
+            name="password"
             type={showPassword ? "text" : "password"}
+            dir="ltr"
+            autoComplete="current-password"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
