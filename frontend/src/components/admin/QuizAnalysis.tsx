@@ -485,10 +485,10 @@ export default function QuizAnalysis({
 
       {/* MODAL DETAIL LEMBAR JAWABAN SISWA */}
       {selectedSubmission && (
-        <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50 p-4 md:p-6 backdrop-blur-xs">
-          <div className="w-full max-w-107.5 md:max-w-3xl lg:max-w-4xl max-h-[90vh] bg-[#FAF9FF] rounded-[28px] md:rounded-[32px] shadow-2xl border border-[#F0EDFF] flex flex-col overflow-hidden animate-none select-none text-left">
+        <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50 p-3 sm:p-4 md:p-6 backdrop-blur-xs">
+          <div className="w-full max-w-[calc(100vw-1.5rem)] sm:max-w-107.5 md:max-w-3xl lg:max-w-4xl max-h-[90vh] bg-[#FAF9FF] rounded-[24px] sm:rounded-[28px] md:rounded-[32px] shadow-2xl border border-[#F0EDFF] flex flex-col overflow-hidden animate-none select-none text-left">
             {/* Header Modal */}
-            <div className="bg-white p-4 md:p-5 border-b border-[#F0EDFF] flex justify-between items-center shrink-0">
+            <div className="bg-white p-3.5 sm:p-4 md:p-5 border-b border-[#F0EDFF] flex justify-between items-center shrink-0">
               <div className="min-w-0 flex-1 pr-2">
                 <p className="text-[9px] md:text-[10px] font-bold uppercase tracking-widest text-[#9C98A6]">
                   Lembar Jawaban Siswa
@@ -502,7 +502,7 @@ export default function QuizAnalysis({
               </div>
               <button
                 onClick={() => setSelectedSubmission(null)}
-                className="w-9 h-9 rounded-full bg-[#FAF9FF] border border-[#F0EDFF] text-[#2C2B30] flex items-center justify-center hover:bg-neutral-100 cursor-pointer shrink-0 transition-colors"
+                className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#FAF9FF] border border-[#F0EDFF] text-[#2C2B30] flex items-center justify-center hover:bg-neutral-100 cursor-pointer shrink-0 transition-colors"
                 title="Tutup"
               >
                 <FiX size={18} />
@@ -510,41 +510,41 @@ export default function QuizAnalysis({
             </div>
 
             {/* Score & Summary Metrics */}
-            <div className="p-3.5 md:p-4 grid grid-cols-3 gap-2.5 md:gap-4 bg-white/70 border-b border-[#F0EDFF] shrink-0">
-              <div className="bg-white rounded-2xl p-3 border border-[#F0EDFF] text-center flex flex-col shadow-xs">
-                <span className="text-[8px] md:text-[9px] uppercase tracking-wider font-extrabold text-[#9C98A6]">
+            <div className="p-2.5 sm:p-3.5 md:p-4 grid grid-cols-3 gap-2 sm:gap-2.5 md:gap-4 bg-white/70 border-b border-[#F0EDFF] shrink-0">
+              <div className="bg-white rounded-xl sm:rounded-2xl p-2 sm:p-3 border border-[#F0EDFF] text-center flex flex-col shadow-xs min-w-0">
+                <span className="text-[7.5px] sm:text-[9px] uppercase tracking-wider font-extrabold text-[#9C98A6] truncate">
                   Skor Siswa
                 </span>
-                <span className="text-base md:text-xl font-black text-[#8C66FF] mt-0.5">
+                <span className="text-sm sm:text-base md:text-xl font-black text-[#8C66FF] mt-0.5 truncate">
                   {selectedSubmission.score}
-                  <span className="text-[10px] font-semibold text-[#9C98A6]">
+                  <span className="text-[9px] sm:text-[10px] font-semibold text-[#9C98A6]">
                     /100
                   </span>
                 </span>
               </div>
-              <div className="bg-white rounded-2xl p-3 border border-[#F0EDFF] text-center flex flex-col shadow-xs">
-                <span className="text-[8px] md:text-[9px] uppercase tracking-wider font-extrabold text-[#9C98A6]">
+              <div className="bg-white rounded-xl sm:rounded-2xl p-2 sm:p-3 border border-[#F0EDFF] text-center flex flex-col shadow-xs min-w-0">
+                <span className="text-[7.5px] sm:text-[9px] uppercase tracking-wider font-extrabold text-[#9C98A6] truncate">
                   Jumlah Benar
                 </span>
-                <span className="text-base md:text-xl font-black text-[#2C8578] mt-0.5">
+                <span className="text-sm sm:text-base md:text-xl font-black text-[#2C8578] mt-0.5 truncate">
                   {studentCorrectCount}
-                  <span className="text-[10px] font-semibold text-[#9C98A6]">
+                  <span className="text-[9px] sm:text-[10px] font-semibold text-[#9C98A6]">
                     /{selectedQuiz.questions.length}
                   </span>
                 </span>
               </div>
-              <div className="bg-white rounded-2xl p-3 border border-[#F0EDFF] text-center flex flex-col shadow-xs">
-                <span className="text-[8px] md:text-[9px] uppercase tracking-wider font-extrabold text-[#9C98A6]">
+              <div className="bg-white rounded-xl sm:rounded-2xl p-2 sm:p-3 border border-[#F0EDFF] text-center flex flex-col shadow-xs min-w-0">
+                <span className="text-[7.5px] sm:text-[9px] uppercase tracking-wider font-extrabold text-[#9C98A6] truncate">
                   Waktu
                 </span>
-                <span className="text-base md:text-xl font-black text-[#2C2B30] mt-0.5 font-mono">
+                <span className="text-sm sm:text-base md:text-xl font-black text-[#2C2B30] mt-0.5 font-mono truncate">
                   {formatDurationFriendly(selectedSubmission.duration)}
                 </span>
               </div>
             </div>
 
             {/* Questions & Options List - 2 Columns on Desktop */}
-            <div className="flex-1 overflow-y-auto p-4 md:p-6 flex flex-col md:grid md:grid-cols-2 md:gap-4 gap-3.5 no-scrollbar">
+            <div className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6 flex flex-col md:grid md:grid-cols-2 md:gap-4 gap-3.5 no-scrollbar">
               {studentResults.map(
                 ({
                   question: q,

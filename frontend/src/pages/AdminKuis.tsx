@@ -544,8 +544,10 @@ export default function AdminKuis() {
   return (
     <div className="w-full min-h-screen bg-[#FAF9FF] flex justify-center items-start text-[#2C2B30] font-sans select-none relative py-4 md:py-8">
       {/* Decorative Blur Bubble */}
-      <div className="absolute top-[-10%] right-[-10%] w-72 h-72 bg-[#E9E4FF] rounded-full filter blur-3xl opacity-50 pointer-events-none"></div>
-      <div className="absolute bottom-[-10%] left-[-10%] w-72 h-72 bg-[#FFEBF0] rounded-full filter blur-3xl opacity-40 pointer-events-none"></div>
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-[-10%] right-[-10%] w-72 h-72 bg-[#E9E4FF] rounded-full filter blur-3xl opacity-50"></div>
+        <div className="absolute bottom-[-10%] left-[-10%] w-72 h-72 bg-[#FFEBF0] rounded-full filter blur-3xl opacity-40"></div>
+      </div>
 
       {/* Container Responsive Desktop & Mobile */}
       <div className="w-full max-w-107.5 md:max-w-5xl lg:max-w-6xl min-h-[calc(100vh-2rem)] md:min-h-[calc(100vh-4rem)] my-auto flex flex-col justify-between px-6 py-6 md:py-6 z-10 transition-all duration-300">
