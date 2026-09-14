@@ -107,7 +107,7 @@ export default function SimulasiPencemaranTanah() {
       };
       unlockOrientation();
     };
-  }, []);
+  }, [enterImmersive, exitImmersive]);
 
   // --- REACT CONTROL STATES ---
   const [running, setRunning] = useState<boolean>(false);

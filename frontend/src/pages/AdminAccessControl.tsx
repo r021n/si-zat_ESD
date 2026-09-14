@@ -197,27 +197,58 @@ export default function AdminAccessControl() {
   }
 
   return (
-    <div className="w-full min-h-screen bg-[#FAF9FF] flex justify-center items-center text-[#2C2B30] font-sans select-none overflow-hidden relative">
-      <div className="absolute top-[-10%] right-[-10%] w-50 h-50 bg-[#E9E4FF] rounded-full filter blur-2xl opacity-50"></div>
+    <div className="w-full min-h-screen bg-[#FAF9FF] flex justify-center items-start text-[#2C2B30] font-sans select-none relative py-4 md:py-8">
+      <div className="absolute top-[-10%] right-[-10%] w-72 h-72 bg-[#E9E4FF] rounded-full filter blur-3xl opacity-50 pointer-events-none"></div>
+      <div className="absolute bottom-[-10%] left-[-10%] w-72 h-72 bg-[#FFF9E6] rounded-full filter blur-3xl opacity-40 pointer-events-none"></div>
 
-      <div className="w-full max-w-107.5 min-h-screen flex flex-col justify-between px-6 py-6 z-10">
+      <div className="w-full max-w-107.5 md:max-w-5xl lg:max-w-6xl min-h-[calc(100vh-2rem)] md:min-h-[calc(100vh-4rem)] my-auto flex flex-col justify-between px-6 py-6 md:py-6 z-10 transition-all duration-300">
         <div>
           {/* Header */}
-          <div className="w-full flex items-center gap-3 mt-6 mb-6">
-            <button
-              onClick={() => goBack("/admin")}
-              className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-[#F0EDFF] text-[#8C66FF] cursor-pointer active:bg-neutral-50 transition-none shrink-0"
-              title="Kembali"
-            >
-              <FiArrowLeft size={20} />
-            </button>
-            <div>
-              <p className="text-[10px] uppercase tracking-widest text-[#9C98A6] font-bold">
-                Panel Administrator
-              </p>
-              <h1 className="text-xl font-extrabold text-[#2C2B30] leading-tight mt-0.5">
-                Kontrol Akses
-              </h1>
+          <div className="w-full flex items-center justify-between mt-2 md:mt-0 mb-6 pb-4 border-b border-[#F0EDFF]/70">
+            <div className="flex items-center gap-3 md:gap-4">
+              <button
+                onClick={() => goBack("/admin")}
+                className="w-10 h-10 md:w-11 md:h-11 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-[#F0EDFF] text-[#8C66FF] cursor-pointer active:bg-neutral-50 hover:bg-[#FAF9FF] transition-colors shrink-0"
+                title="Kembali"
+              >
+                <FiArrowLeft size={20} />
+              </button>
+              <div>
+                <p className="text-[10px] md:text-xs uppercase tracking-widest text-[#9C98A6] font-bold">
+                  Panel Administrator
+                </p>
+                <h1 className="text-xl md:text-2xl font-extrabold text-[#2C2B30] leading-tight mt-0.5">
+                  Kontrol Akses
+                </h1>
+              </div>
+            </div>
+
+            {/* Status indicators & Desktop Save button */}
+            <div className="flex items-center gap-3">
+              <div className="hidden md:flex items-center gap-2">
+                {isLocked ? (
+                  <span className="px-3 py-1.5 bg-[#FFEBF0] text-[#D95276] text-xs font-bold rounded-full flex items-center gap-1.5">
+                    <LuLock size={13} /> Terkunci Manual
+                  </span>
+                ) : isScheduleEnabled ? (
+                  <span className="px-3 py-1.5 bg-[#F0ECFF] text-[#8C66FF] text-xs font-bold rounded-full flex items-center gap-1.5">
+                    <LuCalendar size={13} /> Jadwal Aktif ({schedules.length} Aturan)
+                  </span>
+                ) : (
+                  <span className="px-3 py-1.5 bg-[#E6F8F6] text-[#2C8578] text-xs font-bold rounded-full flex items-center gap-1.5">
+                    <LuLockOpen size={13} /> Akses Terbuka
+                  </span>
+                )}
+              </div>
+
+              <button
+                onClick={handleSaveChanges}
+                disabled={saving}
+                className="hidden md:flex py-2.5 px-5 bg-[#8C66FF] text-white font-extrabold uppercase tracking-wider text-xs rounded-full shadow-md shadow-purple-100 cursor-pointer hover:bg-[#7b55f0] transition-colors items-center gap-2"
+              >
+                <LuSave size={14} />
+                <span>{saving ? "Menyimpan..." : "Simpan Pengaturan"}</span>
+              </button>
             </div>
           </div>
 
@@ -233,25 +264,26 @@ export default function AdminAccessControl() {
             </div>
           )}
 
-          <div className="flex flex-col gap-5 overflow-y-auto max-h-[calc(100vh-200px)] pr-0.5 no-scrollbar">
+          {/* Responsive Cards Layout */}
+          <div className="flex flex-col gap-5 overflow-y-auto max-h-[calc(100vh-200px)] md:max-h-none md:overflow-visible pr-0.5 no-scrollbar">
             {/* CARD 1: MANUAL LOCK */}
-            <div className="w-full bg-white rounded-[28px] p-5 shadow-[0_4px_12px_rgba(0,0,0,0.02)] border border-[#F0EDFF] flex flex-col gap-4">
+            <div className="w-full bg-white rounded-[28px] p-5 md:p-6 shadow-[0_4px_12px_rgba(0,0,0,0.02)] md:shadow-[0_4px_16px_rgba(0,0,0,0.03)] border border-[#F0EDFF] flex flex-col gap-4">
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-3">
                   <div
-                    className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-inner ${
+                    className={`w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl flex items-center justify-center shadow-inner ${
                       isLocked
                         ? "bg-[#FFEBF0] text-[#D95276]"
                         : "bg-[#E6F8F6] text-[#2C8578]"
                     }`}
                   >
-                    {isLocked ? <LuLock size={18} /> : <LuLockOpen size={18} />}
+                    {isLocked ? <LuLock size={20} /> : <LuLockOpen size={20} />}
                   </div>
                   <div>
-                    <h3 className="text-sm font-extrabold text-[#2C2B30] tracking-wide">
+                    <h3 className="text-sm md:text-base font-extrabold text-[#2C2B30] tracking-wide">
                       Kunci Manual (Override)
                     </h3>
-                    <p className="text-[9px] text-[#9C98A6] font-medium mt-0.5">
+                    <p className="text-[9px] md:text-xs text-[#9C98A6] font-medium mt-0.5">
                       Kunci instan aplikasi untuk semua siswa
                     </p>
                   </div>
@@ -272,39 +304,44 @@ export default function AdminAccessControl() {
                 </button>
               </div>
 
-              {isLocked && (
-                <div className="bg-[#FFEBF0]/50 border border-[#FFEBF0]/70 rounded-xl p-3 flex gap-2.5 items-start">
+              {isLocked ? (
+                <div className="bg-[#FFEBF0]/60 border border-[#FFEBF0] rounded-2xl p-4 flex gap-3 items-start">
                   <LuShieldAlert
                     className="text-[#D95276] mt-0.5 shrink-0"
-                    size={16}
+                    size={18}
                   />
-                  <p className="text-[9px] text-[#D95276] font-bold leading-normal">
-                    Aplikasi saat ini terkunci. Semua siswa yang masuk atau
-                    sedang membuka aplikasi akan langsung diarahkan ke layar
-                    blokir.
+                  <p className="text-[10px] md:text-xs text-[#D95276] font-bold leading-relaxed">
+                    Aplikasi saat ini terkunci manual. Seluruh siswa yang membuka aplikasi akan langsung dialihkan ke halaman blokir.
+                  </p>
+                </div>
+              ) : (
+                <div className="bg-[#E6F8F6]/50 border border-[#E6F8F6] rounded-2xl p-3.5 flex gap-2.5 items-center">
+                  <LuLockOpen className="text-[#2C8578] shrink-0" size={16} />
+                  <p className="text-[10px] md:text-xs text-[#2C8578] font-bold leading-tight">
+                    Aplikasi terbuka. Akses berjalan normal mengikuti aturan jadwal.
                   </p>
                 </div>
               )}
             </div>
 
             {/* CARD 2: AUTOMATIC SCHEDULE */}
-            <div className="w-full bg-white rounded-[28px] p-5 shadow-[0_4px_12px_rgba(0,0,0,0.02)] border border-[#F0EDFF] flex flex-col gap-4">
+            <div className="w-full bg-white rounded-[28px] p-5 md:p-6 shadow-[0_4px_12px_rgba(0,0,0,0.02)] md:shadow-[0_4px_16px_rgba(0,0,0,0.03)] border border-[#F0EDFF] flex flex-col gap-4">
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-3">
                   <div
-                    className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-inner ${
+                    className={`w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl flex items-center justify-center shadow-inner ${
                       isScheduleEnabled
                         ? "bg-[#F0ECFF] text-[#8C66FF]"
                         : "bg-neutral-100 text-neutral-400"
                     }`}
                   >
-                    <LuCalendar size={18} />
+                    <LuCalendar size={20} />
                   </div>
                   <div>
-                    <h3 className="text-sm font-extrabold text-[#2C2B30] tracking-wide">
+                    <h3 className="text-sm md:text-base font-extrabold text-[#2C2B30] tracking-wide">
                       Jadwal Akses Otomatis
                     </h3>
-                    <p className="text-[9px] text-[#9C98A6] font-medium mt-0.5">
+                    <p className="text-[9px] md:text-xs text-[#9C98A6] font-medium mt-0.5">
                       Batasi akses otomatis pada jam & hari tertentu
                     </p>
                   </div>
@@ -326,188 +363,192 @@ export default function AdminAccessControl() {
               </div>
 
               {isScheduleEnabled && (
-                <div className="flex flex-col gap-3.5 border-t border-[#F0EDFF]/70 pt-4 animate-fade-in">
+                <div className="flex flex-col gap-4 border-t border-[#F0EDFF]/70 pt-4 animate-fade-in">
                   <div className="flex justify-between items-center">
-                    <h4 className="text-[10px] uppercase tracking-wider text-[#9C98A6] font-bold">
+                    <h4 className="text-[10px] md:text-xs uppercase tracking-wider text-[#9C98A6] font-bold">
                       Aturan Jadwal Aktif ({schedules.length})
                     </h4>
 
                     {!showAddForm && (
                       <button
                         onClick={() => setShowAddForm(true)}
-                        className="py-1 px-3 bg-[#F0ECFF] text-[#8C66FF] font-extrabold uppercase text-[8px] tracking-wider rounded-full shadow-inner cursor-pointer hover:bg-[#8C66FF] hover:text-white transition-all flex items-center gap-1"
+                        className="py-1.5 px-3.5 bg-[#F0ECFF] text-[#8C66FF] font-extrabold uppercase text-[9px] md:text-[10px] tracking-wider rounded-full shadow-inner cursor-pointer hover:bg-[#8C66FF] hover:text-white transition-colors flex items-center gap-1.5"
                       >
-                        <FiPlus size={10} /> Tambah
+                        <FiPlus size={12} /> Tambah Jadwal
                       </button>
                     )}
                   </div>
 
-                  {/* Form to Add Schedule */}
-                  {showAddForm && (
-                    <form
-                      onSubmit={handleAddSchedule}
-                      className="bg-[#FAF9FF] border border-[#F0EDFF] rounded-[20px] p-4 flex flex-col gap-3.5 animate-slide-down"
-                    >
-                      <div className="flex justify-between items-center">
-                        <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#8C66FF]">
-                          Aturan Baru
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setShowAddForm(false);
-                            setFormError("");
-                          }}
-                          className="text-[10px] font-bold text-[#D95276]"
+                  {/* Form & List Container */}
+                  <div className={showAddForm ? "flex flex-col gap-4 md:grid md:grid-cols-12 md:gap-6 md:items-start" : "flex flex-col gap-4"}>
+                    {/* Form to Add Schedule */}
+                    {showAddForm && (
+                      <div className="md:col-span-5">
+                        <form
+                          onSubmit={handleAddSchedule}
+                          className="bg-[#FAF9FF] border border-[#F0EDFF] rounded-[24px] p-5 flex flex-col gap-4 animate-slide-down"
                         >
-                          Batal
-                        </button>
-                      </div>
-
-                      {formError && (
-                        <p className="text-[9px] text-[#D95276] font-bold">
-                          {formError}
-                        </p>
-                      )}
-
-                      {/* Day Selectors */}
-                      <div className="flex flex-col gap-1">
-                        <label className="text-[9px] font-extrabold uppercase text-[#9C98A6]">
-                          Hari Efektif
-                        </label>
-                        <div className="flex justify-between gap-1 mt-1">
-                          {DAYS_OF_WEEK.map((day) => {
-                            const active = selectedDays.includes(day.value);
-                            return (
-                              <button
-                                key={day.value}
-                                type="button"
-                                onClick={() => handleToggleDay(day.value)}
-                                className={`w-8 h-8 rounded-full text-xs font-bold transition-all cursor-pointer flex items-center justify-center ${
-                                  active
-                                    ? "bg-[#8C66FF] text-white shadow-md shadow-purple-100"
-                                    : "bg-white border border-[#F0EDFF] text-[#9C98A6]"
-                                }`}
-                                title={day.fullName}
-                              >
-                                {day.label}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-
-                      {/* Time Inputs */}
-                      <div className="grid grid-cols-2 gap-3.5">
-                        <div className="flex flex-col gap-1 text-left">
-                          <label className="text-[9px] font-extrabold uppercase text-[#9C98A6]">
-                            Jam Mulai
-                          </label>
-                          <input
-                            type="time"
-                            value={startTime}
-                            onChange={(e) => setStartTime(e.target.value)}
-                            className="w-full bg-white border border-[#F0EDFF] rounded-xl px-3 py-2 text-xs font-bold outline-none focus:border-[#8C66FF]"
-                          />
-                        </div>
-                        <div className="flex flex-col gap-1 text-left">
-                          <label className="text-[9px] font-extrabold uppercase text-[#9C98A6]">
-                            Jam Selesai
-                          </label>
-                          <input
-                            type="time"
-                            value={endTime}
-                            onChange={(e) => setEndTime(e.target.value)}
-                            className="w-full bg-white border border-[#F0EDFF] rounded-xl px-3 py-2 text-xs font-bold outline-none focus:border-[#8C66FF]"
-                          />
-                        </div>
-                      </div>
-
-                      {/* Rule Type Option */}
-                      <div className="flex flex-col gap-1">
-                        <label className="text-[9px] font-extrabold uppercase text-[#9C98A6]">
-                          Tindakan
-                        </label>
-                        <div className="grid grid-cols-2 gap-2 mt-1">
-                          <button
-                            type="button"
-                            onClick={() => setRuleType("allow")}
-                            className={`py-2 text-[9px] font-extrabold uppercase tracking-wider rounded-xl transition-all cursor-pointer ${
-                              ruleType === "allow"
-                                ? "bg-[#E6F8F6] text-[#2C8578] border border-[#2C8578]"
-                                : "bg-white border border-[#F0EDFF] text-[#9C98A6]"
-                            }`}
-                          >
-                            Bisa Diakses
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setRuleType("block")}
-                            className={`py-2 text-[9px] font-extrabold uppercase tracking-wider rounded-xl transition-all cursor-pointer ${
-                              ruleType === "block"
-                                ? "bg-[#FFEBF0] text-[#D95276] border border-[#D95276]"
-                                : "bg-white border border-[#F0EDFF] text-[#9C98A6]"
-                            }`}
-                          >
-                            Tidak Bisa Diakses
-                          </button>
-                        </div>
-                      </div>
-
-                      <button
-                        type="submit"
-                        className="w-full mt-2 py-2.5 bg-[#8C66FF] text-white font-extrabold uppercase tracking-wider text-[9px] rounded-xl shadow-md shadow-purple-50 cursor-pointer"
-                      >
-                        Tambahkan Jadwal
-                      </button>
-                    </form>
-                  )}
-
-                  {/* List of Schedules */}
-                  <div className="flex flex-col gap-2.5">
-                    {schedules.length === 0 ? (
-                      <p className="text-[10px] text-[#9C98A6] font-semibold text-center py-6 bg-[#FAF9FF] border border-dashed border-[#F0EDFF] rounded-2xl leading-relaxed px-4">
-                        Belum ada aturan jadwal yang dikonfigurasi. Klik "+
-                        Tambah" di atas untuk membuat jadwal baru.
-                      </p>
-                    ) : (
-                      schedules.map((item) => (
-                        <div
-                          key={item.id}
-                          className="w-full bg-[#FAF9FF] border border-[#F0EDFF] rounded-2xl p-3 flex justify-between items-center gap-2"
-                        >
-                          <div className="flex flex-col gap-1 truncate">
-                            <span className="text-[10px] font-extrabold text-[#2C2B30] truncate">
-                              {formatDays(item.days)}
+                          <div className="flex justify-between items-center">
+                            <span className="text-xs font-extrabold uppercase tracking-wider text-[#8C66FF]">
+                              Konfigurasi Aturan Baru
                             </span>
-                            <span className="text-[9px] text-[#9C98A6] font-bold flex items-center gap-1.5">
-                              <LuClock size={11} className="text-[#8C66FF]" />
-                              {item.startTime} - {item.endTime} WIB
-                            </span>
-                          </div>
-
-                          <div className="flex items-center gap-2.5 shrink-0">
-                            <span
-                              className={`text-[8px] font-extrabold uppercase px-2.5 py-1 rounded-full ${
-                                item.type === "allow"
-                                  ? "bg-[#E6F8F6] text-[#2C8578]"
-                                  : "bg-[#FFEBF0] text-[#D95276]"
-                              }`}
-                            >
-                              {item.type === "allow" ? "Bisa" : "Kunci"}
-                            </span>
-
                             <button
-                              onClick={() => handleDeleteSchedule(item.id)}
-                              className="w-7 h-7 bg-white text-[#D95276] border border-[#FFEBF0] rounded-lg flex items-center justify-center shadow-sm cursor-pointer active:bg-[#FFEBF0]"
-                              title="Hapus"
+                              type="button"
+                              onClick={() => {
+                                setShowAddForm(false);
+                                setFormError("");
+                              }}
+                              className="text-xs font-bold text-[#D95276] cursor-pointer hover:underline"
                             >
-                              <FiTrash2 size={12} />
+                              Batal
                             </button>
                           </div>
-                        </div>
-                      ))
+
+                          {formError && (
+                            <p className="text-[10px] text-[#D95276] font-bold">
+                              {formError}
+                            </p>
+                          )}
+
+                          {/* Day Selectors */}
+                          <div className="flex flex-col gap-1.5">
+                            <label className="text-[9px] md:text-[10px] font-extrabold uppercase text-[#9C98A6]">
+                              Hari Efektif
+                            </label>
+                            <div className="flex flex-wrap gap-2 mt-1">
+                              {DAYS_OF_WEEK.map((day) => {
+                                const active = selectedDays.includes(day.value);
+                                return (
+                                  <button
+                                    key={day.value}
+                                    type="button"
+                                    onClick={() => handleToggleDay(day.value)}
+                                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-1 ${
+                                      active
+                                        ? "bg-[#8C66FF] text-white shadow-md shadow-purple-100"
+                                        : "bg-white border border-[#F0EDFF] text-[#9C98A6] hover:border-[#8C66FF]/40"
+                                    }`}
+                                    title={day.fullName}
+                                  >
+                                    {day.fullName}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+
+                          {/* Time Inputs */}
+                          <div className="grid grid-cols-2 gap-3.5">
+                            <div className="flex flex-col gap-1 text-left">
+                              <label className="text-[9px] md:text-[10px] font-extrabold uppercase text-[#9C98A6]">
+                                Jam Mulai
+                              </label>
+                              <input
+                                type="time"
+                                value={startTime}
+                                onChange={(e) => setStartTime(e.target.value)}
+                                className="w-full bg-white border border-[#F0EDFF] rounded-xl px-3 py-2.5 text-xs font-bold outline-none focus:border-[#8C66FF]"
+                              />
+                            </div>
+                            <div className="flex flex-col gap-1 text-left">
+                              <label className="text-[9px] md:text-[10px] font-extrabold uppercase text-[#9C98A6]">
+                                Jam Selesai
+                              </label>
+                              <input
+                                type="time"
+                                value={endTime}
+                                onChange={(e) => setEndTime(e.target.value)}
+                                className="w-full bg-white border border-[#F0EDFF] rounded-xl px-3 py-2.5 text-xs font-bold outline-none focus:border-[#8C66FF]"
+                              />
+                            </div>
+                          </div>
+
+                          {/* Rule Type Option */}
+                          <div className="flex flex-col gap-1.5">
+                            <label className="text-[9px] md:text-[10px] font-extrabold uppercase text-[#9C98A6]">
+                              Tindakan
+                            </label>
+                            <div className="grid grid-cols-2 gap-3">
+                              <button
+                                type="button"
+                                onClick={() => setRuleType("allow")}
+                                className={`py-2.5 text-xs font-extrabold uppercase tracking-wider rounded-xl transition-colors cursor-pointer ${
+                                  ruleType === "allow"
+                                    ? "bg-[#E6F8F6] text-[#2C8578] border border-[#2C8578] shadow-xs"
+                                    : "bg-white border border-[#F0EDFF] text-[#9C98A6]"
+                                }`}
+                              >
+                                Bisa Diakses
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setRuleType("block")}
+                                className={`py-2.5 text-xs font-extrabold uppercase tracking-wider rounded-xl transition-colors cursor-pointer ${
+                                  ruleType === "block"
+                                    ? "bg-[#FFEBF0] text-[#D95276] border border-[#D95276] shadow-xs"
+                                    : "bg-white border border-[#F0EDFF] text-[#9C98A6]"
+                                }`}
+                              >
+                                Tidak Bisa Diakses
+                              </button>
+                            </div>
+                          </div>
+
+                          <button
+                            type="submit"
+                            className="w-full mt-2 py-3 bg-[#8C66FF] text-white font-extrabold uppercase tracking-wider text-xs rounded-xl shadow-md shadow-purple-50 cursor-pointer hover:bg-[#7b55f0] transition-colors"
+                          >
+                            Tambahkan Jadwal
+                          </button>
+                        </form>
+                      </div>
                     )}
+
+                    {/* List of Schedules */}
+                    <div className={showAddForm ? "flex flex-col gap-3 md:col-span-7" : "flex flex-col gap-3"}>
+                      {schedules.length === 0 ? (
+                        <p className="text-xs text-[#9C98A6] font-semibold text-center py-8 bg-[#FAF9FF] border border-dashed border-[#F0EDFF] rounded-2xl leading-relaxed px-4">
+                          Belum ada aturan jadwal yang dikonfigurasi. Klik "+ Tambah Jadwal" di atas untuk membuat aturan baru.
+                        </p>
+                      ) : (
+                        schedules.map((item) => (
+                          <div
+                            key={item.id}
+                            className="w-full bg-[#FAF9FF] border border-[#F0EDFF] rounded-2xl p-4 flex justify-between items-center gap-3 hover:border-[#8C66FF]/40 transition-colors"
+                          >
+                            <div className="flex flex-col gap-1 truncate">
+                              <span className="text-xs md:text-sm font-extrabold text-[#2C2B30] truncate">
+                                {formatDays(item.days)}
+                              </span>
+                              <span className="text-[10px] md:text-xs text-[#9C98A6] font-bold flex items-center gap-1.5">
+                                <LuClock size={13} className="text-[#8C66FF]" />
+                                {item.startTime} - {item.endTime} WIB
+                              </span>
+                            </div>
+
+                            <div className="flex items-center gap-3 shrink-0">
+                              <span
+                                className={`text-[9px] md:text-[10px] font-extrabold uppercase px-3 py-1 rounded-full ${
+                                  item.type === "allow"
+                                    ? "bg-[#E6F8F6] text-[#2C8578]"
+                                    : "bg-[#FFEBF0] text-[#D95276]"
+                                }`}
+                              >
+                                {item.type === "allow" ? "Bisa Diakses" : "Terkunci"}
+                              </span>
+
+                              <button
+                                onClick={() => handleDeleteSchedule(item.id)}
+                                className="w-8 h-8 bg-white text-[#D95276] border border-[#FFEBF0] rounded-xl flex items-center justify-center shadow-xs cursor-pointer hover:bg-[#FFEBF0] transition-colors"
+                                title="Hapus Aturan"
+                              >
+                                <FiTrash2 size={13} />
+                              </button>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
                   </div>
                 </div>
               )}
@@ -515,14 +556,14 @@ export default function AdminAccessControl() {
           </div>
         </div>
 
-        {/* Save Button */}
-        <div className="w-full pt-4">
+        {/* Mobile Save Button (also available on desktop bottom) */}
+        <div className="w-full pt-4 md:mt-4 md:border-t md:border-[#F0EDFF]/50">
           <button
             onClick={handleSaveChanges}
             disabled={saving}
-            className="w-full py-4 bg-[#8C66FF] text-white font-extrabold uppercase tracking-wider text-[10px] rounded-full shadow-md shadow-purple-100 cursor-pointer active:scale-98 transition-all flex items-center justify-center gap-2 hover:bg-[#7b55f0]"
+            className="w-full py-4 bg-[#8C66FF] text-white font-extrabold uppercase tracking-wider text-xs rounded-full shadow-md shadow-purple-100 cursor-pointer hover:bg-[#7b55f0] transition-colors flex items-center justify-center gap-2"
           >
-            <LuSave className="text-xs" />
+            <LuSave size={16} />
             <span>{saving ? "Menyimpan..." : "Simpan Pengaturan"}</span>
           </button>
         </div>

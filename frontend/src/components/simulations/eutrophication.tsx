@@ -88,7 +88,7 @@ export default function SimulasiEutrofikasi() {
       };
       unlockOrientation();
     };
-  }, []);
+  }, [enterImmersive, exitImmersive]);
 
   // --- STATE UNTUK KONTROL INTERFASE (REACT STATE) ---
   const [running, setRunning] = useState<boolean>(false);

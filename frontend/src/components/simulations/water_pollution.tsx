@@ -91,7 +91,7 @@ export default function SimulasiPencemaranAir() {
       };
       unlockOrientation();
     };
-  }, []);
+  }, [enterImmersive, exitImmersive]);
 
   // --- STATE UNTUK KONTROL UI ---
   const [running, setRunning] = useState<boolean>(false);

@@ -80,6 +80,14 @@ export default function QuizAnalysis({
             quizSubmissions.length,
         )
       : 0;
+  const highestScore =
+    quizSubmissions.length > 0
+      ? Math.max(...quizSubmissions.map((s) => s.score))
+      : 0;
+  const lowestScore =
+    quizSubmissions.length > 0
+      ? Math.min(...quizSubmissions.map((s) => s.score))
+      : 0;
 
   // Sorting logic for student submissions
   const sortedSubmissions = [...quizSubmissions].sort((a, b) => {
@@ -165,20 +173,20 @@ export default function QuizAnalysis({
     <div className="w-full flex-1 flex flex-col justify-between overflow-hidden">
       <div className="w-full flex-1 flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="w-full flex justify-between items-center mt-4 pb-4 border-b border-[#F0EDFF]/50 shrink-0">
-          <div className="flex items-center gap-3 min-w-0 flex-1">
+        <div className="w-full flex justify-between items-center mt-2 md:mt-0 pb-4 border-b border-[#F0EDFF]/70 shrink-0">
+          <div className="flex items-center gap-3 md:gap-4 min-w-0 flex-1">
             <button
               onClick={onClose}
-              className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-[#F0EDFF] text-[#8C66FF] cursor-pointer active:bg-neutral-50 transition-none shrink-0"
+              className="w-10 h-10 md:w-11 md:h-11 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-[#F0EDFF] text-[#8C66FF] cursor-pointer active:bg-neutral-50 hover:bg-[#FAF9FF] transition-colors shrink-0"
               title="Kembali"
             >
               <FiArrowLeft size={20} />
             </button>
             <div className="min-w-0 flex-1">
-              <p className="text-[10px] uppercase tracking-widest text-[#9C98A6] font-bold">
-                Hasil Analisis
+              <p className="text-[10px] md:text-xs uppercase tracking-widest text-[#9C98A6] font-bold">
+                Hasil Analisis Kuis
               </p>
-              <h1 className="text-sm font-extrabold text-[#2C2B30] truncate leading-tight mt-0.5">
+              <h1 className="text-sm md:text-xl font-extrabold text-[#2C2B30] truncate leading-tight mt-0.5">
                 {selectedQuiz.title}
               </h1>
             </div>
@@ -187,55 +195,71 @@ export default function QuizAnalysis({
 
         {/* Core Analytics Calculations */}
         <div className="w-full mt-4 flex-1 flex flex-col gap-4 overflow-hidden">
-          {/* General Stats */}
-          <div className="grid grid-cols-2 gap-3 shrink-0">
-            <div className="bg-white rounded-[20px] p-4 shadow-[0_4px_12px_rgba(0,0,0,0.02)] border border-[#F0EDFF] text-center flex flex-col gap-1.5">
-              <span className="text-[9px] font-black uppercase tracking-widest text-[#9C98A6]">
+          {/* General Stats - 4 Columns on Desktop */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 shrink-0">
+            <div className="bg-white rounded-[20px] md:rounded-[24px] p-4 md:p-5 shadow-[0_4px_12px_rgba(0,0,0,0.02)] md:shadow-[0_4px_16px_rgba(0,0,0,0.03)] border border-[#F0EDFF] text-center flex flex-col gap-1">
+              <span className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-[#9C98A6]">
                 Siswa Menjawab
               </span>
-              <span className="text-2xl font-black text-[#8C66FF]">
+              <span className="text-2xl md:text-3xl font-black text-[#8C66FF]">
                 {quizSubmissions.length}
               </span>
             </div>
-            <div className="bg-white rounded-[20px] p-4 shadow-[0_4px_12px_rgba(0,0,0,0.02)] border border-[#F0EDFF] text-center flex flex-col gap-1.5">
-              <span className="text-[9px] font-black uppercase tracking-widest text-[#9C98A6]">
+            <div className="bg-white rounded-[20px] md:rounded-[24px] p-4 md:p-5 shadow-[0_4px_12px_rgba(0,0,0,0.02)] md:shadow-[0_4px_16px_rgba(0,0,0,0.03)] border border-[#F0EDFF] text-center flex flex-col gap-1">
+              <span className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-[#9C98A6]">
                 Nilai Rata-Rata
               </span>
-              <span className="text-2xl font-black text-[#2C8578]">
+              <span className="text-2xl md:text-3xl font-black text-[#2C8578]">
                 {avgScore}
+              </span>
+            </div>
+            <div className="bg-white rounded-[20px] md:rounded-[24px] p-4 md:p-5 shadow-[0_4px_12px_rgba(0,0,0,0.02)] md:shadow-[0_4px_16px_rgba(0,0,0,0.03)] border border-[#F0EDFF] text-center flex flex-col gap-1">
+              <span className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-[#9C98A6]">
+                Nilai Tertinggi
+              </span>
+              <span className="text-2xl md:text-3xl font-black text-[#8C66FF]">
+                {highestScore}
+              </span>
+            </div>
+            <div className="bg-white rounded-[20px] md:rounded-[24px] p-4 md:p-5 shadow-[0_4px_12px_rgba(0,0,0,0.02)] md:shadow-[0_4px_16px_rgba(0,0,0,0.03)] border border-[#F0EDFF] text-center flex flex-col gap-1">
+              <span className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-[#9C98A6]">
+                Nilai Terendah
+              </span>
+              <span className="text-2xl md:text-3xl font-black text-[#D95276]">
+                {lowestScore}
               </span>
             </div>
           </div>
 
           {/* Tab Navigation */}
-          <div className="grid grid-cols-2 bg-[#F0ECFF]/50 p-1.5 rounded-2xl border border-[#F0EDFF] shrink-0">
+          <div className="grid grid-cols-2 md:max-w-md bg-[#F0ECFF]/50 p-1.5 rounded-2xl border border-[#F0EDFF] shrink-0">
             <button
               onClick={() => setAnalysisTab("SUMMARY")}
-              className={`py-2 px-4 rounded-xl cursor-pointer text-center text-xs font-extrabold uppercase transition-none ${
+              className={`py-2 px-4 rounded-xl cursor-pointer text-center text-xs font-extrabold uppercase transition-all ${
                 analysisTab === "SUMMARY"
                   ? "bg-white text-[#8C66FF] shadow-sm"
-                  : "bg-transparent text-[#9C98A6]"
+                  : "bg-transparent text-[#9C98A6] hover:text-[#8C66FF]"
               }`}
             >
-              Daftar Skor
+              Daftar Skor ({quizSubmissions.length})
             </button>
             <button
               onClick={() => setAnalysisTab("ITEMS")}
-              className={`py-2 px-4 rounded-xl cursor-pointer text-center text-xs font-extrabold uppercase transition-none ${
+              className={`py-2 px-4 rounded-xl cursor-pointer text-center text-xs font-extrabold uppercase transition-all ${
                 analysisTab === "ITEMS"
                   ? "bg-white text-[#8C66FF] shadow-sm"
-                  : "bg-transparent text-[#9C98A6]"
+                  : "bg-transparent text-[#9C98A6] hover:text-[#8C66FF]"
               }`}
             >
-              Analisis Soal
+              Analisis Soal ({selectedQuiz.questions.length})
             </button>
           </div>
 
           {/* Empty State */}
           {quizSubmissions.length === 0 ? (
-            <div className="bg-white rounded-3xl border border-[#F0EDFF] p-8 text-center flex flex-col gap-2 items-center shadow-[0_4px_12px_rgba(0,0,0,0.02)] shrink-0">
-              <p className="text-xs font-extrabold text-[#9C98A6] uppercase tracking-wider">
-                Belum ada respon siswa.
+            <div className="bg-white rounded-3xl border border-[#F0EDFF] p-12 text-center flex flex-col gap-2 items-center shadow-[0_4px_12px_rgba(0,0,0,0.02)] shrink-0">
+              <p className="text-xs md:text-sm font-extrabold text-[#9C98A6] uppercase tracking-wider">
+                Belum ada respon siswa untuk kuis ini.
               </p>
             </div>
           ) : (
@@ -243,14 +267,14 @@ export default function QuizAnalysis({
               {/* TAB A: SUMMARY TABLE */}
               {analysisTab === "SUMMARY" && (
                 <div className="flex flex-col gap-2 flex-1 overflow-hidden">
-                  <div className="flex justify-between items-center text-[9px] font-bold text-[#9C98A6] uppercase px-1 shrink-0">
+                  <div className="flex justify-between items-center text-[9px] md:text-[10px] font-bold text-[#9C98A6] uppercase px-1 shrink-0">
                     <span>Daftar Nilai Siswa</span>
                     <div className="flex items-center gap-1.5">
                       <span>Urutan:</span>
                       <select
                         value={scoreSort}
                         onChange={(e) => setScoreSort(e.target.value as any)}
-                        className="border border-[#F0EDFF] bg-white text-[#2C2B30] px-2.5 py-1 text-[9px] font-bold rounded-lg outline-none cursor-pointer"
+                        className="border border-[#F0EDFF] bg-white text-[#2C2B30] px-3 py-1.5 text-[9px] md:text-xs font-bold rounded-xl outline-none cursor-pointer shadow-xs"
                       >
                         <option value="NAME_ASC">Abjad</option>
                         <option value="SCORE_DESC">Skor Terbaik</option>
@@ -259,23 +283,23 @@ export default function QuizAnalysis({
                     </div>
                   </div>
 
-                  <div className="flex-1 overflow-auto border border-[#F0EDFF] rounded-[20px] shadow-[0_4px_12px_rgba(0,0,0,0.02)] bg-white">
-                    <table className="w-full min-w-[500px] border-collapse text-left text-xs">
+                  <div className="flex-1 overflow-auto border border-[#F0EDFF] rounded-[24px] shadow-[0_4px_12px_rgba(0,0,0,0.02)] bg-white no-scrollbar">
+                    <table className="w-full min-w-[500px] border-collapse text-left text-xs md:text-sm">
                       <thead className="sticky top-0 bg-[#FAF9FF] z-10">
-                        <tr className="bg-[#FAF9FF] text-[#2C2B30] border-b border-[#F0EDFF] uppercase font-black text-[9px] tracking-wider">
-                          <th className="p-3 border-r border-[#F0EDFF]/50 whitespace-nowrap">
-                            Nama
+                        <tr className="bg-[#FAF9FF] text-[#2C2B30] border-b border-[#F0EDFF] uppercase font-black text-[9px] md:text-[10px] tracking-wider">
+                          <th className="p-3.5 md:p-4 border-r border-[#F0EDFF]/50 whitespace-nowrap">
+                            Nama Siswa
                           </th>
-                          <th className="p-3 border-r border-[#F0EDFF]/50 text-center whitespace-nowrap">
+                          <th className="p-3.5 md:p-4 border-r border-[#F0EDFF]/50 text-center whitespace-nowrap">
                             Kelas
                           </th>
-                          <th className="p-3 border-r border-[#F0EDFF]/50 text-center whitespace-nowrap">
+                          <th className="p-3.5 md:p-4 border-r border-[#F0EDFF]/50 text-center whitespace-nowrap">
                             Durasi
                           </th>
-                          <th className="p-3 border-r border-[#F0EDFF]/50 text-center whitespace-nowrap">
-                            Soal (T/K)
+                          <th className="p-3.5 md:p-4 border-r border-[#F0EDFF]/50 text-center whitespace-nowrap">
+                            Terisi / Kosong
                           </th>
-                          <th className="p-3 text-center whitespace-nowrap">Skor</th>
+                          <th className="p-3.5 md:p-4 text-center whitespace-nowrap">Skor Akhir</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -293,30 +317,30 @@ export default function QuizAnalysis({
                             <tr
                               key={sub.id}
                               onClick={() => setSelectedSubmission(sub)}
-                              className={`border-b border-[#F0EDFF]/30 cursor-pointer transition-colors hover:bg-[#F0ECFF]/60 active:bg-[#E9E4FF] ${
+                              className={`border-b border-[#F0EDFF]/40 cursor-pointer transition-colors hover:bg-[#F0ECFF]/60 active:bg-[#E9E4FF] ${
                                 sIdx % 2 === 1 ? "bg-[#FAF9FF]/40" : "bg-white"
                               }`}
                               title="Klik untuk melihat detail lembar jawaban siswa"
                             >
-                              <td className="p-3 font-bold whitespace-nowrap text-[#2C2B30]">
+                              <td className="p-3.5 md:p-4 font-bold whitespace-nowrap text-[#2C2B30]">
                                 {sub.studentName}
                               </td>
-                              <td className="p-3 text-center font-mono text-[#9C98A6] font-bold whitespace-nowrap">
+                              <td className="p-3.5 md:p-4 text-center font-mono text-[#9C98A6] font-bold whitespace-nowrap">
                                 {sub.studentClass}
                               </td>
-                              <td className="p-3 text-center font-mono text-[#9C98A6] font-semibold whitespace-nowrap">
+                              <td className="p-3.5 md:p-4 text-center font-mono text-[#9C98A6] font-semibold whitespace-nowrap">
                                 {formatDurationFriendly(sub.duration)}
                               </td>
-                              <td className="p-3 text-center font-mono text-[#9C98A6] font-semibold whitespace-nowrap">
-                                <span className="text-[#2C8578]">
+                              <td className="p-3.5 md:p-4 text-center font-mono text-[#9C98A6] font-semibold whitespace-nowrap">
+                                <span className="text-[#2C8578] font-bold">
                                    {subAnsweredCount}
                                 </span>
-                                <span className="text-[#9C98A6]">/</span>
-                                <span className="text-[#FF5E8C]">
+                                <span className="text-[#9C98A6]"> / </span>
+                                <span className="text-[#FF5E8C] font-bold">
                                    {subEmptyCount}
                                 </span>
                               </td>
-                              <td className="p-3 text-center font-mono font-black text-sm text-[#8C66FF] whitespace-nowrap">
+                              <td className="p-3.5 md:p-4 text-center font-mono font-black text-sm md:text-base text-[#8C66FF] whitespace-nowrap">
                                 {sub.score}
                               </td>
                             </tr>
@@ -328,16 +352,16 @@ export default function QuizAnalysis({
                 </div>
               )}
 
-              {/* TAB B: ITEM ACCURACY ANALYSIS */}
+              {/* TAB B: ITEM ACCURACY ANALYSIS - 2 COLUMNS ON DESKTOP */}
               {analysisTab === "ITEMS" && (
                 <div className="flex flex-col gap-3 flex-1 overflow-hidden">
-                  <div className="flex justify-end items-center text-[9px] font-bold text-[#9C98A6] uppercase px-1 shrink-0">
+                  <div className="flex justify-end items-center text-[9px] md:text-[10px] font-bold text-[#9C98A6] uppercase px-1 shrink-0">
                     <div className="flex items-center gap-1.5">
                       <span>Urutan:</span>
                       <select
                         value={itemSort}
                         onChange={(e) => setItemSort(e.target.value as any)}
-                        className="border border-[#F0EDFF] bg-white text-[#2C2B30] px-2.5 py-1 text-[9px] font-bold rounded-lg outline-none cursor-pointer"
+                        className="border border-[#F0EDFF] bg-white text-[#2C2B30] px-3 py-1.5 text-[9px] md:text-xs font-bold rounded-xl outline-none cursor-pointer shadow-xs"
                       >
                         <option value="ORDER_ASC">Urutan Soal</option>
                         <option value="ACCURACY_DESC">Akurasi Terbaik</option>
@@ -352,7 +376,7 @@ export default function QuizAnalysis({
                     </div>
                   </div>
 
-                  <div className="flex-1 flex flex-col gap-4 overflow-y-auto pr-1">
+                  <div className="flex-1 flex flex-col gap-4 md:grid md:grid-cols-2 md:gap-5 overflow-y-auto pr-1 no-scrollbar md:content-start">
                     {sortedQuestions.map((q) => {
                       const correctCount = quizSubmissions.filter((sub) => {
                         const ans = sub.answers[q.id] || [];
@@ -373,28 +397,28 @@ export default function QuizAnalysis({
                       return (
                         <div
                           key={q.id}
-                          className="bg-white rounded-3xl p-5 shadow-[0_4px_12px_rgba(0,0,0,0.02)] border border-[#F0EDFF] flex flex-col gap-4 shrink-0"
+                          className="bg-white rounded-3xl p-5 md:p-6 shadow-[0_4px_12px_rgba(0,0,0,0.02)] md:shadow-[0_4px_16px_rgba(0,0,0,0.03)] border border-[#F0EDFF] flex flex-col gap-4 shrink-0"
                         >
-                          <div className="flex justify-between items-center border-b border-[#F0EDFF]/50 pb-2">
-                            <span className="text-xs font-extrabold text-[#8C66FF]">
+                          <div className="flex justify-between items-center border-b border-[#F0EDFF]/70 pb-2.5">
+                            <span className="text-xs md:text-sm font-extrabold text-[#8C66FF]">
                               Soal #{q.originalIndex + 1}
                               {q.questionType && (
-                                <span className="ml-1.5 px-2 py-0.5 bg-[#F0ECFF] text-[#8C66FF] rounded-md text-[9px] uppercase tracking-wider font-black">
+                                <span className="ml-2 px-2.5 py-0.5 bg-[#F0ECFF] text-[#8C66FF] rounded-md text-[9px] md:text-[10px] uppercase tracking-wider font-black">
                                   {q.questionType}
                                 </span>
                               )}
                             </span>
-                            <span className="text-[10px] font-mono font-bold px-2 py-0.5 bg-[#E6F8F6] text-[#2C8578] rounded-full">
+                            <span className="text-[10px] md:text-xs font-mono font-bold px-2.5 py-1 bg-[#E6F8F6] text-[#2C8578] rounded-full">
                               Akurasi: {accuracy}%
                             </span>
                           </div>
 
-                          <p className="text-xs font-bold leading-normal text-[#2C2B30] line-clamp-3">
+                          <p className="text-xs md:text-sm font-bold leading-relaxed text-[#2C2B30] line-clamp-3">
                             {q.text}
                           </p>
 
                           {/* Choice distribution bar graphs */}
-                          <div className="flex flex-col gap-2">
+                          <div className="flex flex-col gap-2.5">
                             {q.options.map((opt, optIdx) => {
                               const isCorrect =
                                 q.correctAnswers.includes(optIdx);
@@ -419,9 +443,9 @@ export default function QuizAnalysis({
                                   key={optIdx}
                                   className="flex flex-col gap-1"
                                 >
-                                  <div className="flex justify-between text-[9px] font-bold">
+                                  <div className="flex justify-between text-[9px] md:text-[10px] font-bold">
                                     <span
-                                      className={`truncate max-w-50 ${
+                                      className={`truncate max-w-[200px] md:max-w-xs ${
                                         isCorrect
                                           ? "text-[#2C8578]"
                                           : "text-[#2C2B30]"
@@ -431,12 +455,12 @@ export default function QuizAnalysis({
                                       {letter}. {opt}
                                     </span>
                                     <span className="font-mono text-[#9C98A6]">
-                                      {chosenCount} mhs ({percent}%)
+                                      {chosenCount} siswa ({percent}%)
                                     </span>
                                   </div>
                                   <div className="w-full h-2 bg-[#FAF9FF] border border-[#F0EDFF] rounded-full overflow-hidden">
                                     <div
-                                      className={`h-full rounded-full transition-none ${
+                                      className={`h-full rounded-full transition-all duration-300 ${
                                         isCorrect
                                           ? "bg-[#2C8578]"
                                           : "bg-[#8C66FF]"
@@ -461,66 +485,66 @@ export default function QuizAnalysis({
 
       {/* MODAL DETAIL LEMBAR JAWABAN SISWA */}
       {selectedSubmission && (
-        <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50 p-4 backdrop-blur-xs">
-          <div className="w-full max-w-107.5 max-h-[90vh] bg-[#FAF9FF] rounded-[28px] shadow-2xl border border-[#F0EDFF] flex flex-col overflow-hidden animate-none select-none text-left">
+        <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50 p-4 md:p-6 backdrop-blur-xs">
+          <div className="w-full max-w-107.5 md:max-w-3xl lg:max-w-4xl max-h-[90vh] bg-[#FAF9FF] rounded-[28px] md:rounded-[32px] shadow-2xl border border-[#F0EDFF] flex flex-col overflow-hidden animate-none select-none text-left">
             {/* Header Modal */}
-            <div className="bg-white p-4 border-b border-[#F0EDFF] flex justify-between items-center shrink-0">
+            <div className="bg-white p-4 md:p-5 border-b border-[#F0EDFF] flex justify-between items-center shrink-0">
               <div className="min-w-0 flex-1 pr-2">
-                <p className="text-[9px] font-bold uppercase tracking-widest text-[#9C98A6]">
+                <p className="text-[9px] md:text-[10px] font-bold uppercase tracking-widest text-[#9C98A6]">
                   Lembar Jawaban Siswa
                 </p>
-                <h2 className="text-sm font-black text-[#2C2B30] truncate mt-0.5">
+                <h2 className="text-sm md:text-base font-black text-[#2C2B30] truncate mt-0.5">
                   {selectedSubmission.studentName}
                 </h2>
-                <p className="text-[10px] font-bold text-[#8C66FF]">
+                <p className="text-[10px] md:text-xs font-bold text-[#8C66FF]">
                   Kelas: {selectedSubmission.studentClass || "-"}
                 </p>
               </div>
               <button
                 onClick={() => setSelectedSubmission(null)}
-                className="w-8 h-8 rounded-full bg-[#FAF9FF] border border-[#F0EDFF] text-[#2C2B30] flex items-center justify-center hover:bg-neutral-100 cursor-pointer shrink-0 transition-none"
+                className="w-9 h-9 rounded-full bg-[#FAF9FF] border border-[#F0EDFF] text-[#2C2B30] flex items-center justify-center hover:bg-neutral-100 cursor-pointer shrink-0 transition-colors"
                 title="Tutup"
               >
-                <FiX size={16} />
+                <FiX size={18} />
               </button>
             </div>
 
             {/* Score & Summary Metrics */}
-            <div className="p-3.5 grid grid-cols-3 gap-2 bg-white/70 border-b border-[#F0EDFF] shrink-0">
-              <div className="bg-white rounded-2xl p-2.5 border border-[#F0EDFF] text-center flex flex-col shadow-xs">
-                <span className="text-[8px] uppercase tracking-wider font-extrabold text-[#9C98A6]">
+            <div className="p-3.5 md:p-4 grid grid-cols-3 gap-2.5 md:gap-4 bg-white/70 border-b border-[#F0EDFF] shrink-0">
+              <div className="bg-white rounded-2xl p-3 border border-[#F0EDFF] text-center flex flex-col shadow-xs">
+                <span className="text-[8px] md:text-[9px] uppercase tracking-wider font-extrabold text-[#9C98A6]">
                   Skor Siswa
                 </span>
-                <span className="text-base font-black text-[#8C66FF] mt-0.5">
+                <span className="text-base md:text-xl font-black text-[#8C66FF] mt-0.5">
                   {selectedSubmission.score}
                   <span className="text-[10px] font-semibold text-[#9C98A6]">
                     /100
                   </span>
                 </span>
               </div>
-              <div className="bg-white rounded-2xl p-2.5 border border-[#F0EDFF] text-center flex flex-col shadow-xs">
-                <span className="text-[8px] uppercase tracking-wider font-extrabold text-[#9C98A6]">
+              <div className="bg-white rounded-2xl p-3 border border-[#F0EDFF] text-center flex flex-col shadow-xs">
+                <span className="text-[8px] md:text-[9px] uppercase tracking-wider font-extrabold text-[#9C98A6]">
                   Jumlah Benar
                 </span>
-                <span className="text-base font-black text-[#2C8578] mt-0.5">
+                <span className="text-base md:text-xl font-black text-[#2C8578] mt-0.5">
                   {studentCorrectCount}
                   <span className="text-[10px] font-semibold text-[#9C98A6]">
                     /{selectedQuiz.questions.length}
                   </span>
                 </span>
               </div>
-              <div className="bg-white rounded-2xl p-2.5 border border-[#F0EDFF] text-center flex flex-col shadow-xs">
-                <span className="text-[8px] uppercase tracking-wider font-extrabold text-[#9C98A6]">
+              <div className="bg-white rounded-2xl p-3 border border-[#F0EDFF] text-center flex flex-col shadow-xs">
+                <span className="text-[8px] md:text-[9px] uppercase tracking-wider font-extrabold text-[#9C98A6]">
                   Waktu
                 </span>
-                <span className="text-base font-black text-[#2C2B30] mt-0.5 font-mono">
+                <span className="text-base md:text-xl font-black text-[#2C2B30] mt-0.5 font-mono">
                   {formatDurationFriendly(selectedSubmission.duration)}
                 </span>
               </div>
             </div>
 
-            {/* Questions & Options List */}
-            <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3.5">
+            {/* Questions & Options List - 2 Columns on Desktop */}
+            <div className="flex-1 overflow-y-auto p-4 md:p-6 flex flex-col md:grid md:grid-cols-2 md:gap-4 gap-3.5 no-scrollbar">
               {studentResults.map(
                 ({
                   question: q,
@@ -532,7 +556,7 @@ export default function QuizAnalysis({
                 }) => (
                   <div
                     key={q.id}
-                    className="bg-white rounded-2xl p-4 border border-[#F0EDFF] shadow-xs flex flex-col gap-3"
+                    className="bg-white rounded-2xl p-4 md:p-5 border border-[#F0EDFF] shadow-xs flex flex-col gap-3"
                   >
                     {/* Header Soal */}
                     <div className="flex justify-between items-start gap-2 border-b border-[#F0EDFF]/60 pb-2.5">
@@ -596,11 +620,9 @@ export default function QuizAnalysis({
                           "bg-[#FAF9FF]/60 border-[#F0EDFF] text-[#6B6875]";
 
                         if (isCorrectOption) {
-                          // Jawaban benar selalu highlight hijau
                           containerStyle =
                             "bg-[#E6F8F6] border-[#2C8578] text-[#2C8578] font-bold";
                         } else if (isChosen) {
-                          // Jawaban salah yang dipilih siswa highlight merah
                           containerStyle =
                             "bg-[#FFEBF0] border-[#FF5E8C] text-[#D95276] font-bold";
                         }
@@ -626,10 +648,10 @@ export default function QuizAnalysis({
             </div>
 
             {/* Tombol Tutup Footer */}
-            <div className="p-3 bg-white border-t border-[#F0EDFF] shrink-0">
+            <div className="p-3.5 md:p-4 bg-white border-t border-[#F0EDFF] shrink-0">
               <button
                 onClick={() => setSelectedSubmission(null)}
-                className="w-full py-2.5 bg-[#8C66FF] text-white font-extrabold uppercase tracking-wider text-[10px] rounded-full shadow-md shadow-purple-100 cursor-pointer active:scale-95 transition-all flex items-center justify-center"
+                className="w-full py-3 bg-[#8C66FF] text-white font-extrabold uppercase tracking-wider text-[10px] md:text-xs rounded-full shadow-md shadow-purple-100 cursor-pointer hover:bg-[#7b55f0] transition-colors flex items-center justify-center"
               >
                 Tutup Lembar Jawaban
               </button>

@@ -1,3 +1,4 @@
+import { useCallback } from "react";
 import { Capacitor, registerPlugin } from "@capacitor/core";
 import { StatusBar, Style } from "@capacitor/status-bar";
 
@@ -9,7 +10,7 @@ interface ImmersiveModePlugin {
 const NativeImmersive = registerPlugin<ImmersiveModePlugin>("ImmersiveMode");
 
 export function useImmersiveMode() {
-  const enterImmersive = async () => {
+  const enterImmersive = useCallback(async () => {
     if (!Capacitor.isNativePlatform()) return;
 
     try {
@@ -25,9 +26,9 @@ export function useImmersiveMode() {
     } catch (err) {
       console.warn("NativeImmersive hide failed:", err);
     }
-  };
+  }, []);
 
-  const exitImmersive = async () => {
+  const exitImmersive = useCallback(async () => {
     if (!Capacitor.isNativePlatform()) return;
 
     try {
@@ -42,7 +43,7 @@ export function useImmersiveMode() {
     } catch (err) {
       console.warn("NativeImmersive show failed:", err);
     }
-  };
+  }, []);
 
   return { enterImmersive, exitImmersive };
 }

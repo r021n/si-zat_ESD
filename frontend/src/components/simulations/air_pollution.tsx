@@ -93,7 +93,7 @@ export default function SimulasiPencemaranUdara() {
       };
       unlockOrientation();
     };
-  }, []);
+  }, [enterImmersive, exitImmersive]);
 
   // --- STATE KONTROL UI (REACT STATE) ---
   const [running, setRunning] = useState<boolean>(false);
