@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 import { useAppBack } from "../hooks/useAppBack";
@@ -55,6 +55,9 @@ export default function AdminKuis() {
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(false);
+
+  // In-memory frontend cache for submissions per quiz
+  const submissionsCache = useRef<Record<string, Submission[]>>({});
 
   // Form States
   const [editingQuizId, setEditingQuizId] = useState<string | null>(null);
@@ -277,6 +280,7 @@ export default function AdminKuis() {
         if (!token) return;
         try {
           await deleteQuizApi(token, id);
+          delete submissionsCache.current[id];
           setQuizzes(quizzes.filter((q) => q.id !== id));
           showAlert("Kuis berhasil dihapus.", "Sukses");
         } catch (err: any) {
@@ -290,12 +294,24 @@ export default function AdminKuis() {
   const handleOpenAnalysis = async (quiz: Quiz) => {
     if (!token) return;
     try {
+      // Check in-memory cache first to avoid wasteful backend calls
+      if (submissionsCache.current[quiz.id]) {
+        setSubmissions(submissionsCache.current[quiz.id]);
+        setSelectedQuiz(quiz);
+        setMode("ANALYSIS");
+        return;
+      }
+
+      setLoading(true);
       const quizSubmissions = await getQuizSubmissionsApi(token, quiz.id);
+      submissionsCache.current[quiz.id] = quizSubmissions;
       setSubmissions(quizSubmissions);
       setSelectedQuiz(quiz);
       setMode("ANALYSIS");
     } catch (err: any) {
       showAlert(err.message || "Gagal mengambil data analisis.", "Gagal");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -508,6 +524,10 @@ export default function AdminKuis() {
           questions,
         };
         await createQuizApi(token, payload);
+      }
+
+      if (editingQuizId) {
+        delete submissionsCache.current[editingQuizId];
       }
 
       await loadQuizzes();

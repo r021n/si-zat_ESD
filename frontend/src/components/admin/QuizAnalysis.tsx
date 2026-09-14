@@ -1,5 +1,11 @@
 import { useState } from "react";
-import { FiArrowLeft } from "react-icons/fi";
+import {
+  FiArrowLeft,
+  FiX,
+  FiCheckCircle,
+  FiXCircle,
+  FiMinusCircle,
+} from "react-icons/fi";
 
 interface Question {
   id: string;
@@ -61,6 +67,8 @@ export default function QuizAnalysis({
     | "ANSWERED_DESC"
     | "EMPTY_DESC"
   >("ORDER_ASC");
+  const [selectedSubmission, setSelectedSubmission] =
+    useState<Submission | null>(null);
 
   const quizSubmissions = submissions.filter(
     (s) => s.quizId === selectedQuiz.id,
@@ -128,6 +136,30 @@ export default function QuizAnalysis({
       return a.originalIndex - b.originalIndex;
     }
   });
+
+  // Calculate detailed student result breakdown for the selected submission modal
+  const studentResults = selectedSubmission
+    ? selectedQuiz.questions.map((q, qIdx) => {
+        const studentAns = selectedSubmission.answers[q.id] || [];
+        const correct = q.correctAnswers || [];
+        const isAnswered = studentAns.length > 0;
+        const isCorrect =
+          isAnswered &&
+          studentAns.length === correct.length &&
+          studentAns.every((v) => correct.includes(v));
+
+        return {
+          question: q,
+          index: qIdx,
+          studentAns,
+          correct,
+          isAnswered,
+          isCorrect,
+        };
+      })
+    : [];
+
+  const studentCorrectCount = studentResults.filter((r) => r.isCorrect).length;
 
   return (
     <div className="w-full flex-1 flex flex-col justify-between overflow-hidden">
@@ -260,9 +292,11 @@ export default function QuizAnalysis({
                           return (
                             <tr
                               key={sub.id}
-                              className={`border-b border-[#F0EDFF]/30 ${
+                              onClick={() => setSelectedSubmission(sub)}
+                              className={`border-b border-[#F0EDFF]/30 cursor-pointer transition-colors hover:bg-[#F0ECFF]/60 active:bg-[#E9E4FF] ${
                                 sIdx % 2 === 1 ? "bg-[#FAF9FF]/40" : "bg-white"
                               }`}
+                              title="Klik untuk melihat detail lembar jawaban siswa"
                             >
                               <td className="p-3 font-bold whitespace-nowrap text-[#2C2B30]">
                                 {sub.studentName}
@@ -424,6 +458,185 @@ export default function QuizAnalysis({
           )}
         </div>
       </div>
+
+      {/* MODAL DETAIL LEMBAR JAWABAN SISWA */}
+      {selectedSubmission && (
+        <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-107.5 max-h-[90vh] bg-[#FAF9FF] rounded-[28px] shadow-2xl border border-[#F0EDFF] flex flex-col overflow-hidden animate-none select-none text-left">
+            {/* Header Modal */}
+            <div className="bg-white p-4 border-b border-[#F0EDFF] flex justify-between items-center shrink-0">
+              <div className="min-w-0 flex-1 pr-2">
+                <p className="text-[9px] font-bold uppercase tracking-widest text-[#9C98A6]">
+                  Lembar Jawaban Siswa
+                </p>
+                <h2 className="text-sm font-black text-[#2C2B30] truncate mt-0.5">
+                  {selectedSubmission.studentName}
+                </h2>
+                <p className="text-[10px] font-bold text-[#8C66FF]">
+                  Kelas: {selectedSubmission.studentClass || "-"}
+                </p>
+              </div>
+              <button
+                onClick={() => setSelectedSubmission(null)}
+                className="w-8 h-8 rounded-full bg-[#FAF9FF] border border-[#F0EDFF] text-[#2C2B30] flex items-center justify-center hover:bg-neutral-100 cursor-pointer shrink-0 transition-none"
+                title="Tutup"
+              >
+                <FiX size={16} />
+              </button>
+            </div>
+
+            {/* Score & Summary Metrics */}
+            <div className="p-3.5 grid grid-cols-3 gap-2 bg-white/70 border-b border-[#F0EDFF] shrink-0">
+              <div className="bg-white rounded-2xl p-2.5 border border-[#F0EDFF] text-center flex flex-col shadow-xs">
+                <span className="text-[8px] uppercase tracking-wider font-extrabold text-[#9C98A6]">
+                  Skor Siswa
+                </span>
+                <span className="text-base font-black text-[#8C66FF] mt-0.5">
+                  {selectedSubmission.score}
+                  <span className="text-[10px] font-semibold text-[#9C98A6]">
+                    /100
+                  </span>
+                </span>
+              </div>
+              <div className="bg-white rounded-2xl p-2.5 border border-[#F0EDFF] text-center flex flex-col shadow-xs">
+                <span className="text-[8px] uppercase tracking-wider font-extrabold text-[#9C98A6]">
+                  Jumlah Benar
+                </span>
+                <span className="text-base font-black text-[#2C8578] mt-0.5">
+                  {studentCorrectCount}
+                  <span className="text-[10px] font-semibold text-[#9C98A6]">
+                    /{selectedQuiz.questions.length}
+                  </span>
+                </span>
+              </div>
+              <div className="bg-white rounded-2xl p-2.5 border border-[#F0EDFF] text-center flex flex-col shadow-xs">
+                <span className="text-[8px] uppercase tracking-wider font-extrabold text-[#9C98A6]">
+                  Waktu
+                </span>
+                <span className="text-base font-black text-[#2C2B30] mt-0.5 font-mono">
+                  {formatDurationFriendly(selectedSubmission.duration)}
+                </span>
+              </div>
+            </div>
+
+            {/* Questions & Options List */}
+            <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3.5">
+              {studentResults.map(
+                ({
+                  question: q,
+                  index: qIdx,
+                  studentAns,
+                  correct,
+                  isAnswered,
+                  isCorrect,
+                }) => (
+                  <div
+                    key={q.id}
+                    className="bg-white rounded-2xl p-4 border border-[#F0EDFF] shadow-xs flex flex-col gap-3"
+                  >
+                    {/* Header Soal */}
+                    <div className="flex justify-between items-start gap-2 border-b border-[#F0EDFF]/60 pb-2.5">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs font-black text-[#8C66FF]">
+                          Soal #{qIdx + 1}
+                        </span>
+                        {q.questionType && (
+                          <span className="px-2 py-0.5 bg-[#F0ECFF] text-[#8C66FF] rounded-md text-[9px] uppercase tracking-wider font-extrabold">
+                            {q.questionType}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Status Badge */}
+                      {isCorrect ? (
+                        <span className="px-2.5 py-0.5 bg-[#E6F8F6] text-[#2C8578] rounded-full text-[10px] font-black flex items-center gap-1 shrink-0">
+                          <FiCheckCircle size={12} />
+                          Benar
+                        </span>
+                      ) : isAnswered ? (
+                        <span className="px-2.5 py-0.5 bg-[#FFEBF0] text-[#FF5E8C] rounded-full text-[10px] font-black flex items-center gap-1 shrink-0">
+                          <FiXCircle size={12} />
+                          Salah
+                        </span>
+                      ) : (
+                        <span className="px-2.5 py-0.5 bg-[#FAF9FF] text-[#9C98A6] border border-[#F0EDFF] rounded-full text-[10px] font-bold flex items-center gap-1 shrink-0">
+                          <FiMinusCircle size={12} />
+                          Tidak Dijawab
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Gambar Soal jika ada */}
+                    {q.images && q.images.length > 0 && (
+                      <div className="flex gap-2 overflow-x-auto py-1">
+                        {q.images.map((img, i) => (
+                          <img
+                            key={i}
+                            src={img}
+                            alt={`Soal ${qIdx + 1}`}
+                            className="h-32 rounded-xl object-contain bg-neutral-50 border border-[#F0EDFF]"
+                          />
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Teks Soal */}
+                    <p className="text-xs font-bold leading-relaxed text-[#2C2B30]">
+                      {q.text}
+                    </p>
+
+                    {/* Pilihan Jawaban */}
+                    <div className="flex flex-col gap-2 mt-1">
+                      {q.options.map((opt, optIdx) => {
+                        const isChosen = studentAns.includes(optIdx);
+                        const isCorrectOption = correct.includes(optIdx);
+                        const letter = String.fromCharCode(65 + optIdx);
+
+                        let containerStyle =
+                          "bg-[#FAF9FF]/60 border-[#F0EDFF] text-[#6B6875]";
+
+                        if (isCorrectOption) {
+                          // Jawaban benar selalu highlight hijau
+                          containerStyle =
+                            "bg-[#E6F8F6] border-[#2C8578] text-[#2C8578] font-bold";
+                        } else if (isChosen) {
+                          // Jawaban salah yang dipilih siswa highlight merah
+                          containerStyle =
+                            "bg-[#FFEBF0] border-[#FF5E8C] text-[#D95276] font-bold";
+                        }
+
+                        return (
+                          <div
+                            key={optIdx}
+                            className={`p-2.5 rounded-xl border flex items-start gap-2 ${containerStyle}`}
+                          >
+                            <span className="font-black text-[11px] shrink-0 mt-0.5">
+                              {letter}.
+                            </span>
+                            <span className="text-xs leading-snug break-words">
+                              {opt}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ),
+              )}
+            </div>
+
+            {/* Tombol Tutup Footer */}
+            <div className="p-3 bg-white border-t border-[#F0EDFF] shrink-0">
+              <button
+                onClick={() => setSelectedSubmission(null)}
+                className="w-full py-2.5 bg-[#8C66FF] text-white font-extrabold uppercase tracking-wider text-[10px] rounded-full shadow-md shadow-purple-100 cursor-pointer active:scale-95 transition-all flex items-center justify-center"
+              >
+                Tutup Lembar Jawaban
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
