@@ -227,23 +227,23 @@ export default function QuizAnalysis({
                     </div>
                   </div>
 
-                  <div className="flex-1 overflow-y-auto border border-[#F0EDFF] rounded-[20px] shadow-[0_4px_12px_rgba(0,0,0,0.02)] bg-white overflow-hidden">
-                    <table className="w-full border-collapse text-left text-xs">
+                  <div className="flex-1 overflow-auto border border-[#F0EDFF] rounded-[20px] shadow-[0_4px_12px_rgba(0,0,0,0.02)] bg-white">
+                    <table className="w-full min-w-[500px] border-collapse text-left text-xs">
                       <thead className="sticky top-0 bg-[#FAF9FF] z-10">
                         <tr className="bg-[#FAF9FF] text-[#2C2B30] border-b border-[#F0EDFF] uppercase font-black text-[9px] tracking-wider">
-                          <th className="p-3 border-r border-[#F0EDFF]/50">
+                          <th className="p-3 border-r border-[#F0EDFF]/50 whitespace-nowrap">
                             Nama
                           </th>
-                          <th className="p-3 border-r border-[#F0EDFF]/50 text-center">
+                          <th className="p-3 border-r border-[#F0EDFF]/50 text-center whitespace-nowrap">
                             Kelas
                           </th>
-                          <th className="p-3 border-r border-[#F0EDFF]/50 text-center">
+                          <th className="p-3 border-r border-[#F0EDFF]/50 text-center whitespace-nowrap">
                             Durasi
                           </th>
-                          <th className="p-3 border-r border-[#F0EDFF]/50 text-center">
+                          <th className="p-3 border-r border-[#F0EDFF]/50 text-center whitespace-nowrap">
                             Soal (T/K)
                           </th>
-                          <th className="p-3 text-center">Skor</th>
+                          <th className="p-3 text-center whitespace-nowrap">Skor</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -264,25 +264,25 @@ export default function QuizAnalysis({
                                 sIdx % 2 === 1 ? "bg-[#FAF9FF]/40" : "bg-white"
                               }`}
                             >
-                              <td className="p-3 font-bold truncate max-w-30 text-[#2C2B30]">
+                              <td className="p-3 font-bold whitespace-nowrap text-[#2C2B30]">
                                 {sub.studentName}
                               </td>
-                              <td className="p-3 text-center font-mono text-[#9C98A6] font-bold">
+                              <td className="p-3 text-center font-mono text-[#9C98A6] font-bold whitespace-nowrap">
                                 {sub.studentClass}
                               </td>
-                              <td className="p-3 text-center font-mono text-[#9C98A6] font-semibold">
+                              <td className="p-3 text-center font-mono text-[#9C98A6] font-semibold whitespace-nowrap">
                                 {formatDurationFriendly(sub.duration)}
                               </td>
-                              <td className="p-3 text-center font-mono text-[#9C98A6] font-semibold">
+                              <td className="p-3 text-center font-mono text-[#9C98A6] font-semibold whitespace-nowrap">
                                 <span className="text-[#2C8578]">
-                                  {subAnsweredCount}
+                                   {subAnsweredCount}
                                 </span>
                                 <span className="text-[#9C98A6]">/</span>
                                 <span className="text-[#FF5E8C]">
-                                  {subEmptyCount}
+                                   {subEmptyCount}
                                 </span>
                               </td>
-                              <td className="p-3 text-center font-mono font-black text-sm text-[#8C66FF]">
+                              <td className="p-3 text-center font-mono font-black text-sm text-[#8C66FF] whitespace-nowrap">
                                 {sub.score}
                               </td>
                             </tr>
