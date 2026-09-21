@@ -12,6 +12,7 @@ import {
   LuUser,
   LuAward,
   LuKeyRound,
+  LuMessageSquare,
 } from "react-icons/lu";
 import unsLogo from "../assets/uns_logo.webp";
 
@@ -169,6 +170,14 @@ export default function MainMenu({ onNavigate }: MainMenuProps) {
             icon: <LuPenTool className="text-xl" />,
             bgIcon: "bg-[#FFEBF0]",
             textIcon: "text-[#D95276]",
+          },
+          {
+            id: "ruang-diskusi",
+            label: "Ruang Diskusi",
+            desc: "Pengumuman, diskusi & tugas siswa",
+            icon: <LuMessageSquare className="text-xl" />,
+            bgIcon: "bg-[#EBF3FF]",
+            textIcon: "text-[#3B82F6]",
           },
           {
             id: "kuis/berpikir-sistem",

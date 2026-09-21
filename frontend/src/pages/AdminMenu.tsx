@@ -10,6 +10,7 @@ import {
   LuEye,
   LuSettings,
   LuKeyRound,
+  LuMessageSquare,
 } from "react-icons/lu";
 
 import { FiArrowLeft } from "react-icons/fi";
@@ -129,6 +130,15 @@ export default function AdminMenu() {
   });
 
   const adminMenus = [
+    {
+      id: "diskusi-admin",
+      label: "Kelola Ruang Diskusi",
+      desc: "Buat pengumuman, nilai tugas siswa, dan pantau ranking keaktifan",
+      icon: <LuMessageSquare className="text-xl" />,
+      bgIcon: "bg-[#EBF3FF]",
+      textIcon: "text-[#3B82F6]",
+      path: "/admin/diskusi",
+    },
     {
       id: "enrollment",
       label: "Enrollment",

@@ -9,6 +9,7 @@ import analyticsRoute from './routes/analytics.js'
 import accessRoute, { getSettings, checkIsLocked } from './routes/access.js'
 import materiRoute from './routes/materi.js'
 import enrollRoute from './routes/enroll.js'
+import announcementsRoute from './routes/announcements.js'
 import { verify } from 'hono/jwt'
 import { db } from './db/index.js'
 import { users } from './db/schema.js'
@@ -111,6 +112,7 @@ app.route('/api/analytics', analyticsRoute)
 app.route('/api/access', accessRoute)
 app.route('/api/materi', materiRoute)
 app.route('/api/enroll', enrollRoute)
+app.route('/api/announcements', announcementsRoute)
 
 
 

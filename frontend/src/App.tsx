@@ -38,6 +38,8 @@ import AdminAccessControl from "./pages/AdminAccessControl";
 import Locked from "./pages/Locked";
 import EnrollPage from "./pages/EnrollPage";
 import AdminEnroll from "./pages/AdminEnroll";
+import RuangDiskusi from "./pages/RuangDiskusi";
+import AdminDiskusi from "./pages/AdminDiskusi";
 
 function RouteTracker() {
   const location = useLocation();
@@ -69,6 +71,8 @@ function RouteTracker() {
       menuKey = "menu profil pengembang";
     } else if (pathname === "/profile-report") {
       menuKey = "menu profil & report";
+    } else if (pathname.startsWith("/ruang-diskusi")) {
+      menuKey = "menu ruang diskusi";
     }
 
     if (menuKey) {
@@ -324,6 +328,8 @@ function AppContent() {
               path="/kuis/berpikir-sistem"
               element={<PenilaianBerpikirSistem />}
             />
+            <Route path="/ruang-diskusi" element={<RuangDiskusi />} />
+            <Route path="/ruang-diskusi/:id" element={<RuangDiskusi />} />
           </Route>
 
           <Route path="/admin" element={<AdminMenu />} />
@@ -339,6 +345,10 @@ function AppContent() {
           <Route
             path="/admin/enrollment"
             element={<AdminEnroll />}
+          />
+          <Route
+            path="/admin/diskusi"
+            element={<AdminDiskusi />}
           />
         </Route>
 

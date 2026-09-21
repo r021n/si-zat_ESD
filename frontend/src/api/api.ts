@@ -600,3 +600,238 @@ export async function revokeEnrollApi(token: string, userId: number) {
   return data;
 }
 
+// --- Ruang Diskusi / Announcement APIs with In-Memory Caching ---
+
+let announcementsCache: CacheItem<any> | null = null;
+const announcementDetailCache = new Map<string, CacheItem<any>>();
+const announcementDiscussionsCache = new Map<string, CacheItem<any>>();
+const announcementSubmissionsCache = new Map<string, CacheItem<any>>();
+
+const ANNOUNCEMENT_TTL_MS = 60 * 1000; // 60s
+const DISCUSSION_TTL_MS = 8 * 1000;    // 8s (fast chat cache)
+const SUBMISSION_TTL_MS = 30 * 1000;   // 30s
+
+export function clearAnnouncementsCache() {
+  announcementsCache = null;
+  announcementDetailCache.clear();
+  announcementDiscussionsCache.clear();
+  announcementSubmissionsCache.clear();
+}
+
+export async function getAnnouncementsApi(token: string, forceRefresh = false) {
+  const now = Date.now();
+  if (!forceRefresh && announcementsCache && (now - announcementsCache.timestamp < ANNOUNCEMENT_TTL_MS)) {
+    return announcementsCache.data;
+  }
+
+  const response = await fetch(`${API_URL}/api/announcements`, {
+    method: "GET",
+    headers: {
+      "Authorization": `Bearer ${token}`
+    }
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || "Gagal mengambil daftar pengumuman");
+  }
+  announcementsCache = { data: data.data, timestamp: now };
+  return data.data;
+}
+
+export async function getAnnouncementDetailApi(token: string, id: string, forceRefresh = false) {
+  const now = Date.now();
+  const cached = announcementDetailCache.get(id);
+  if (!forceRefresh && cached && (now - cached.timestamp < ANNOUNCEMENT_TTL_MS)) {
+    return cached.data;
+  }
+
+  const response = await fetch(`${API_URL}/api/announcements/${id}`, {
+    method: "GET",
+    headers: {
+      "Authorization": `Bearer ${token}`
+    }
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || "Gagal mengambil detail pengumuman");
+  }
+  announcementDetailCache.set(id, { data: data.data, timestamp: now });
+  return data.data;
+}
+
+export async function createAnnouncementApi(token: string, body: {
+  title: string;
+  problem: string;
+  question: string;
+  taskInfo: string;
+  instruction: string;
+}) {
+  clearAnnouncementsCache();
+  const response = await fetch(`${API_URL}/api/announcements`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    },
+    body: JSON.stringify(body)
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || "Gagal membuat pengumuman");
+  }
+  return data;
+}
+
+export async function updateAnnouncementApi(token: string, id: string, body: {
+  title: string;
+  problem: string;
+  question: string;
+  taskInfo: string;
+  instruction: string;
+}) {
+  clearAnnouncementsCache();
+  const response = await fetch(`${API_URL}/api/announcements/${id}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    },
+    body: JSON.stringify(body)
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || "Gagal memperbarui pengumuman");
+  }
+  return data;
+}
+
+export async function deleteAnnouncementApi(token: string, id: string) {
+  clearAnnouncementsCache();
+  const response = await fetch(`${API_URL}/api/announcements/${id}`, {
+    method: "DELETE",
+    headers: {
+      "Authorization": `Bearer ${token}`
+    }
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || "Gagal menghapus pengumuman");
+  }
+  return data;
+}
+
+export async function getAnnouncementDiscussionsApi(token: string, id: string, forceRefresh = false) {
+  const now = Date.now();
+  const cached = announcementDiscussionsCache.get(id);
+  if (!forceRefresh && cached && (now - cached.timestamp < DISCUSSION_TTL_MS)) {
+    return cached.data;
+  }
+
+  const response = await fetch(`${API_URL}/api/announcements/${id}/discussions`, {
+    method: "GET",
+    headers: {
+      "Authorization": `Bearer ${token}`
+    }
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || "Gagal memuat diskusi");
+  }
+  announcementDiscussionsCache.set(id, { data: data.data, timestamp: now });
+  return data.data;
+}
+
+export async function sendAnnouncementDiscussionApi(token: string, id: string, content: string) {
+  announcementDiscussionsCache.delete(id);
+  const response = await fetch(`${API_URL}/api/announcements/${id}/discussions`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    },
+    body: JSON.stringify({ content })
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || "Gagal mengirim pesan diskusi");
+  }
+  return data.data;
+}
+
+export async function getAnnouncementSubmissionsApi(token: string, id: string, forceRefresh = false) {
+  const now = Date.now();
+  const cached = announcementSubmissionsCache.get(id);
+  if (!forceRefresh && cached && (now - cached.timestamp < SUBMISSION_TTL_MS)) {
+    return cached.data;
+  }
+
+  const response = await fetch(`${API_URL}/api/announcements/${id}/submissions`, {
+    method: "GET",
+    headers: {
+      "Authorization": `Bearer ${token}`
+    }
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || "Gagal mengambil pengumpulan tugas");
+  }
+  announcementSubmissionsCache.set(id, { data: data.data, timestamp: now });
+  return data.data;
+}
+
+export async function submitAnnouncementTaskApi(token: string, id: string, formData: FormData) {
+  announcementsCache = null;
+  announcementDetailCache.delete(id);
+  announcementSubmissionsCache.delete(id);
+  const response = await fetch(`${API_URL}/api/announcements/${id}/submissions`, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${token}`
+    },
+    body: formData
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || "Gagal mengumpulkan tugas");
+  }
+  return data;
+}
+
+export async function deleteAnnouncementSubmissionApi(token: string, submissionId: string) {
+  clearAnnouncementsCache();
+  const response = await fetch(`${API_URL}/api/announcements/submissions/${submissionId}`, {
+    method: "DELETE",
+    headers: {
+      "Authorization": `Bearer ${token}`
+    }
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || "Gagal menghapus tugas");
+  }
+  return data;
+}
+
+export async function gradeAnnouncementSubmissionApi(
+  token: string,
+  submissionId: string,
+  grade: number,
+  feedback?: string
+) {
+  clearAnnouncementsCache();
+  const response = await fetch(`${API_URL}/api/announcements/submissions/${submissionId}/grade`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    },
+    body: JSON.stringify({ grade, feedback })
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || "Gagal menyimpan nilai");
+  }
+  return data;
+}
+
+

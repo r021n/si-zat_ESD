@@ -98,3 +98,43 @@ export const materiProgress = sqliteTable('materi_progress', {
   maxUnlockedIndex: integer('max_unlocked_index').default(0).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
 })
+
+export const announcements = sqliteTable('announcements', {
+  id: text('id').primaryKey(),
+  title: text('title').notNull(),
+  problem: text('problem').notNull().default(''),
+  question: text('question').notNull().default(''),
+  taskInfo: text('task_info').notNull().default(''),
+  instruction: text('instruction').notNull().default(''),
+  authorId: integer('author_id').references(() => users.id, { onDelete: 'set null' }),
+  authorName: text('author_name').notNull().default('Guru'),
+  createdAt: text('created_at').notNull(),
+  updatedAt: text('updated_at'),
+})
+
+export const announcementSubmissions = sqliteTable('announcement_submissions', {
+  id: text('id').primaryKey(),
+  announcementId: text('announcement_id').notNull().references(() => announcements.id, { onDelete: 'cascade' }),
+  userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  studentName: text('student_name').notNull(),
+  studentClass: text('student_class').notNull(),
+  answer: text('answer').notNull(),
+  fileName: text('file_name').default(''),
+  imageBlob: blob('image_blob', { mode: 'buffer' }),
+  imageType: text('image_type'),
+  submittedAt: text('submitted_at').notNull(),
+  grade: integer('grade'),
+  feedback: text('feedback'),
+  gradedAt: text('graded_at'),
+  gradedBy: text('graded_by'),
+})
+
+export const announcementDiscussions = sqliteTable('announcement_discussions', {
+  id: text('id').primaryKey(),
+  announcementId: text('announcement_id').notNull().references(() => announcements.id, { onDelete: 'cascade' }),
+  userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  senderName: text('sender_name').notNull(),
+  senderRole: text('sender_role').notNull(),
+  content: text('content').notNull(),
+  createdAt: text('created_at').notNull(),
+})
