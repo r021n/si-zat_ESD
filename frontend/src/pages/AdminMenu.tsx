@@ -133,7 +133,7 @@ export default function AdminMenu() {
     {
       id: "diskusi-admin",
       label: "Kelola Ruang Diskusi",
-      desc: "Buat pengumuman, nilai tugas siswa, dan pantau ranking keaktifan",
+      desc: "Buat topik diskusi, nilai tugas siswa, dan pantau ranking keaktifan",
       icon: <LuMessageSquare className="text-xl" />,
       bgIcon: "bg-[#EBF3FF]",
       textIcon: "text-[#3B82F6]",

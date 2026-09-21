@@ -91,10 +91,63 @@ export default function AdminDiskusi() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formTitle, setFormTitle] = useState<string>("");
   const [formProblem, setFormProblem] = useState<string>("");
-  const [formQuestion, setFormQuestion] = useState<string>("");
+  const [formQuestions, setFormQuestions] = useState<string[]>([""]);
   const [formTaskInfo, setFormTaskInfo] = useState<string>("");
-  const [formInstruction, setFormInstruction] = useState<string>("");
+  const [formInstructions, setFormInstructions] = useState<string[]>([""]);
   const [submittingForm, setSubmittingForm] = useState<boolean>(false);
+
+  // Helper to parse existing multi-line string to list array
+  const parseToList = (text?: string): string[] => {
+    if (!text || !text.trim()) return [""];
+    const lines = text
+      .split("\n")
+      .map((line) =>
+        line
+          .trim()
+          .replace(/^(\d+[.)]\s*|[-*•]\s*)/, "")
+          .trim(),
+      )
+      .filter((line) => line.length > 0);
+    return lines.length > 0 ? lines : [""];
+  };
+
+  const handleAddQuestion = () => {
+    setFormQuestions((prev) => [...prev, ""]);
+  };
+
+  const handleUpdateQuestion = (index: number, val: string) => {
+    setFormQuestions((prev) => {
+      const updated = [...prev];
+      updated[index] = val;
+      return updated;
+    });
+  };
+
+  const handleRemoveQuestion = (index: number) => {
+    setFormQuestions((prev) => {
+      const filtered = prev.filter((_, idx) => idx !== index);
+      return filtered.length > 0 ? filtered : [""];
+    });
+  };
+
+  const handleAddInstruction = () => {
+    setFormInstructions((prev) => [...prev, ""]);
+  };
+
+  const handleUpdateInstruction = (index: number, val: string) => {
+    setFormInstructions((prev) => {
+      const updated = [...prev];
+      updated[index] = val;
+      return updated;
+    });
+  };
+
+  const handleRemoveInstruction = (index: number) => {
+    setFormInstructions((prev) => {
+      const filtered = prev.filter((_, idx) => idx !== index);
+      return filtered.length > 0 ? filtered : [""];
+    });
+  };
 
   // Submissions Grading View
   const [selectedForSubmissions, setSelectedForSubmissions] =
@@ -146,7 +199,7 @@ export default function AdminDiskusi() {
         const data = await getAnnouncementsApi(token, force);
         setAnnouncements(data || []);
       } catch (err: any) {
-        console.error("Gagal mengambil data pengumuman:", err);
+        console.error("Gagal mengambil data diskusi:", err);
       } finally {
         setLoadingList(false);
       }
@@ -158,25 +211,25 @@ export default function AdminDiskusi() {
     fetchAnnouncements();
   }, [fetchAnnouncements]);
 
-  // Open Form for Create
+  // Open Create Form
   const handleOpenCreateForm = () => {
     setEditingId(null);
     setFormTitle("");
     setFormProblem("");
-    setFormQuestion("");
+    setFormQuestions([""]);
     setFormTaskInfo("");
-    setFormInstruction("");
+    setFormInstructions([""]);
     setIsFormOpen(true);
   };
 
-  // Open Form for Edit
+  // Open Edit Form
   const handleOpenEditForm = (ann: AnnouncementItem) => {
     setEditingId(ann.id);
     setFormTitle(ann.title);
     setFormProblem(ann.problem || "");
-    setFormQuestion(ann.question || "");
+    setFormQuestions(parseToList(ann.question));
     setFormTaskInfo(ann.taskInfo || "");
-    setFormInstruction(ann.instruction || "");
+    setFormInstructions(parseToList(ann.instruction));
     setIsFormOpen(true);
   };
 
@@ -184,7 +237,7 @@ export default function AdminDiskusi() {
   const handleSaveAnnouncement = async () => {
     if (!formTitle.trim()) {
       showAlert(
-        "Silakan masukkan judul pengumuman / topik diskusi.",
+        "Silakan masukkan judul topik diskusi.",
         "Judul Kosong",
       );
       return;
@@ -194,21 +247,31 @@ export default function AdminDiskusi() {
     setSubmittingForm(true);
 
     try {
+      const questionPayload = formQuestions
+        .map((q) => q.trim())
+        .filter((q) => q.length > 0)
+        .join("\n");
+
+      const instructionPayload = formInstructions
+        .map((inst) => inst.trim())
+        .filter((inst) => inst.length > 0)
+        .join("\n");
+
       const payload = {
         title: formTitle.trim(),
         problem: formProblem.trim(),
-        question: formQuestion.trim(),
+        question: questionPayload,
         taskInfo: formTaskInfo.trim(),
-        instruction: formInstruction.trim(),
+        instruction: instructionPayload,
       };
 
       if (editingId) {
         await updateAnnouncementApi(token, editingId, payload);
-        showAlert("Pengumuman berhasil diubah.", "Berhasil Diperbarui");
+        showAlert("Topik diskusi berhasil diubah.", "Berhasil Diperbarui");
       } else {
         await createAnnouncementApi(token, payload);
         showAlert(
-          "Pengumuman dan ruang diskusi baru berhasil dibuat.",
+          "Topik dan ruang diskusi baru berhasil dibuat.",
           "Berhasil Dibuat",
         );
       }
@@ -217,7 +280,7 @@ export default function AdminDiskusi() {
       fetchAnnouncements();
     } catch (err: any) {
       showAlert(
-        err.message || "Terjadi kendala saat menyimpan pengumuman.",
+        err.message || "Terjadi kendala saat menyimpan topik diskusi.",
         "Gagal Menyimpan",
       );
     } finally {
@@ -235,11 +298,11 @@ export default function AdminDiskusi() {
 
     try {
       await deleteAnnouncementApi(token, id);
-      showAlert("Pengumuman berhasil dihapus.", "Dihapus");
+      showAlert("Topik diskusi berhasil dihapus.", "Dihapus");
       fetchAnnouncements();
     } catch (err: any) {
       showAlert(
-        err.message || "Gagal menghapus pengumuman.",
+        err.message || "Gagal menghapus topik diskusi.",
         "Gagal Menghapus",
       );
     }
@@ -470,7 +533,7 @@ export default function AdminDiskusi() {
                   onClick={() => fetchAnnouncements(true)}
                   disabled={loadingList}
                   className="w-9 h-9 bg-white rounded-xl flex items-center justify-center border border-[#F0EDFF] text-[#8C66FF] shadow-xs active:scale-95 transition-transform cursor-pointer"
-                  title="Refresh Pengumuman"
+                  title="Refresh Diskusi"
                 >
                   <FiRefreshCw
                     size={14}
@@ -495,7 +558,7 @@ export default function AdminDiskusi() {
               />
               <input
                 type="text"
-                placeholder="Cari pengumuman diskusi..."
+                placeholder="Cari topik diskusi..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-4 py-2.5 bg-white border border-[#F0EDFF] rounded-2xl text-xs font-semibold text-[#2C2B30] placeholder:text-[#9C98A6] focus:outline-none focus:border-[#8C66FF] shadow-xs"
@@ -508,7 +571,7 @@ export default function AdminDiskusi() {
                 <div className="py-20 flex flex-col items-center justify-center gap-2">
                   <div className="w-8 h-8 border-3 border-[#8C66FF] border-t-transparent rounded-full animate-spin"></div>
                   <p className="text-xs text-[#9C98A6] font-bold uppercase tracking-wider">
-                    Memuat Pengumuman...
+                    Memuat Topik Diskusi...
                   </p>
                 </div>
               ) : filteredAnnouncements.length === 0 ? (
@@ -517,10 +580,10 @@ export default function AdminDiskusi() {
                     <LuMessageSquare />
                   </div>
                   <h3 className="text-sm font-extrabold text-[#2C2B30]">
-                    Belum Ada Pengumuman Diskusi
+                    Belum Ada Topik Diskusi
                   </h3>
                   <p className="text-xs text-[#9C98A6] mt-1 mb-4">
-                    Mulai dengan membuat pengumuman diskusi atau tugas pertama
+                    Mulai dengan membuat topik diskusi atau tugas pertama
                     Anda.
                   </p>
                   <button
@@ -553,7 +616,7 @@ export default function AdminDiskusi() {
                         <button
                           onClick={() => handleOpenEditForm(ann)}
                           className="w-8 h-8 rounded-xl bg-[#FAF9FF] border border-[#F0EDFF] text-[#8C66FF] flex items-center justify-center hover:bg-[#F0ECFF] transition-colors"
-                          title="Edit Pengumuman"
+                          title="Edit Topik Diskusi"
                         >
                           <FiEdit2 size={13} />
                         </button>
@@ -562,7 +625,7 @@ export default function AdminDiskusi() {
                             handleDeleteAnnouncement(ann.id, ann.title)
                           }
                           className="w-8 h-8 rounded-xl bg-[#FFF1F2] border border-[#FFE4E6] text-[#E11D48] flex items-center justify-center hover:bg-[#FFE4E6] transition-colors"
-                          title="Hapus Pengumuman"
+                          title="Hapus Topik Diskusi"
                         >
                           <FiTrash2 size={13} />
                         </button>
@@ -758,8 +821,8 @@ export default function AdminDiskusi() {
             <div className="flex justify-between items-center pb-2.5 border-b border-[#F0EDFF]">
               <h3 className="text-sm font-black text-[#2C2B30]">
                 {editingId
-                  ? "Edit Topik Pengumuman"
-                  : "Buat Topik Pengumuman Baru"}
+                  ? "Edit Topik Diskusi"
+                  : "Buat Topik Diskusi Baru"}
               </h3>
               <button
                 onClick={() => setIsFormOpen(false)}
@@ -773,7 +836,7 @@ export default function AdminDiskusi() {
               {/* Judul */}
               <div>
                 <label className="font-bold text-[#524F5D] block mb-1">
-                  Judul Topik / Pengumuman *
+                  Judul Topik Diskusi *
                 </label>
                 <input
                   type="text"
@@ -799,22 +862,71 @@ export default function AdminDiskusi() {
               </div>
 
               {/* Pertanyaan */}
-              <div>
-                <div className="flex justify-between items-center mb-1">
-                  <label className="font-bold text-[#524F5D]">
-                    ❓ Pertanyaan Analisis
-                  </label>
-                  <span className="text-[10px] text-[#8C66FF] font-semibold">
-                    (1 baris = 1 butir nomor)
-                  </span>
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-1.5">
+                    <label className="font-bold text-[#524F5D]">
+                      ❓ Pertanyaan Analisis
+                    </label>
+                    <span className="text-[10px] bg-[#EDE9FE] text-[#8C66FF] font-bold px-2 py-0.5 rounded-full">
+                      {formQuestions.filter((q) => q.trim().length > 0).length} butir
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleAddQuestion}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 bg-[#F4F0FF] hover:bg-[#EDE9FE] text-[#8C66FF] font-bold text-[11px] rounded-lg transition-colors active:scale-95 cursor-pointer shadow-2xs"
+                  >
+                    <FiPlus size={13} />
+                    <span>Tambah</span>
+                  </button>
                 </div>
-                <textarea
-                  rows={4}
-                  placeholder={"1. Apa saja kemungkinan penyebab pencemaran danau tersebut?\n2. Apa dampak pencemaran tersebut terhadap lingkungan dan masyarakat?\n3. Buatlah solusi yang dapat dilakukan untuk mengatasi masalah ini."}
-                  value={formQuestion}
-                  onChange={(e) => setFormQuestion(e.target.value)}
-                  className="w-full p-3 bg-[#FAF9FF] border border-[#E9E6F5] rounded-xl font-medium text-[#2C2B30] focus:outline-none focus:border-[#8C66FF] leading-relaxed"
-                />
+
+                <div className="space-y-2">
+                  {formQuestions.map((q, idx) => (
+                    <div key={idx} className="flex items-start gap-2">
+                      <span className="w-6 h-6 rounded-lg bg-[#EDE9FE] text-[#8C66FF] font-black text-[11px] flex items-center justify-center shrink-0 mt-1 border border-[#DDD6FE]/60 shadow-2xs">
+                        {idx + 1}
+                      </span>
+                      <textarea
+                        rows={2}
+                        placeholder={
+                          idx === 0
+                            ? "Contoh: Apa saja kemungkinan penyebab pencemaran danau tersebut?"
+                            : idx === 1
+                              ? "Contoh: Apa dampak pencemaran tersebut terhadap lingkungan dan masyarakat?"
+                              : `Tulis butir pertanyaan ${idx + 1}...`
+                        }
+                        value={q}
+                        onChange={(e) => handleUpdateQuestion(idx, e.target.value)}
+                        className="flex-1 px-3 py-2 bg-[#FAF9FF] border border-[#E9E6F5] rounded-xl font-medium text-[#2C2B30] focus:outline-none focus:border-[#8C66FF] leading-relaxed text-xs resize-none"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveQuestion(idx)}
+                        className="w-8 h-8 rounded-xl flex items-center justify-center text-[#9C98A6] hover:text-red-500 hover:bg-red-50 border border-transparent hover:border-red-100 transition-colors shrink-0 mt-0.5 active:scale-90 cursor-pointer"
+                        title={
+                          formQuestions.length === 1 && idx === 0
+                            ? "Kosongkan butir ini"
+                            : "Hapus butir pertanyaan ini"
+                        }
+                      >
+                        <FiTrash2 size={15} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+                {formQuestions.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={handleAddQuestion}
+                    className="w-full py-1.5 border border-dashed border-[#8C66FF]/40 bg-[#FAF8FF] hover:bg-[#F3EFFF] text-[#8C66FF] font-bold text-[11px] rounded-xl flex items-center justify-center gap-1.5 transition-colors cursor-pointer active:scale-98"
+                  >
+                    <FiPlus size={13} />
+                    <span>Tambah Butir Pertanyaan Baru</span>
+                  </button>
+                )}
               </div>
 
               {/* Informasi Tugas */}
@@ -832,22 +944,71 @@ export default function AdminDiskusi() {
               </div>
 
               {/* Petunjuk */}
-              <div>
-                <div className="flex justify-between items-center mb-1">
-                  <label className="font-bold text-[#524F5D]">
-                    💡 Petunjuk Pengerjaan
-                  </label>
-                  <span className="text-[10px] text-[#059669] font-semibold">
-                    (1 baris = 1 poin bullet)
-                  </span>
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-1.5">
+                    <label className="font-bold text-[#524F5D]">
+                      💡 Petunjuk Pengerjaan
+                    </label>
+                    <span className="text-[10px] bg-[#ECFDF5] text-[#059669] font-bold px-2 py-0.5 rounded-full">
+                      {formInstructions.filter((inst) => inst.trim().length > 0).length} poin
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleAddInstruction}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 bg-[#ECFDF5] hover:bg-[#D1FAE5] text-[#059669] font-bold text-[11px] rounded-lg transition-colors active:scale-95 cursor-pointer shadow-2xs"
+                  >
+                    <FiPlus size={13} />
+                    <span>Tambah</span>
+                  </button>
                 </div>
-                <textarea
-                  rows={4}
-                  placeholder={"• Gunakan data dari materi, hasil simulasi, atau sumber lain yang relevan.\n• Kerjakan secara berkelompok dan diskusikan di kolom diskusi.\n• Unggah pekerjaanmu dalam format gambar (JPG/PNG)."}
-                  value={formInstruction}
-                  onChange={(e) => setFormInstruction(e.target.value)}
-                  className="w-full p-3 bg-[#FAF9FF] border border-[#E9E6F5] rounded-xl font-medium text-[#2C2B30] focus:outline-none focus:border-[#8C66FF] leading-relaxed"
-                />
+
+                <div className="space-y-2">
+                  {formInstructions.map((inst, idx) => (
+                    <div key={idx} className="flex items-start gap-2">
+                      <span className="w-6 h-6 rounded-lg bg-[#ECFDF5] text-[#059669] font-black text-sm flex items-center justify-center shrink-0 mt-1 border border-[#A7F3D0]/60 shadow-2xs">
+                        •
+                      </span>
+                      <textarea
+                        rows={2}
+                        placeholder={
+                          idx === 0
+                            ? "Contoh: Gunakan data dari materi, hasil simulasi, atau sumber relevan."
+                            : idx === 1
+                              ? "Contoh: Kerjakan secara berkelompok dan diskusikan di kolom diskusi."
+                              : `Tulis poin petunjuk ${idx + 1}...`
+                        }
+                        value={inst}
+                        onChange={(e) => handleUpdateInstruction(idx, e.target.value)}
+                        className="flex-1 px-3 py-2 bg-[#FAF9FF] border border-[#E9E6F5] rounded-xl font-medium text-[#2C2B30] focus:outline-none focus:border-[#059669] leading-relaxed text-xs resize-none"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveInstruction(idx)}
+                        className="w-8 h-8 rounded-xl flex items-center justify-center text-[#9C98A6] hover:text-red-500 hover:bg-red-50 border border-transparent hover:border-red-100 transition-colors shrink-0 mt-0.5 active:scale-90 cursor-pointer"
+                        title={
+                          formInstructions.length === 1 && idx === 0
+                            ? "Kosongkan poin ini"
+                            : "Hapus poin petunjuk ini"
+                        }
+                      >
+                        <FiTrash2 size={15} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+                {formInstructions.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={handleAddInstruction}
+                    className="w-full py-1.5 border border-dashed border-[#059669]/40 bg-[#F0FDF4] hover:bg-[#DCFCE7] text-[#059669] font-bold text-[11px] rounded-xl flex items-center justify-center gap-1.5 transition-colors cursor-pointer active:scale-98"
+                  >
+                    <FiPlus size={13} />
+                    <span>Tambah Poin Petunjuk Baru</span>
+                  </button>
+                )}
               </div>
             </div>
 
@@ -865,7 +1026,7 @@ export default function AdminDiskusi() {
                 disabled={submittingForm}
                 className="flex-1 py-2.5 bg-[#8C66FF] text-white font-extrabold text-xs rounded-2xl shadow-md shadow-purple-200 active:scale-95 disabled:opacity-50"
               >
-                {submittingForm ? "Menyimpan..." : "Simpan Pengumuman"}
+                {submittingForm ? "Menyimpan..." : "Simpan Topik Diskusi"}
               </button>
             </div>
           </div>

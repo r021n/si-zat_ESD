@@ -632,7 +632,7 @@ export async function getAnnouncementsApi(token: string, forceRefresh = false) {
   });
   const data = await response.json();
   if (!response.ok) {
-    throw new Error(data.error || "Gagal mengambil daftar pengumuman");
+    throw new Error(data.error || "Gagal mengambil daftar topik diskusi");
   }
   announcementsCache = { data: data.data, timestamp: now };
   return data.data;
@@ -653,7 +653,7 @@ export async function getAnnouncementDetailApi(token: string, id: string, forceR
   });
   const data = await response.json();
   if (!response.ok) {
-    throw new Error(data.error || "Gagal mengambil detail pengumuman");
+    throw new Error(data.error || "Gagal mengambil detail topik diskusi");
   }
   announcementDetailCache.set(id, { data: data.data, timestamp: now });
   return data.data;
@@ -677,7 +677,7 @@ export async function createAnnouncementApi(token: string, body: {
   });
   const data = await response.json();
   if (!response.ok) {
-    throw new Error(data.error || "Gagal membuat pengumuman");
+    throw new Error(data.error || "Gagal membuat topik diskusi");
   }
   return data;
 }
@@ -700,7 +700,7 @@ export async function updateAnnouncementApi(token: string, id: string, body: {
   });
   const data = await response.json();
   if (!response.ok) {
-    throw new Error(data.error || "Gagal memperbarui pengumuman");
+    throw new Error(data.error || "Gagal memperbarui topik diskusi");
   }
   return data;
 }
@@ -715,7 +715,7 @@ export async function deleteAnnouncementApi(token: string, id: string) {
   });
   const data = await response.json();
   if (!response.ok) {
-    throw new Error(data.error || "Gagal menghapus pengumuman");
+    throw new Error(data.error || "Gagal menghapus topik diskusi");
   }
   return data;
 }

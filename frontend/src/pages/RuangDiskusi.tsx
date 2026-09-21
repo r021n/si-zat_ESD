@@ -13,7 +13,6 @@ import {
   FiCheckCircle,
   FiSearch,
   FiChevronRight,
-  FiCalendar,
 } from "react-icons/fi";
 import {
   LuMessageSquare,
@@ -21,6 +20,10 @@ import {
   LuFileText,
   LuInfo,
   LuUpload,
+  LuPin,
+  LuCircleHelp,
+  LuLightbulb,
+  LuClipboardList,
 } from "react-icons/lu";
 import {
   getAnnouncementsApi,
@@ -77,7 +80,6 @@ interface SubmissionItem {
   gradedBy?: string;
   hasImage?: boolean;
 }
-
 
 // Canvas-based image compression helper (<200KB for safe mobile uploads)
 function compressImage(
@@ -210,11 +212,14 @@ export default function RuangDiskusi() {
     if (!text) return [];
     return text
       .split("\n")
-      .map((line) => line.trim().replace(/^(\d+[.)]\s*|[-*•]\s*)/, "").trim())
+      .map((line) =>
+        line
+          .trim()
+          .replace(/^(\d+[.)]\s*|[-*•]\s*)/, "")
+          .trim(),
+      )
       .filter((line) => line.length > 0);
   };
-
-
 
   // Fetch Announcements List
   const fetchAnnouncements = useCallback(
@@ -294,7 +299,7 @@ export default function RuangDiskusi() {
         fetchSubmissions(annId, force);
       } catch (err: any) {
         showAlert(
-          err.message || "Gagal memuat detail pengumuman.",
+          err.message || "Gagal memuat detail diskusi.",
           "Gagal Membuka",
         );
       }
@@ -308,8 +313,6 @@ export default function RuangDiskusi() {
       handleSelectAnnouncement(paramAnnouncementId);
     }
   }, [paramAnnouncementId, token, handleSelectAnnouncement]);
-
-
 
   // Send Discussion Message
   const handleSendMessage = async (e?: React.FormEvent) => {
@@ -448,7 +451,6 @@ export default function RuangDiskusi() {
       );
     }
   };
-
 
   const formatDateIndo = (dateStr: string) => {
     if (!dateStr) return "";
@@ -599,7 +601,8 @@ export default function RuangDiskusi() {
                           </span>
                           {isGraded ? (
                             <span className="text-[9px] font-black text-[#10B981] bg-[#ECFDF5] px-2 py-0.5 rounded-md flex items-center gap-1">
-                              <FiCheckCircle size={10} /> Nilai: {ann.mySubmission?.grade}
+                              <FiCheckCircle size={10} /> Nilai:{" "}
+                              {ann.mySubmission?.grade}
                             </span>
                           ) : isSubmitted ? (
                             <span className="text-[9px] font-bold text-[#3B82F6] bg-[#EFF6FF] px-2 py-0.5 rounded-md flex items-center gap-1">
@@ -619,7 +622,8 @@ export default function RuangDiskusi() {
 
                         {/* Author / Date Subtitle */}
                         <p className="text-[10px] text-[#9C98A6] font-medium mt-0.5 truncate">
-                          {ann.authorName || "Guru"} • {formatDateIndo(ann.createdAt)}
+                          {ann.authorName || "Guru"} •{" "}
+                          {formatDateIndo(ann.createdAt)}
                         </p>
                       </div>
 
@@ -724,129 +728,111 @@ export default function RuangDiskusi() {
                   <div className="absolute bottom-2 right-4 text-white/20 text-6xl font-black select-none pointer-events-none">
                     ESD
                   </div>
-                  <div className="relative z-10">
+                  {/* <div className="relative z-10">
                     <span className="text-[10px] uppercase font-black tracking-wider text-white/80 bg-black/20 px-2.5 py-0.5 rounded-full inline-flex items-center gap-1">
-                      <FiCalendar size={10} /> {formatDateIndo(selectedAnnouncement.createdAt)}
+                      <FiCalendar size={10} />{" "}
+                      {formatDateIndo(selectedAnnouncement.createdAt)}
                     </span>
-                  </div>
+                  </div> */}
                 </div>
 
-                {/* 2. Header Info Row (Tag, Title, Author) */}
-                <div className="space-y-1.5 px-0.5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-black uppercase tracking-wider text-[#8C66FF] bg-[#F0ECFF] px-2.5 py-0.5 rounded-md">
-                      Tugas
-                    </span>
-                    <span className="text-[10px] font-semibold text-[#9C98A6]">
-                      {user?.kelas || "IPA - Biologi"}
-                    </span>
+                {/* 2. Main Content Card (Unified Article Style) */}
+                <div className="w-full bg-white rounded-2xl p-5 border border-[#F0EDFF] shadow-xs space-y-5">
+                  {/* Title & Meta */}
+                  <div className="border-b border-[#F0EDFF] pb-3">
+                    <h1 className="text-base font-extrabold text-[#2C2B30] leading-snug">
+                      {selectedAnnouncement.title}
+                    </h1>
                   </div>
 
-                  <h1 className="text-base font-extrabold text-[#2C2B30] leading-snug">
-                    {selectedAnnouncement.title}
-                  </h1>
-
-                  <div className="flex items-center gap-2 pt-1">
-                    <div className="w-7 h-7 rounded-full bg-[#EDE9FE] text-[#8C66FF] font-black flex items-center justify-center text-xs shrink-0 border border-[#DDD6FE]">
-                      {selectedAnnouncement.authorName?.charAt(0).toUpperCase() || "G"}
-                    </div>
-                    <div className="text-xs">
-                      <p className="font-bold text-[#2C2B30] leading-tight">
-                        {selectedAnnouncement.authorName || "Guru"}
-                      </p>
-                      <p className="text-[10px] text-[#9C98A6] leading-tight">
-                        Pengajar
+                  {/* A. Soal / Permasalahan */}
+                  {selectedAnnouncement.problem && (
+                    <div className="space-y-1.5">
+                      <div className="flex items-center gap-1.5 text-[#8C66FF]">
+                        <LuPin size={14} className="shrink-0" />
+                        <h3 className="text-xs font-black uppercase tracking-wider text-[#2C2B30]">
+                          Soal / Permasalahan
+                        </h3>
+                      </div>
+                      <p className="text-xs text-[#524F5D] font-medium leading-relaxed whitespace-pre-line pl-0.5">
+                        {selectedAnnouncement.problem}
                       </p>
                     </div>
-                  </div>
-                </div>
+                  )}
 
-                {/* 3. Soal / Permasalahan Card */}
-                {selectedAnnouncement.problem && (
-                  <div className="w-full bg-white rounded-2xl p-4 border border-[#F0EDFF] shadow-xs">
-                    <div className="flex items-center gap-2 mb-2 text-[#8C66FF]">
-                      <div className="w-6 h-6 rounded-lg bg-[#F0ECFF] flex items-center justify-center text-xs">
-                        📌
+                  {/* B. Pertanyaan */}
+                  {selectedAnnouncement.question && (
+                    <div className="space-y-2 pt-2 border-t border-[#F8F7FC]">
+                      <div className="flex items-center gap-1.5 text-[#3B82F6]">
+                        <LuCircleHelp size={14} className="shrink-0" />
+                        <h3 className="text-xs font-black uppercase tracking-wider text-[#2C2B30]">
+                          Pertanyaan
+                        </h3>
                       </div>
-                      <h3 className="text-xs font-black uppercase tracking-wider text-[#2C2B30]">
-                        Soal / Permasalahan
-                      </h3>
+                      <ol className="space-y-2 pl-0.5">
+                        {parseListItems(selectedAnnouncement.question).map(
+                          (qItem, idx) => (
+                            <li
+                              key={idx}
+                              className="flex items-start gap-2.5 text-xs text-[#2C2B30] leading-relaxed"
+                            >
+                              <span className="w-5 h-5 rounded-full bg-[#EDE9FE] text-[#8C66FF] font-black flex items-center justify-center text-[10px] shrink-0 mt-0.5 border border-[#DDD6FE]/60">
+                                {idx + 1}
+                              </span>
+                              <span className="flex-1 font-semibold">
+                                {qItem}
+                              </span>
+                            </li>
+                          ),
+                        )}
+                      </ol>
                     </div>
-                    <p className="text-xs text-[#524F5D] font-medium leading-relaxed whitespace-pre-line">
-                      {selectedAnnouncement.problem}
-                    </p>
-                  </div>
-                )}
+                  )}
 
-                {/* 4. Pertanyaan (Ordered List Style with Number Badges) */}
-                {selectedAnnouncement.question && (
-                  <div className="space-y-2.5">
-                    <div className="flex items-center gap-2 px-0.5">
-                      <div className="w-6 h-6 rounded-lg bg-[#EFF6FF] flex items-center justify-center text-xs text-[#3B82F6]">
-                        ❓
+                  {/* C. Petunjuk Pengerjaan */}
+                  {selectedAnnouncement.instruction && (
+                    <div className="space-y-2 pt-2 border-t border-[#F8F7FC]">
+                      <div className="flex items-center gap-1.5 text-[#F59E0B]">
+                        <LuLightbulb size={14} className="shrink-0" />
+                        <h3 className="text-xs font-black uppercase tracking-wider text-[#2C2B30]">
+                          Petunjuk Pengerjaan
+                        </h3>
                       </div>
-                      <h3 className="text-xs font-black uppercase tracking-wider text-[#2C2B30]">
-                        Pertanyaan
-                      </h3>
+                      <ul className="space-y-1.5 pl-0.5">
+                        {parseListItems(selectedAnnouncement.instruction).map(
+                          (instItem, idx) => (
+                            <li
+                              key={idx}
+                              className="flex items-start gap-2 text-xs text-[#524F5D] leading-relaxed"
+                            >
+                              <span className="w-1.5 h-1.5 rounded-full bg-[#8C66FF] shrink-0 mt-2"></span>
+                              <span className="flex-1 font-medium">
+                                {instItem}
+                              </span>
+                            </li>
+                          ),
+                        )}
+                      </ul>
                     </div>
+                  )}
 
-                    <div className="space-y-2">
-                      {parseListItems(selectedAnnouncement.question).map((qItem, idx) => (
-                        <div
-                          key={idx}
-                          className="w-full bg-white rounded-2xl p-3.5 border border-[#F0EDFF] shadow-xs flex items-start gap-3"
-                        >
-                          <div className="w-7 h-7 rounded-full bg-[#EDE9FE] text-[#8C66FF] font-black flex items-center justify-center text-xs shrink-0 mt-0.5 border border-[#DDD6FE]/60">
-                            {idx + 1}
-                          </div>
-                          <p className="text-xs text-[#2C2B30] font-semibold leading-relaxed flex-1 pt-0.5">
-                            {qItem}
-                          </p>
+                  {/* D. Informasi Tambahan Tugas */}
+                  {selectedAnnouncement.taskInfo && (
+                    <div className="pt-2 border-t border-[#F8F7FC]">
+                      <div className="p-3 bg-[#FFF8F8] rounded-xl border border-[#FFE4E6] space-y-1">
+                        <div className="flex items-center gap-1.5 text-[#E11D48]">
+                          <LuClipboardList size={14} className="shrink-0" />
+                          <h4 className="text-[11px] font-black uppercase tracking-wider text-[#E11D48]">
+                            Catatan Tambahan
+                          </h4>
                         </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* 5. Petunjuk (Unordered List Style with Bullet Points) */}
-                {selectedAnnouncement.instruction && (
-                  <div className="w-full bg-white rounded-2xl p-4 border border-[#F0EDFF] shadow-xs">
-                    <div className="flex items-center gap-2 mb-3 text-[#F59E0B]">
-                      <div className="w-6 h-6 rounded-lg bg-[#FFFBEB] flex items-center justify-center text-xs">
-                        💡
+                        <p className="text-xs text-[#524F5D] font-medium leading-relaxed whitespace-pre-line pl-0.5">
+                          {selectedAnnouncement.taskInfo}
+                        </p>
                       </div>
-                      <h3 className="text-xs font-black uppercase tracking-wider text-[#2C2B30]">
-                        Petunjuk Pengerjaan
-                      </h3>
                     </div>
-
-                    <ul className="space-y-2.5">
-                      {parseListItems(selectedAnnouncement.instruction).map((instItem, idx) => (
-                        <li key={idx} className="flex items-start gap-2.5 text-xs text-[#524F5D] leading-relaxed">
-                          <span className="w-2 h-2 rounded-full bg-[#8C66FF] shrink-0 mt-1.5"></span>
-                          <span className="flex-1 font-medium">{instItem}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                {/* 6. Informasi Tambahan Tugas (if provided) */}
-                {selectedAnnouncement.taskInfo && (
-                  <div className="w-full bg-white rounded-2xl p-4 border border-[#F0EDFF] shadow-xs">
-                    <div className="flex items-center gap-2 mb-2 text-[#E11D48]">
-                      <div className="w-6 h-6 rounded-lg bg-[#FFE4E6] flex items-center justify-center text-xs">
-                        📋
-                      </div>
-                      <h3 className="text-xs font-black uppercase tracking-wider text-[#2C2B30]">
-                        Informasi Tugas
-                      </h3>
-                    </div>
-                    <div className="text-xs text-[#524F5D] font-medium leading-relaxed whitespace-pre-line bg-[#FFF1F2] p-3 rounded-xl border border-[#FFE4E6]/80">
-                      {selectedAnnouncement.taskInfo}
-                    </div>
-                  </div>
-                )}
+                  )}
+                </div>
 
                 {/* Action CTA Button on Tab Informasi */}
                 <div className="pt-2">
@@ -892,7 +878,6 @@ export default function RuangDiskusi() {
                       </p>
                     </div>
                   </div>
-
                 </div>
 
                 {/* WhatsApp Messages Scroll Area */}
@@ -1013,179 +998,167 @@ export default function RuangDiskusi() {
                     </p>
                   </div>
                 ) : mySubmission && !showSubmissionForm ? (
-                  /* Existing Submission Display */
-                  <div className="space-y-3.5">
-                    {/* Status & Grade Banner */}
-                    <div
-                      className={`w-full rounded-3xl p-4.5 border flex flex-col gap-2 ${
-                        mySubmission.grade !== undefined &&
-                        mySubmission.grade !== null
-                          ? "bg-[#ECFDF5] border-[#A7F3D0]"
-                          : "bg-[#FFFBEB] border-[#FDE68A]"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <FiCheckCircle
-                            size={18}
-                            className={
-                              mySubmission.grade !== undefined &&
-                              mySubmission.grade !== null
-                                ? "text-[#10B981]"
-                                : "text-[#F59E0B]"
-                            }
-                          />
-                          <span className="text-xs uppercase font-extrabold tracking-wider text-[#2C2B30]">
-                            {mySubmission.grade !== undefined &&
+                  /* Existing Submission Display - Unified Compact Card */
+                  <div className="w-full bg-white rounded-2xl p-4 border border-[#F0EDFF] shadow-xs space-y-3">
+                    {/* Header: Status, Grade, and Timestamp in One Row */}
+                    <div className="flex items-center justify-between gap-2 pb-2.5 border-b border-[#F0EDFF]">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <FiCheckCircle
+                          size={15}
+                          className={
+                            mySubmission.grade !== undefined &&
                             mySubmission.grade !== null
-                              ? "Sudah Dinilai oleh Guru"
-                              : "Menunggu Penilaian Guru"}
-                          </span>
-                        </div>
-
-                        {mySubmission.grade !== undefined &&
-                          mySubmission.grade !== null && (
-                            <div className="px-3 py-1 bg-[#10B981] text-white font-black text-sm rounded-full shadow-2xs">
-                              Nilai: {mySubmission.grade} / 100
-                            </div>
-                          )}
+                              ? "text-[#10B981] shrink-0"
+                              : "text-[#F59E0B] shrink-0"
+                          }
+                        />
+                        <span className="text-[11px] font-bold text-[#2C2B30] truncate">
+                          {mySubmission.grade !== undefined &&
+                          mySubmission.grade !== null
+                            ? "Sudah Dinilai"
+                            : "Menunggu Penilaian"}
+                        </span>
+                        <span className="text-[10px] text-[#9C98A6] hidden sm:inline">
+                          • {formatDateIndo(mySubmission.submittedAt)}
+                        </span>
                       </div>
 
-                      <p className="text-[11px] text-[#524F5D]">
-                        Dikumpulkan pada:{" "}
-                        <span className="font-bold">
-                          {formatDateIndo(mySubmission.submittedAt)}
-                        </span>
-                      </p>
-
-                      {/* Teacher Feedback if graded */}
-                      {mySubmission.feedback && (
-                        <div className="mt-2 p-3 bg-white rounded-2xl border border-[#A7F3D0] shadow-2xs">
-                          <p className="text-[10px] font-black uppercase text-[#059669] mb-0.5">
-                            Catatan & Masukan Guru:
-                          </p>
-                          <p className="text-xs text-[#2C2B30] italic font-medium leading-relaxed">
-                            "{mySubmission.feedback}"
-                          </p>
-                          {mySubmission.gradedBy && (
-                            <p className="text-[9px] text-[#9C98A6] font-semibold mt-1 text-right">
-                              Penilai: {mySubmission.gradedBy}
-                            </p>
-                          )}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Submitted Answer Card */}
-                    <div className="w-full bg-white rounded-3xl p-4.5 border border-[#F0EDFF] shadow-xs">
-                      <div className="flex items-center justify-between mb-2">
-                        <h3 className="text-xs uppercase tracking-wider font-extrabold text-[#2C2B30] flex items-center gap-1.5">
-                          <LuFileText className="text-[#8C66FF]" />
-                          Jawaban yang Dikumpulkan
-                        </h3>
-                        <span className="text-[10px] font-bold text-[#8C66FF] bg-[#F0ECFF] px-2.5 py-0.5 rounded-full">
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        {mySubmission.grade !== undefined &&
+                        mySubmission.grade !== null ? (
+                          <span className="px-2.5 py-0.5 bg-[#ECFDF5] border border-[#A7F3D0] text-[#059669] font-black text-xs rounded-full">
+                            Nilai: {mySubmission.grade}/100
+                          </span>
+                        ) : (
+                          <span className="px-2 py-0.5 bg-[#FFFBEB] text-[#D97706] font-bold text-[10px] rounded-full">
+                            Terkumpul
+                          </span>
+                        )}
+                        <span className="text-[9px] font-bold text-[#8C66FF] bg-[#F0ECFF] px-2 py-0.5 rounded-full">
                           Kelas{" "}
                           {mySubmission.studentClass || user?.kelas || "-"}
                         </span>
                       </div>
+                    </div>
 
-                      <div className="text-xs text-[#2C2B30] font-medium leading-relaxed whitespace-pre-line bg-[#FAF9FF] p-3.5 rounded-2xl border border-[#F0EDFF]/80">
+                    {/* Teacher Feedback (if graded) */}
+                    {mySubmission.feedback && (
+                      <div className="p-2.5 bg-[#F0FDF4] rounded-xl border border-[#BBF7D0]/80">
+                        <p className="text-[10px] font-extrabold uppercase text-[#16A34A] mb-0.5">
+                          Catatan Guru:
+                        </p>
+                        <p className="text-xs text-[#1E293B] italic font-medium leading-relaxed">
+                          "{mySubmission.feedback}"
+                        </p>
+                        {mySubmission.gradedBy && (
+                          <p className="text-[9px] text-[#64748B] font-semibold mt-1 text-right">
+                            — {mySubmission.gradedBy}
+                          </p>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Submitted Answer Content */}
+                    <div>
+                      <label className="text-[10px] font-extrabold uppercase tracking-wider text-[#9C98A6] block mb-1">
+                        Jawaban Anda
+                      </label>
+                      <div className="text-xs text-[#2C2B30] font-medium leading-relaxed whitespace-pre-line bg-[#FAF9FF] p-3 rounded-xl border border-[#F0EDFF]">
                         {mySubmission.answer}
                       </div>
+                    </div>
 
-                      {/* Attachment preview if any */}
-                      {mySubmission.hasImage && (
-                        <div className="mt-3">
-                          <p className="text-[10px] font-bold text-[#9C98A6] uppercase tracking-wider mb-1.5 flex items-center gap-1">
-                            <FiImage /> Lampiran Foto / Gambar
-                          </p>
-                          <div
-                            onClick={() =>
-                              setZoomImageUrl(
-                                `${API_URL}/api/announcements/submissions/${mySubmission.id}/image`,
-                              )
-                            }
-                            className="w-full h-44 bg-[#F8FAFC] rounded-2xl overflow-hidden border border-[#E2E8F0] relative cursor-pointer group"
-                          >
+                    {/* Attachment preview (Compact Horizontal Thumbnail) */}
+                    {mySubmission.hasImage && (
+                      <div className="pt-1">
+                        <div
+                          onClick={() =>
+                            setZoomImageUrl(
+                              `${API_URL}/api/announcements/submissions/${mySubmission.id}/image`,
+                            )
+                          }
+                          className="w-full flex items-center gap-3 p-2 bg-[#FAF9FF] hover:bg-[#F3E8FF] rounded-xl border border-[#F0EDFF] transition-colors cursor-pointer group"
+                        >
+                          <div className="w-14 h-14 bg-white rounded-lg overflow-hidden border border-[#E2E8F0] shrink-0">
                             <img
                               src={`${API_URL}/api/announcements/submissions/${mySubmission.id}/image`}
                               alt="Lampiran Tugas"
                               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
                             />
-                            <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold">
-                              Klik untuk memperbesar
-                            </div>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-bold text-[#2C2B30] flex items-center gap-1.5">
+                              <FiImage className="text-[#8C66FF] shrink-0" />
+                              <span className="truncate">
+                                Lampiran Gambar Tugas
+                              </span>
+                            </p>
+                            <p className="text-[10px] text-[#8C66FF] font-medium mt-0.5 group-hover:underline">
+                              Klik untuk melihat gambar ukuran penuh
+                            </p>
                           </div>
                         </div>
-                      )}
-
-                      {/* Action buttons */}
-                      <div className="flex gap-2 mt-4 pt-3 border-t border-[#F0EDFF]">
-                        <button
-                          onClick={() => {
-                            setTaskAnswer(mySubmission.answer);
-                            setShowSubmissionForm(true);
-                          }}
-                          className="flex-1 py-2.5 bg-[#FAF9FF] border border-[#8C66FF]/30 text-[#8C66FF] text-xs font-bold rounded-2xl hover:bg-[#F0ECFF] transition-colors active:scale-95"
-                        >
-                          Perbarui Jawaban
-                        </button>
-                        <button
-                          onClick={handleDeleteSubmission}
-                          className="px-4 py-2.5 bg-[#FFF1F2] border border-[#FFE4E6] text-[#E11D48] text-xs font-bold rounded-2xl hover:bg-[#FFE4E6] transition-colors active:scale-95"
-                        >
-                          Hapus
-                        </button>
                       </div>
+                    )}
+
+                    {/* Action buttons (Slim & Clean) */}
+                    <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#F0EDFF]">
+                      <button
+                        onClick={handleDeleteSubmission}
+                        className="px-3 py-1.5 text-[#E11D48] hover:bg-[#FFF1F2] rounded-xl text-xs font-bold transition-colors active:scale-95"
+                      >
+                        Hapus
+                      </button>
+                      <button
+                        onClick={() => {
+                          setTaskAnswer(mySubmission.answer);
+                          setShowSubmissionForm(true);
+                        }}
+                        className="px-3.5 py-1.5 bg-[#FAF9FF] border border-[#8C66FF]/30 text-[#8C66FF] hover:bg-[#F0ECFF] rounded-xl text-xs font-bold transition-colors active:scale-95"
+                      >
+                        Perbarui Jawaban
+                      </button>
                     </div>
                   </div>
                 ) : (
                   /* Submission Form (When not submitted or editing) */
-                  <div className="w-full bg-white rounded-3xl p-5 border border-[#F0EDFF] shadow-xs flex flex-col gap-4">
-                    <div>
-                      <div className="flex justify-between items-center mb-1">
-                        <h3 className="text-sm font-black text-[#2C2B30]">
+                  <div className="w-full bg-white rounded-2xl p-4 border border-[#F0EDFF] shadow-xs flex flex-col gap-3">
+                    <div className="flex justify-between items-center pb-2 border-b border-[#F0EDFF]">
+                      <div>
+                        <h3 className="text-xs font-extrabold text-[#2C2B30]">
                           {mySubmission
                             ? "Perbarui Jawaban Tugas"
                             : "Kumpulkan Tugas"}
                         </h3>
-                        {showSubmissionForm && mySubmission && (
-                          <button
-                            onClick={() => setShowSubmissionForm(false)}
-                            className="text-xs text-[#9C98A6] font-bold hover:text-[#2C2B30]"
-                          >
-                            Batal
-                          </button>
-                        )}
+                        <p className="text-[10px] text-[#9C98A6]">
+                          Tuliskan jawaban Anda berdasarkan petunjuk tugas.
+                        </p>
                       </div>
-                      <p className="text-[11px] text-[#9C98A6]">
-                        Tuliskan jawaban Anda secara rinci berdasarkan petunjuk
-                        soal.
-                      </p>
+                      {showSubmissionForm && mySubmission && (
+                        <button
+                          onClick={() => setShowSubmissionForm(false)}
+                          className="text-xs text-[#9C98A6] font-bold hover:text-[#2C2B30] px-2 py-1"
+                        >
+                          Batal
+                        </button>
+                      )}
                     </div>
 
                     {/* Answer Textarea */}
                     <div>
-                      <label className="text-[11px] font-extrabold uppercase tracking-wider text-[#524F5D] block mb-1.5">
-                        Jawaban Tugas *
-                      </label>
                       <textarea
-                        rows={5}
-                        placeholder="Ketikkan hasil analisis dan jawaban Anda di sini..."
+                        rows={4}
+                        placeholder="Ketikkan jawaban Anda di sini..."
                         value={taskAnswer}
                         onChange={(e) => setTaskAnswer(e.target.value)}
-                        className="w-full p-3.5 bg-[#FAF9FF] border border-[#E9E6F5] rounded-2xl text-xs font-medium text-[#2C2B30] placeholder:text-[#9C98A6] focus:outline-none focus:border-[#8C66FF] leading-relaxed"
+                        className="w-full p-3 bg-[#FAF9FF] border border-[#E9E6F5] rounded-xl text-xs font-medium text-[#2C2B30] placeholder:text-[#9C98A6] focus:outline-none focus:border-[#8C66FF] leading-relaxed resize-none"
                       />
                     </div>
 
                     {/* Image Attachment */}
                     <div>
-                      <label className="text-[11px] font-extrabold uppercase tracking-wider text-[#524F5D] block mb-1.5">
-                        Lampiran Foto / Diagram (Opsional)
-                      </label>
-
                       {imagePreviewUrl ? (
-                        <div className="relative w-full h-36 bg-[#F8FAFC] rounded-2xl overflow-hidden border border-[#E2E8F0] mb-2">
+                        <div className="relative w-full h-24 bg-[#F8FAFC] rounded-xl overflow-hidden border border-[#E2E8F0]">
                           <img
                             src={imagePreviewUrl}
                             alt="Preview"
@@ -1194,21 +1167,23 @@ export default function RuangDiskusi() {
                           <button
                             type="button"
                             onClick={handleClearImage}
-                            className="absolute top-2 right-2 w-7 h-7 bg-black/60 text-white rounded-full flex items-center justify-center hover:bg-black"
+                            className="absolute top-1.5 right-1.5 w-6 h-6 bg-black/60 text-white rounded-full flex items-center justify-center hover:bg-black transition-colors"
                           >
-                            <FiX size={14} />
+                            <FiX size={12} />
                           </button>
                         </div>
                       ) : (
-                        <label className="w-full py-4 border-2 border-dashed border-[#DFDCF0] hover:border-[#8C66FF] rounded-2xl flex flex-col items-center justify-center gap-1.5 cursor-pointer bg-[#FAF9FF] transition-colors">
-                          <FiImage className="text-[#8C66FF]" size={20} />
-                          <span className="text-xs font-bold text-[#8C66FF]">
-                            {compressingImage
-                              ? "Memproses Gambar..."
-                              : "Pilih Foto / Gambar"}
-                          </span>
-                          <span className="text-[9px] text-[#9C98A6]">
-                            Otomatis dikompres agar hemat kuota
+                        <label className="w-full py-2.5 px-3 border border-dashed border-[#DFDCF0] hover:border-[#8C66FF] rounded-xl flex items-center justify-between cursor-pointer bg-[#FAF9FF] transition-colors">
+                          <div className="flex items-center gap-2">
+                            <FiImage className="text-[#8C66FF]" size={16} />
+                            <span className="text-xs font-bold text-[#524F5D]">
+                              {compressingImage
+                                ? "Memproses..."
+                                : "Lampirkan Foto (Opsional)"}
+                            </span>
+                          </div>
+                          <span className="text-[10px] font-semibold text-[#8C66FF] bg-[#F0ECFF] px-2 py-0.5 rounded-lg">
+                            Pilih File
                           </span>
                           <input
                             type="file"
@@ -1225,17 +1200,19 @@ export default function RuangDiskusi() {
                       type="button"
                       onClick={handleSubmitTask}
                       disabled={submittingTask || compressingImage}
-                      className="w-full py-3.5 bg-gradient-to-r from-[#8C66FF] to-[#6366F1] text-white text-xs font-extrabold rounded-2xl shadow-md shadow-purple-200 active:scale-[0.99] disabled:opacity-50 transition-all flex items-center justify-center gap-2 cursor-pointer mt-1"
+                      className="w-full py-2.5 bg-gradient-to-r from-[#8C66FF] to-[#6366F1] text-white text-xs font-bold rounded-xl shadow-xs active:scale-[0.99] disabled:opacity-50 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                     >
                       {submittingTask ? (
                         <>
-                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                          <span>Mengirimkan Tugas...</span>
+                          <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          <span>Mengirim...</span>
                         </>
                       ) : (
                         <>
-                          <LuUpload size={16} />
-                          <span>Kirim Jawaban Tugas</span>
+                          <LuUpload size={14} />
+                          <span>
+                            {mySubmission ? "Simpan Perubahan" : "Kirim Tugas"}
+                          </span>
                         </>
                       )}
                     </button>
@@ -1246,8 +1223,6 @@ export default function RuangDiskusi() {
           </div>
         )}
       </div>
-
-
 
       {/* Fullscreen Zoom Image Modal */}
       {zoomImageUrl && (

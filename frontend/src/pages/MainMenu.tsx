@@ -174,7 +174,7 @@ export default function MainMenu({ onNavigate }: MainMenuProps) {
           {
             id: "ruang-diskusi",
             label: "Ruang Diskusi",
-            desc: "Pengumuman, diskusi & tugas siswa",
+            desc: "Forum diskusi & tugas siswa",
             icon: <LuMessageSquare className="text-xl" />,
             bgIcon: "bg-[#EBF3FF]",
             textIcon: "text-[#3B82F6]",
