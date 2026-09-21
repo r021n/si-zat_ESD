@@ -14,12 +14,7 @@ import {
   FiCalendar,
   FiRefreshCw,
 } from "react-icons/fi";
-import {
-  LuMessageSquare,
-  LuFileText,
-  LuTrophy,
-  LuAward,
-} from "react-icons/lu";
+import { LuMessageSquare, LuTrophy, LuAward } from "react-icons/lu";
 import {
   getAnnouncementsApi,
   createAnnouncementApi,
@@ -102,21 +97,29 @@ export default function AdminDiskusi() {
   const [submittingForm, setSubmittingForm] = useState<boolean>(false);
 
   // Submissions Grading View
-  const [selectedForSubmissions, setSelectedForSubmissions] = useState<AnnouncementItem | null>(null);
+  const [selectedForSubmissions, setSelectedForSubmissions] =
+    useState<AnnouncementItem | null>(null);
   const [submissionsList, setSubmissionsList] = useState<SubmissionItem[]>([]);
   const [loadingSubmissions, setLoadingSubmissions] = useState<boolean>(false);
-  const [searchSubmissionQuery, setSearchSubmissionQuery] = useState<string>("");
-  const [submissionFilterStatus, setSubmissionFilterStatus] = useState<"all" | "graded" | "ungraded">("all");
+  const [searchSubmissionQuery, setSearchSubmissionQuery] =
+    useState<string>("");
+  const [submissionFilterStatus, setSubmissionFilterStatus] = useState<
+    "all" | "graded" | "ungraded"
+  >("all");
 
   // Single Submission Grading Modal
-  const [gradingSubmission, setGradingSubmission] = useState<SubmissionItem | null>(null);
+  const [gradingSubmission, setGradingSubmission] =
+    useState<SubmissionItem | null>(null);
   const [gradeScore, setGradeScore] = useState<string>("");
   const [gradeFeedback, setGradeFeedback] = useState<string>("");
   const [savingGrade, setSavingGrade] = useState<boolean>(false);
 
   // Ranking Modal
-  const [rankingAnnouncement, setRankingAnnouncement] = useState<AnnouncementItem | null>(null);
-  const [rankingMessages, setRankingMessages] = useState<DiscussionMessage[]>([]);
+  const [rankingAnnouncement, setRankingAnnouncement] =
+    useState<AnnouncementItem | null>(null);
+  const [rankingMessages, setRankingMessages] = useState<DiscussionMessage[]>(
+    [],
+  );
   const [loadingRanking, setLoadingRanking] = useState<boolean>(false);
 
   // Zoom Image
@@ -135,18 +138,21 @@ export default function AdminDiskusi() {
     }
   }, [user, navigate]);
 
-  const fetchAnnouncements = useCallback(async (force = false) => {
-    if (!token) return;
-    setLoadingList(true);
-    try {
-      const data = await getAnnouncementsApi(token, force);
-      setAnnouncements(data || []);
-    } catch (err: any) {
-      console.error("Gagal mengambil data pengumuman:", err);
-    } finally {
-      setLoadingList(false);
-    }
-  }, [token]);
+  const fetchAnnouncements = useCallback(
+    async (force = false) => {
+      if (!token) return;
+      setLoadingList(true);
+      try {
+        const data = await getAnnouncementsApi(token, force);
+        setAnnouncements(data || []);
+      } catch (err: any) {
+        console.error("Gagal mengambil data pengumuman:", err);
+      } finally {
+        setLoadingList(false);
+      }
+    },
+    [token],
+  );
 
   useEffect(() => {
     fetchAnnouncements();
@@ -177,7 +183,10 @@ export default function AdminDiskusi() {
   // Save (Create or Update) Announcement
   const handleSaveAnnouncement = async () => {
     if (!formTitle.trim()) {
-      showAlert("Silakan masukkan judul pengumuman / topik diskusi.", "Judul Kosong");
+      showAlert(
+        "Silakan masukkan judul pengumuman / topik diskusi.",
+        "Judul Kosong",
+      );
       return;
     }
 
@@ -198,13 +207,19 @@ export default function AdminDiskusi() {
         showAlert("Pengumuman berhasil diubah.", "Berhasil Diperbarui");
       } else {
         await createAnnouncementApi(token, payload);
-        showAlert("Pengumuman dan ruang diskusi baru berhasil dibuat.", "Berhasil Dibuat");
+        showAlert(
+          "Pengumuman dan ruang diskusi baru berhasil dibuat.",
+          "Berhasil Dibuat",
+        );
       }
 
       setIsFormOpen(false);
       fetchAnnouncements();
     } catch (err: any) {
-      showAlert(err.message || "Terjadi kendala saat menyimpan pengumuman.", "Gagal Menyimpan");
+      showAlert(
+        err.message || "Terjadi kendala saat menyimpan pengumuman.",
+        "Gagal Menyimpan",
+      );
     } finally {
       setSubmittingForm(false);
     }
@@ -223,7 +238,10 @@ export default function AdminDiskusi() {
       showAlert("Pengumuman berhasil dihapus.", "Dihapus");
       fetchAnnouncements();
     } catch (err: any) {
-      showAlert(err.message || "Gagal menghapus pengumuman.", "Gagal Menghapus");
+      showAlert(
+        err.message || "Gagal menghapus pengumuman.",
+        "Gagal Menghapus",
+      );
     }
   };
 
@@ -236,7 +254,10 @@ export default function AdminDiskusi() {
       const data = await getAnnouncementSubmissionsApi(token, ann.id);
       setSubmissionsList(data || []);
     } catch (err: any) {
-      showAlert(err.message || "Gagal mengambil data pengumpulan tugas.", "Gagal Membuka");
+      showAlert(
+        err.message || "Gagal mengambil data pengumpulan tugas.",
+        "Gagal Membuka",
+      );
     } finally {
       setLoadingSubmissions(false);
     }
@@ -245,7 +266,9 @@ export default function AdminDiskusi() {
   // Open Grading Modal
   const handleOpenGradingModal = (sub: SubmissionItem) => {
     setGradingSubmission(sub);
-    setGradeScore(sub.grade !== undefined && sub.grade !== null ? String(sub.grade) : "");
+    setGradeScore(
+      sub.grade !== undefined && sub.grade !== null ? String(sub.grade) : "",
+    );
     setGradeFeedback(sub.feedback || "");
   };
 
@@ -254,8 +277,16 @@ export default function AdminDiskusi() {
     if (!gradingSubmission || !token) return;
 
     const numScore = Number(gradeScore);
-    if (gradeScore === "" || isNaN(numScore) || numScore < 0 || numScore > 100) {
-      showAlert("Masukkan nilai angka antara 0 hingga 100.", "Nilai Tidak Valid");
+    if (
+      gradeScore === "" ||
+      isNaN(numScore) ||
+      numScore < 0 ||
+      numScore > 100
+    ) {
+      showAlert(
+        "Masukkan nilai angka antara 0 hingga 100.",
+        "Nilai Tidak Valid",
+      );
       return;
     }
 
@@ -268,7 +299,10 @@ export default function AdminDiskusi() {
         gradeFeedback.trim(),
       );
 
-      showAlert(`Tugas milik ${gradingSubmission.studentName} berhasil dinilai.`, "Nilai Disimpan");
+      showAlert(
+        `Tugas milik ${gradingSubmission.studentName} berhasil dinilai.`,
+        "Nilai Disimpan",
+      );
 
       // Update in local submissions list
       setSubmissionsList((prev) =>
@@ -287,7 +321,10 @@ export default function AdminDiskusi() {
 
       setGradingSubmission(null);
     } catch (err: any) {
-      showAlert(err.message || "Gagal menyimpan penilaian tugas.", "Gagal Menyimpan Nilai");
+      showAlert(
+        err.message || "Gagal menyimpan penilaian tugas.",
+        "Gagal Menyimpan Nilai",
+      );
     } finally {
       setSavingGrade(false);
     }
@@ -302,7 +339,10 @@ export default function AdminDiskusi() {
       const data = await getAnnouncementDiscussionsApi(token, ann.id);
       setRankingMessages(data || []);
     } catch (err: any) {
-      showAlert(err.message || "Gagal memuat pesan diskusi.", "Gagal Membuka Ranking");
+      showAlert(
+        err.message || "Gagal memuat pesan diskusi.",
+        "Gagal Membuka Ranking",
+      );
     } finally {
       setLoadingRanking(false);
     }
@@ -375,8 +415,17 @@ export default function AdminDiskusi() {
   });
 
   const filteredSubmissions = submissionsList.filter((s) => {
-    if (submissionFilterStatus === "graded" && (s.grade === undefined || s.grade === null)) return false;
-    if (submissionFilterStatus === "ungraded" && s.grade !== undefined && s.grade !== null) return false;
+    if (
+      submissionFilterStatus === "graded" &&
+      (s.grade === undefined || s.grade === null)
+    )
+      return false;
+    if (
+      submissionFilterStatus === "ungraded" &&
+      s.grade !== undefined &&
+      s.grade !== null
+    )
+      return false;
 
     if (!searchSubmissionQuery.trim()) return true;
     const q = searchSubmissionQuery.toLowerCase();
@@ -393,7 +442,6 @@ export default function AdminDiskusi() {
 
       {/* Container Mobile Portrait */}
       <div className="w-full max-w-107.5 min-h-screen flex flex-col justify-between px-6 py-6 z-10">
-        
         {/* ==================== VIEW 1: ANNOUNCEMENTS MANAGEMENT ==================== */}
         {!selectedForSubmissions ? (
           <div className="w-full flex-1 flex flex-col">
@@ -424,7 +472,10 @@ export default function AdminDiskusi() {
                   className="w-9 h-9 bg-white rounded-xl flex items-center justify-center border border-[#F0EDFF] text-[#8C66FF] shadow-xs active:scale-95 transition-transform cursor-pointer"
                   title="Refresh Pengumuman"
                 >
-                  <FiRefreshCw size={14} className={loadingList ? "animate-spin" : ""} />
+                  <FiRefreshCw
+                    size={14}
+                    className={loadingList ? "animate-spin" : ""}
+                  />
                 </button>
                 <button
                   onClick={handleOpenCreateForm}
@@ -438,7 +489,10 @@ export default function AdminDiskusi() {
 
             {/* Search Bar */}
             <div className="w-full relative mb-3">
-              <FiSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#9C98A6]" size={15} />
+              <FiSearch
+                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#9C98A6]"
+                size={15}
+              />
               <input
                 type="text"
                 placeholder="Cari pengumuman diskusi..."
@@ -466,7 +520,8 @@ export default function AdminDiskusi() {
                     Belum Ada Pengumuman Diskusi
                   </h3>
                   <p className="text-xs text-[#9C98A6] mt-1 mb-4">
-                    Mulai dengan membuat pengumuman diskusi atau tugas pertama Anda.
+                    Mulai dengan membuat pengumuman diskusi atau tugas pertama
+                    Anda.
                   </p>
                   <button
                     onClick={handleOpenCreateForm}
@@ -484,14 +539,12 @@ export default function AdminDiskusi() {
                     {/* Top Row: Title & Actions */}
                     <div className="flex justify-between items-start gap-2">
                       <div>
-                        <span className="text-[9px] uppercase font-black tracking-wider bg-[#F0ECFF] text-[#8C66FF] px-2.5 py-0.5 rounded-full inline-block mb-1">
-                          Topik Pengumuman
-                        </span>
                         <h2 className="text-sm font-black text-[#2C2B30] leading-snug">
                           {ann.title}
                         </h2>
                         <p className="text-[10px] text-[#9C98A6] font-semibold mt-0.5 flex items-center gap-1">
-                          <FiCalendar size={11} /> {formatDateIndo(ann.createdAt)}
+                          <FiCalendar size={11} />{" "}
+                          {formatDateIndo(ann.createdAt)}
                         </p>
                       </div>
 
@@ -505,7 +558,9 @@ export default function AdminDiskusi() {
                           <FiEdit2 size={13} />
                         </button>
                         <button
-                          onClick={() => handleDeleteAnnouncement(ann.id, ann.title)}
+                          onClick={() =>
+                            handleDeleteAnnouncement(ann.id, ann.title)
+                          }
                           className="w-8 h-8 rounded-xl bg-[#FFF1F2] border border-[#FFE4E6] text-[#E11D48] flex items-center justify-center hover:bg-[#FFE4E6] transition-colors"
                           title="Hapus Pengumuman"
                         >
@@ -520,18 +575,6 @@ export default function AdminDiskusi() {
                         {ann.problem}
                       </p>
                     )}
-
-                    {/* Stats Badges */}
-                    <div className="flex items-center gap-2 pt-1 border-t border-[#F0EDFF]">
-                      <span className="text-[10px] font-bold text-[#3B82F6] bg-[#EFF6FF] px-2.5 py-1 rounded-full flex items-center gap-1">
-                        <LuFileText size={12} />
-                        {ann.submissionsCount || 0} Siswa Mengumpulkan
-                      </span>
-                      <span className="text-[10px] font-bold text-[#8C66FF] bg-[#F0ECFF] px-2.5 py-1 rounded-full flex items-center gap-1">
-                        <LuMessageSquare size={12} />
-                        {ann.discussionsCount || 0} Pesan Diskusi
-                      </span>
-                    </div>
 
                     {/* Admin Action Buttons (Penilaian & Ranking Keaktifan) */}
                     <div className="grid grid-cols-2 gap-2 pt-1">
@@ -583,7 +626,10 @@ export default function AdminDiskusi() {
             {/* Filter and Search inside Submissions */}
             <div className="w-full flex gap-2 mb-3">
               <div className="flex-1 relative">
-                <FiSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#9C98A6]" size={14} />
+                <FiSearch
+                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#9C98A6]"
+                  size={14}
+                />
                 <input
                   type="text"
                   placeholder="Cari siswa atau kelas..."
@@ -610,7 +656,9 @@ export default function AdminDiskusi() {
               {loadingSubmissions ? (
                 <div className="py-20 flex flex-col items-center justify-center gap-2">
                   <div className="w-7 h-7 border-3 border-[#8C66FF] border-t-transparent rounded-full animate-spin"></div>
-                  <p className="text-xs text-[#9C98A6] font-bold">Memuat data tugas siswa...</p>
+                  <p className="text-xs text-[#9C98A6] font-bold">
+                    Memuat data tugas siswa...
+                  </p>
                 </div>
               ) : filteredSubmissions.length === 0 ? (
                 <div className="py-16 text-center bg-white rounded-3xl p-6 border border-[#F0EDFF]">
@@ -620,7 +668,8 @@ export default function AdminDiskusi() {
                 </div>
               ) : (
                 filteredSubmissions.map((sub) => {
-                  const isGraded = sub.grade !== undefined && sub.grade !== null;
+                  const isGraded =
+                    sub.grade !== undefined && sub.grade !== null;
 
                   return (
                     <div
@@ -634,7 +683,8 @@ export default function AdminDiskusi() {
                             {sub.studentName}
                           </h3>
                           <p className="text-[10px] text-[#9C98A6] font-semibold">
-                            Kelas {sub.studentClass} • {formatDateIndo(sub.submittedAt)}
+                            Kelas {sub.studentClass} •{" "}
+                            {formatDateIndo(sub.submittedAt)}
                           </p>
                         </div>
 
@@ -686,7 +736,11 @@ export default function AdminDiskusi() {
                         }`}
                       >
                         <LuAward size={14} />
-                        <span>{isGraded ? "Edit Nilai & Catatan" : "Beri Nilai Siswa"}</span>
+                        <span>
+                          {isGraded
+                            ? "Edit Nilai & Catatan"
+                            : "Beri Nilai Siswa"}
+                        </span>
                       </button>
                     </div>
                   );
@@ -703,7 +757,9 @@ export default function AdminDiskusi() {
           <div className="w-full max-w-md bg-white rounded-3xl p-5 border border-[#F0EDFF] shadow-2xl flex flex-col max-h-[90vh]">
             <div className="flex justify-between items-center pb-2.5 border-b border-[#F0EDFF]">
               <h3 className="text-sm font-black text-[#2C2B30]">
-                {editingId ? "Edit Topik Pengumuman" : "Buat Topik Pengumuman Baru"}
+                {editingId
+                  ? "Edit Topik Pengumuman"
+                  : "Buat Topik Pengumuman Baru"}
               </h3>
               <button
                 onClick={() => setIsFormOpen(false)}
@@ -744,12 +800,17 @@ export default function AdminDiskusi() {
 
               {/* Pertanyaan */}
               <div>
-                <label className="font-bold text-[#524F5D] block mb-1">
-                  ❓ Pertanyaan Analisis
-                </label>
+                <div className="flex justify-between items-center mb-1">
+                  <label className="font-bold text-[#524F5D]">
+                    ❓ Pertanyaan Analisis
+                  </label>
+                  <span className="text-[10px] text-[#8C66FF] font-semibold">
+                    (1 baris = 1 butir nomor)
+                  </span>
+                </div>
                 <textarea
-                  rows={3}
-                  placeholder="Contoh: 1. Apa zat pencemar utama? 2. Bagaimana solusinya?"
+                  rows={4}
+                  placeholder={"1. Apa saja kemungkinan penyebab pencemaran danau tersebut?\n2. Apa dampak pencemaran tersebut terhadap lingkungan dan masyarakat?\n3. Buatlah solusi yang dapat dilakukan untuk mengatasi masalah ini."}
                   value={formQuestion}
                   onChange={(e) => setFormQuestion(e.target.value)}
                   className="w-full p-3 bg-[#FAF9FF] border border-[#E9E6F5] rounded-xl font-medium text-[#2C2B30] focus:outline-none focus:border-[#8C66FF] leading-relaxed"
@@ -772,12 +833,17 @@ export default function AdminDiskusi() {
 
               {/* Petunjuk */}
               <div>
-                <label className="font-bold text-[#524F5D] block mb-1">
-                  💡 Petunjuk Pengerjaan
-                </label>
+                <div className="flex justify-between items-center mb-1">
+                  <label className="font-bold text-[#524F5D]">
+                    💡 Petunjuk Pengerjaan
+                  </label>
+                  <span className="text-[10px] text-[#059669] font-semibold">
+                    (1 baris = 1 poin bullet)
+                  </span>
+                </div>
                 <textarea
-                  rows={2}
-                  placeholder="Gunakan prinsip berpikir sistem dalam mengurai dampak pencemaran."
+                  rows={4}
+                  placeholder={"• Gunakan data dari materi, hasil simulasi, atau sumber lain yang relevan.\n• Kerjakan secara berkelompok dan diskusikan di kolom diskusi.\n• Unggah pekerjaanmu dalam format gambar (JPG/PNG)."}
                   value={formInstruction}
                   onChange={(e) => setFormInstruction(e.target.value)}
                   className="w-full p-3 bg-[#FAF9FF] border border-[#E9E6F5] rounded-xl font-medium text-[#2C2B30] focus:outline-none focus:border-[#8C66FF] leading-relaxed"
@@ -816,7 +882,8 @@ export default function AdminDiskusi() {
                   Penilaian Tugas Siswa
                 </h3>
                 <p className="text-[10px] text-[#9C98A6] font-semibold">
-                  {gradingSubmission.studentName} (Kelas {gradingSubmission.studentClass})
+                  {gradingSubmission.studentName} (Kelas{" "}
+                  {gradingSubmission.studentClass})
                 </p>
               </div>
               <button
@@ -944,8 +1011,8 @@ export default function AdminDiskusi() {
 
             {/* Filter Explanation Card */}
             <div className="p-2.5 bg-[#FFFBEB] rounded-2xl border border-[#FDE68A] text-[10px] text-[#92400E] font-medium leading-relaxed">
-              💡 <strong>Ketentuan Ranking:</strong> Berdasarkan filter sistem di frontend,
-              hanya komentar siswa yang memiliki <strong>lebih dari 4 kata</strong> yang dihitung ke dalam ranking keaktifan.
+              💡 <strong>Ketentuan Ranking:</strong>
+              hanya komentar siswa yang memiliki lebih dari 4 kata yang dihitung
             </div>
 
             {/* Ranking List */}
@@ -953,11 +1020,14 @@ export default function AdminDiskusi() {
               {loadingRanking ? (
                 <div className="py-8 flex flex-col items-center justify-center gap-2">
                   <div className="w-6 h-6 border-2 border-[#8C66FF] border-t-transparent rounded-full animate-spin"></div>
-                  <p className="text-[10px] text-[#9C98A6] font-bold">Menghitung keaktifan...</p>
+                  <p className="text-[10px] text-[#9C98A6] font-bold">
+                    Menghitung keaktifan...
+                  </p>
                 </div>
               ) : rankedStudents.length === 0 ? (
                 <div className="py-8 text-center text-xs text-[#9C98A6]">
-                  Belum ada komentar siswa yang memiliki lebih dari 4 kata pada topik ini.
+                  Belum ada komentar siswa yang memiliki lebih dari 4 kata pada
+                  topik ini.
                 </div>
               ) : (
                 rankedStudents.map((item, index) => {
@@ -990,7 +1060,8 @@ export default function AdminDiskusi() {
                             {item.name}
                           </p>
                           <p className="text-[9px] text-[#9C98A6] font-semibold">
-                            Kelas {item.studentClass} • Total {item.totalCommentsCount} pesan
+                            Kelas {item.studentClass} • Total{" "}
+                            {item.totalCommentsCount} pesan
                           </p>
                         </div>
                       </div>

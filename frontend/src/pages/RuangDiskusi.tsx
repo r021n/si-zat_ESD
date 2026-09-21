@@ -21,8 +21,6 @@ import {
   LuFileText,
   LuInfo,
   LuUpload,
-  LuTrophy,
-  LuSparkles,
 } from "react-icons/lu";
 import {
   getAnnouncementsApi,
@@ -80,13 +78,6 @@ interface SubmissionItem {
   hasImage?: boolean;
 }
 
-interface RankedStudent {
-  userId: number;
-  name: string;
-  studentClass: string;
-  validCommentsCount: number;
-  totalCommentsCount: number;
-}
 
 // Canvas-based image compression helper (<200KB for safe mobile uploads)
 function compressImage(
@@ -177,15 +168,20 @@ export default function RuangDiskusi() {
   const { showAlert, showConfirm } = useCustomDialog();
 
   // Announcements List State
-  const [announcementsList, setAnnouncementsList] = useState<AnnouncementItem[]>([]);
+  const [announcementsList, setAnnouncementsList] = useState<
+    AnnouncementItem[]
+  >([]);
   const [loadingList, setLoadingList] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>("");
 
   // Selected Announcement Detail
-  const [selectedAnnouncement, setSelectedAnnouncement] = useState<AnnouncementItem | null>(null);
+  const [selectedAnnouncement, setSelectedAnnouncement] =
+    useState<AnnouncementItem | null>(null);
 
   // Active Tab: 1 = Informasi (Default), 2 = Diskusi, 3 = Riwayat
-  const [activeTab, setActiveTab] = useState<"informasi" | "diskusi" | "riwayat">("informasi");
+  const [activeTab, setActiveTab] = useState<
+    "informasi" | "diskusi" | "riwayat"
+  >("informasi");
 
   // Discussion State
   const [discussions, setDiscussions] = useState<DiscussionMessage[]>([]);
@@ -209,100 +205,137 @@ export default function RuangDiskusi() {
   // Fullscreen Image Modal
   const [zoomImageUrl, setZoomImageUrl] = useState<string | null>(null);
 
-  // Ranking Modal State
-  const [showRankingModal, setShowRankingModal] = useState<boolean>(false);
+  // Helper to parse multi-line text into clean array of list items
+  const parseListItems = (text: string) => {
+    if (!text) return [];
+    return text
+      .split("\n")
+      .map((line) => line.trim().replace(/^(\d+[.)]\s*|[-*•]\s*)/, "").trim())
+      .filter((line) => line.length > 0);
+  };
+
+
 
   // Fetch Announcements List
-  const fetchAnnouncements = useCallback(async (force = false) => {
-    if (!token) return;
-    setLoadingList(true);
-    try {
-      const data = await getAnnouncementsApi(token, force);
-      setAnnouncementsList(data || []);
-    } catch (err: any) {
-      console.error("Error fetching announcements:", err);
-    } finally {
-      setLoadingList(false);
-    }
-  }, [token]);
+  const fetchAnnouncements = useCallback(
+    async (force = false) => {
+      if (!token) return;
+      setLoadingList(true);
+      try {
+        const data = await getAnnouncementsApi(token, force);
+        setAnnouncementsList(data || []);
+      } catch (err: any) {
+        console.error("Error fetching announcements:", err);
+      } finally {
+        setLoadingList(false);
+      }
+    },
+    [token],
+  );
 
   useEffect(() => {
     fetchAnnouncements();
   }, [fetchAnnouncements]);
+
+  const fetchDiscussions = useCallback(
+    async (annId: string, force = false) => {
+      if (!token) return;
+      setLoadingDiscussions(true);
+      try {
+        const data = await getAnnouncementDiscussionsApi(token, annId, force);
+        setDiscussions(data || []);
+        setTimeout(() => {
+          chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
+        }, 200);
+      } catch (err) {
+        console.error("Error fetching discussions:", err);
+      } finally {
+        setLoadingDiscussions(false);
+      }
+    },
+    [token],
+  );
+
+  const fetchSubmissions = useCallback(
+    async (annId: string, force = false) => {
+      if (!token) return;
+      setLoadingSubmission(true);
+      try {
+        const subs: SubmissionItem[] = await getAnnouncementSubmissionsApi(
+          token,
+          annId,
+          force,
+        );
+        if (subs && subs.length > 0) {
+          setMySubmission(subs[0]);
+        } else {
+          setMySubmission(null);
+        }
+      } catch (err) {
+        console.error("Error fetching submissions:", err);
+      } finally {
+        setLoadingSubmission(false);
+      }
+    },
+    [token],
+  );
+
+  const handleSelectAnnouncement = useCallback(
+    async (annId: string, force = false) => {
+      if (!token) return;
+      try {
+        const detail = await getAnnouncementDetailApi(token, annId, force);
+        setSelectedAnnouncement(detail);
+        setActiveTab("informasi"); // Default tab: Informasi!
+        setShowSubmissionForm(false);
+
+        // Also fetch discussions and submissions
+        fetchDiscussions(annId, force);
+        fetchSubmissions(annId, force);
+      } catch (err: any) {
+        showAlert(
+          err.message || "Gagal memuat detail pengumuman.",
+          "Gagal Membuka",
+        );
+      }
+    },
+    [token, fetchDiscussions, fetchSubmissions, showAlert],
+  );
 
   // Load selected announcement if param is present
   useEffect(() => {
     if (paramAnnouncementId && token) {
       handleSelectAnnouncement(paramAnnouncementId);
     }
-  }, [paramAnnouncementId, token]);
+  }, [paramAnnouncementId, token, handleSelectAnnouncement]);
 
-  const handleSelectAnnouncement = async (annId: string, force = false) => {
-    if (!token) return;
-    try {
-      const detail = await getAnnouncementDetailApi(token, annId, force);
-      setSelectedAnnouncement(detail);
-      setActiveTab("informasi"); // Default tab: Informasi!
-      setShowSubmissionForm(false);
 
-      // Also fetch discussions and submissions
-      fetchDiscussions(annId, force);
-      fetchSubmissions(annId, force);
-    } catch (err: any) {
-      showAlert(err.message || "Gagal memuat detail pengumuman.", "Gagal Membuka");
-    }
-  };
-
-  const fetchDiscussions = async (annId: string, force = false) => {
-    if (!token) return;
-    setLoadingDiscussions(true);
-    try {
-      const data = await getAnnouncementDiscussionsApi(token, annId, force);
-      setDiscussions(data || []);
-      setTimeout(() => {
-        chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
-      }, 200);
-    } catch (err) {
-      console.error("Error fetching discussions:", err);
-    } finally {
-      setLoadingDiscussions(false);
-    }
-  };
-
-  const fetchSubmissions = async (annId: string, force = false) => {
-    if (!token) return;
-    setLoadingSubmission(true);
-    try {
-      const subs: SubmissionItem[] = await getAnnouncementSubmissionsApi(token, annId, force);
-      if (subs && subs.length > 0) {
-        setMySubmission(subs[0]);
-      } else {
-        setMySubmission(null);
-      }
-    } catch (err) {
-      console.error("Error fetching submissions:", err);
-    } finally {
-      setLoadingSubmission(false);
-    }
-  };
 
   // Send Discussion Message
   const handleSendMessage = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!chatInput.trim() || !selectedAnnouncement || !token || sendingChat) return;
+    if (!chatInput.trim() || !selectedAnnouncement || !token || sendingChat)
+      return;
 
     const content = chatInput.trim();
     setChatInput("");
     setSendingChat(true);
 
     try {
-      const newMsg = await sendAnnouncementDiscussionApi(token, selectedAnnouncement.id, content);
+      const newMsg = await sendAnnouncementDiscussionApi(
+        token,
+        selectedAnnouncement.id,
+        content,
+      );
       setDiscussions((prev) => [...prev, newMsg]);
       setTimeout(() => {
         chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
       }, 100);
     } catch (err: any) {
-      showAlert(err.message || "Gagal mengirim pesan diskusi.", "Gagal Mengirim");
+      showAlert(
+        err.message || "Gagal mengirim pesan diskusi.",
+        "Gagal Mengirim",
+      );
       setChatInput(content); // Restore content on fail
     } finally {
       setSendingChat(false);
@@ -315,7 +348,10 @@ export default function RuangDiskusi() {
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
-      showAlert("Hanya file gambar (JPG, PNG, WebP) yang dapat dilampirkan.", "Format Tidak Didukung");
+      showAlert(
+        "Hanya file gambar (JPG, PNG, WebP) yang dapat dilampirkan.",
+        "Format Tidak Didukung",
+      );
       return;
     }
 
@@ -347,7 +383,10 @@ export default function RuangDiskusi() {
   // Submit Task Answer
   const handleSubmitTask = async () => {
     if (!taskAnswer.trim()) {
-      showAlert("Silakan ketikkan jawaban tugas Anda terlebih dahulu.", "Jawaban Kosong");
+      showAlert(
+        "Silakan ketikkan jawaban tugas Anda terlebih dahulu.",
+        "Jawaban Kosong",
+      );
       return;
     }
 
@@ -364,7 +403,10 @@ export default function RuangDiskusi() {
 
       await submitAnnouncementTaskApi(token, selectedAnnouncement.id, formData);
 
-      showAlert("Tugas Anda telah berhasil disimpan dan dikirimkan.", "Berhasil Mengumpulkan!");
+      showAlert(
+        "Tugas Anda telah berhasil disimpan dan dikirimkan.",
+        "Berhasil Mengumpulkan!",
+      );
 
       setShowSubmissionForm(false);
       setTaskAnswer("");
@@ -374,7 +416,10 @@ export default function RuangDiskusi() {
       fetchSubmissions(selectedAnnouncement.id);
       fetchAnnouncements();
     } catch (err: any) {
-      showAlert(err.message || "Terjadi kendala saat mengirimkan tugas.", "Gagal Mengumpulkan");
+      showAlert(
+        err.message || "Terjadi kendala saat mengirimkan tugas.",
+        "Gagal Mengumpulkan",
+      );
     } finally {
       setSubmittingTask(false);
     }
@@ -397,50 +442,13 @@ export default function RuangDiskusi() {
         fetchAnnouncements();
       }
     } catch (err: any) {
-      showAlert(err.message || "Gagal menghapus pengumpulan tugas.", "Gagal Menghapus");
+      showAlert(
+        err.message || "Gagal menghapus pengumpulan tugas.",
+        "Gagal Menghapus",
+      );
     }
   };
 
-  // Helper: Count words in text
-  const countWords = (text: string) => {
-    return (text || "").trim().split(/\s+/).filter(Boolean).length;
-  };
-
-  // Filter Ranking: ONLY count student comments with MORE THAN 4 WORDS!
-  const calculateRanking = (): RankedStudent[] => {
-    const studentMessages = discussions.filter(
-      (msg) => (msg.senderRole || "").toLowerCase() === "siswa",
-    );
-
-    const map: Record<string, RankedStudent> = {};
-
-    studentMessages.forEach((msg) => {
-      const wCount = countWords(msg.content);
-      const isValid = wCount > 4; // Requirement: > 4 words!
-
-      const key = `${msg.userId}_${msg.senderName}`;
-      if (!map[key]) {
-        map[key] = {
-          userId: msg.userId,
-          name: msg.senderName,
-          studentClass: msg.studentClass || "Siswa",
-          validCommentsCount: 0,
-          totalCommentsCount: 0,
-        };
-      }
-
-      map[key].totalCommentsCount++;
-      if (isValid) {
-        map[key].validCommentsCount++;
-      }
-    });
-
-    return Object.values(map)
-      .filter((s) => s.validCommentsCount > 0)
-      .sort((a, b) => b.validCommentsCount - a.validCommentsCount);
-  };
-
-  const rankedStudents = calculateRanking();
 
   const formatDateIndo = (dateStr: string) => {
     if (!dateStr) return "";
@@ -474,12 +482,15 @@ export default function RuangDiskusi() {
   };
 
   const filteredAnnouncements = announcementsList.filter((item) => {
-    if (!searchQuery.trim()) return true;
-    const q = searchQuery.toLowerCase();
-    return (
-      item.title.toLowerCase().includes(q) ||
-      item.problem.toLowerCase().includes(q)
-    );
+    // Search query filter
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      return (
+        item.title.toLowerCase().includes(q) ||
+        item.problem.toLowerCase().includes(q)
+      );
+    }
+    return true;
   });
 
   return (
@@ -489,7 +500,6 @@ export default function RuangDiskusi() {
 
       {/* Container Mobile Portrait */}
       <div className="w-full max-w-107.5 min-h-screen flex flex-col justify-between px-6 py-6 z-10">
-        
         {/* ==================== VIEW 1: LIST OF ANNOUNCEMENTS ==================== */}
         {!selectedAnnouncement ? (
           <div className="w-full flex-1 flex flex-col">
@@ -505,7 +515,7 @@ export default function RuangDiskusi() {
                 </button>
                 <div>
                   <p className="text-[10px] uppercase tracking-widest text-[#9C98A6] font-bold">
-                    Forum & Tugas
+                    Forum Kolaborasi
                   </p>
                   <h1 className="text-xl font-extrabold text-[#2C2B30] leading-tight">
                     Ruang Diskusi
@@ -519,16 +529,22 @@ export default function RuangDiskusi() {
                 className="w-9 h-9 bg-white rounded-xl flex items-center justify-center border border-[#F0EDFF] text-[#8C66FF] shadow-xs active:scale-95 transition-transform cursor-pointer"
                 title="Refresh"
               >
-                <FiRefreshCw size={15} className={loadingList ? "animate-spin" : ""} />
+                <FiRefreshCw
+                  size={15}
+                  className={loadingList ? "animate-spin" : ""}
+                />
               </button>
             </div>
 
             {/* Search Bar */}
             <div className="w-full relative mb-3">
-              <FiSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#9C98A6]" size={15} />
+              <FiSearch
+                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#9C98A6]"
+                size={15}
+              />
               <input
                 type="text"
-                placeholder="Cari topik diskusi..."
+                placeholder="Cari tugas atau diskusi..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-4 py-2.5 bg-white border border-[#F0EDFF] rounded-2xl text-xs font-semibold text-[#2C2B30] placeholder:text-[#9C98A6] focus:outline-none focus:border-[#8C66FF] shadow-xs"
@@ -559,71 +575,57 @@ export default function RuangDiskusi() {
               ) : (
                 filteredAnnouncements.map((ann) => {
                   const isSubmitted = !!ann.mySubmission;
-                  const isGraded = ann.mySubmission?.grade !== undefined && ann.mySubmission?.grade !== null;
+                  const isGraded =
+                    ann.mySubmission?.grade !== undefined &&
+                    ann.mySubmission?.grade !== null;
 
                   return (
                     <div
                       key={ann.id}
                       onClick={() => handleSelectAnnouncement(ann.id)}
-                      className="w-full bg-white rounded-3xl overflow-hidden border border-[#F0EDFF] shadow-[0_4px_16px_rgba(140,102,255,0.06)] active:scale-[0.99] transition-all cursor-pointer hover:border-[#8C66FF]/50 flex flex-col"
+                      className="w-full bg-white rounded-2xl p-3.5 border border-[#F0EDFF] shadow-xs active:scale-[0.99] transition-all cursor-pointer hover:border-[#8C66FF]/50 flex items-center gap-3.5"
                     >
-                      {/* Card Header Banner (Google Classroom style) */}
-                      <div className="w-full bg-gradient-to-r from-[#6366F1] to-[#8C66FF] p-4 text-white relative overflow-hidden">
-                        <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-xs"></div>
-                        <div className="flex justify-between items-start mb-1">
-                          <span className="text-[9px] uppercase font-black tracking-wider bg-white/20 backdrop-blur-xs px-2.5 py-0.5 rounded-full">
-                            Pengumuman Tugas
+                      {/* Left Square Thumbnail / Icon */}
+                      <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#8C66FF] to-[#6366F1] flex items-center justify-center text-white text-xl shrink-0 shadow-xs">
+                        <LuFileText size={24} />
+                      </div>
+
+                      {/* Right Details */}
+                      <div className="flex-1 min-w-0 flex flex-col">
+                        {/* Badges Row */}
+                        <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+                          <span className="text-[9px] font-black uppercase tracking-wider text-[#8C66FF] bg-[#F0ECFF] px-2 py-0.5 rounded-md">
+                            Tugas
                           </span>
-                          <span className="text-[10px] text-white/80 font-medium flex items-center gap-1">
-                            <FiCalendar size={11} />
-                            {formatDateIndo(ann.createdAt)}
-                          </span>
+                          {isGraded ? (
+                            <span className="text-[9px] font-black text-[#10B981] bg-[#ECFDF5] px-2 py-0.5 rounded-md flex items-center gap-1">
+                              <FiCheckCircle size={10} /> Nilai: {ann.mySubmission?.grade}
+                            </span>
+                          ) : isSubmitted ? (
+                            <span className="text-[9px] font-bold text-[#3B82F6] bg-[#EFF6FF] px-2 py-0.5 rounded-md flex items-center gap-1">
+                              <FiCheckCircle size={10} /> Terkumpul
+                            </span>
+                          ) : (
+                            <span className="text-[9px] font-bold text-[#F59E0B] bg-[#FFFBEB] px-2 py-0.5 rounded-md">
+                              Berlangsung
+                            </span>
+                          )}
                         </div>
-                        <h2 className="text-base font-black leading-snug mt-1.5 drop-shadow-xs">
+
+                        {/* Title */}
+                        <h2 className="text-xs font-extrabold text-[#2C2B30] leading-snug truncate">
                           {ann.title}
                         </h2>
-                        <p className="text-[11px] text-white/90 font-semibold mt-1">
-                          Oleh: {ann.authorName || "Guru"}
+
+                        {/* Author / Date Subtitle */}
+                        <p className="text-[10px] text-[#9C98A6] font-medium mt-0.5 truncate">
+                          {ann.authorName || "Guru"} • {formatDateIndo(ann.createdAt)}
                         </p>
                       </div>
 
-                      {/* Card Body */}
-                      <div className="p-4 flex flex-col gap-3">
-                        {ann.problem ? (
-                          <p className="text-xs text-[#524F5D] line-clamp-2 leading-relaxed">
-                            {ann.problem}
-                          </p>
-                        ) : null}
-
-                        {/* Badges & Footer */}
-                        <div className="flex items-center justify-between pt-2 border-t border-[#F0EDFF]/80">
-                          <div className="flex items-center gap-3">
-                            <span className="text-[11px] font-bold text-[#8C66FF] flex items-center gap-1 bg-[#F0ECFF] px-2.5 py-1 rounded-full">
-                              <LuMessageSquare size={13} />
-                              {ann.discussionsCount || 0} Diskusi
-                            </span>
-
-                            {isGraded ? (
-                              <span className="text-[10px] font-extrabold text-[#10B981] bg-[#ECFDF5] px-2.5 py-1 rounded-full flex items-center gap-1">
-                                <FiCheckCircle size={12} />
-                                Nilai: {ann.mySubmission?.grade}
-                              </span>
-                            ) : isSubmitted ? (
-                              <span className="text-[10px] font-bold text-[#3B82F6] bg-[#EFF6FF] px-2.5 py-1 rounded-full flex items-center gap-1">
-                                <FiCheckCircle size={12} />
-                                Terkumpul
-                              </span>
-                            ) : (
-                              <span className="text-[10px] font-bold text-[#9C98A6] bg-[#FAF9FF] border border-[#F0EDFF] px-2 py-1 rounded-full">
-                                Belum Kumpul
-                              </span>
-                            )}
-                          </div>
-
-                          <div className="w-7 h-7 rounded-full bg-[#FAF9FF] text-[#8C66FF] border border-[#F0EDFF] flex items-center justify-center">
-                            <FiChevronRight size={14} />
-                          </div>
-                        </div>
+                      {/* Right Chevron Arrow */}
+                      <div className="w-6 h-6 rounded-full flex items-center justify-center text-[#9C98A6] shrink-0">
+                        <FiChevronRight size={16} />
                       </div>
                     </div>
                   );
@@ -636,7 +638,7 @@ export default function RuangDiskusi() {
           <div className="w-full flex-1 flex flex-col h-full">
             {/* Top Bar inside Detail */}
             <div className="w-full flex items-center justify-between pb-2.5 mb-2 border-b border-[#F0EDFF]">
-              <div className="flex items-center gap-2.5 truncate">
+              <div className="flex items-center gap-3">
                 <button
                   onClick={() => {
                     setSelectedAnnouncement(null);
@@ -647,28 +649,13 @@ export default function RuangDiskusi() {
                 >
                   <FiArrowLeft size={18} />
                 </button>
-                <div className="truncate">
-                  <h2 className="text-sm font-extrabold text-[#2C2B30] truncate">
-                    {selectedAnnouncement.title}
-                  </h2>
-                  <p className="text-[10px] text-[#9C98A6] font-semibold truncate">
-                    {selectedAnnouncement.authorName || "Guru"} • {formatDateIndo(selectedAnnouncement.createdAt)}
-                  </p>
-                </div>
+                <h2 className="text-base font-extrabold text-[#2C2B30]">
+                  Detail Tugas
+                </h2>
               </div>
-
-              {/* Ranking shortcut button */}
-              <button
-                onClick={() => setShowRankingModal(true)}
-                className="px-2.5 py-1.5 bg-[#FFF9E6] text-[#D97706] border border-[#FDE68A] text-[10px] font-extrabold rounded-xl flex items-center gap-1 shrink-0 shadow-2xs active:scale-95"
-                title="Lihat Ranking Keaktifan Diskusi"
-              >
-                <LuTrophy size={13} />
-                <span className="hidden sm:inline">Ranking</span>
-              </button>
             </div>
 
-            {/* 3 Tabs Bar (Google Classroom inspired) */}
+            {/* 3 Tabs Bar */}
             <div className="w-full grid grid-cols-3 bg-white p-1 rounded-2xl border border-[#F0EDFF] shadow-xs mb-3">
               <button
                 onClick={() => setActiveTab("informasi")}
@@ -686,7 +673,9 @@ export default function RuangDiskusi() {
                 onClick={() => {
                   setActiveTab("diskusi");
                   setTimeout(() => {
-                    chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
+                    chatBottomRef.current?.scrollIntoView({
+                      behavior: "smooth",
+                    });
                   }, 150);
                 }}
                 className={`py-2 text-xs font-black rounded-xl transition-all flex items-center justify-center gap-1.5 relative ${
@@ -728,69 +717,133 @@ export default function RuangDiskusi() {
 
             {/* TAB CONTENT 1: INFORMASI (DEFAULT) */}
             {activeTab === "informasi" && (
-              <div className="flex-1 overflow-y-auto pr-0.5 space-y-3.5 no-scrollbar pb-6">
-                {/* 1. Soal / Permasalahan */}
-                <div className="w-full bg-white rounded-3xl p-4.5 border border-[#F0EDFF] shadow-xs">
-                  <div className="flex items-center gap-2 mb-2 text-[#8C66FF]">
-                    <div className="w-7 h-7 rounded-xl bg-[#F0ECFF] flex items-center justify-center text-sm">
-                      📌
-                    </div>
-                    <h3 className="text-xs uppercase tracking-wider font-extrabold text-[#2C2B30]">
-                      Soal & Permasalahan
-                    </h3>
+              <div className="flex-1 overflow-y-auto pr-0.5 space-y-4 no-scrollbar pb-6">
+                {/* 1. Cover Illustration Banner */}
+                <div className="w-full h-36 rounded-2xl bg-gradient-to-tr from-[#6366F1] via-[#8C66FF] to-[#A78BFA] p-4 flex flex-col justify-end relative overflow-hidden shadow-xs">
+                  <div className="absolute top-[-20%] right-[-10%] w-32 h-32 bg-white/10 rounded-full blur-sm"></div>
+                  <div className="absolute bottom-2 right-4 text-white/20 text-6xl font-black select-none pointer-events-none">
+                    ESD
                   </div>
-                  <div className="text-xs text-[#2C2B30] font-medium leading-relaxed whitespace-pre-line bg-[#FAF9FF] p-3.5 rounded-2xl border border-[#F0EDFF]/80">
-                    {selectedAnnouncement.problem || "Tidak ada rincian soal/permasalahan."}
+                  <div className="relative z-10">
+                    <span className="text-[10px] uppercase font-black tracking-wider text-white/80 bg-black/20 px-2.5 py-0.5 rounded-full inline-flex items-center gap-1">
+                      <FiCalendar size={10} /> {formatDateIndo(selectedAnnouncement.createdAt)}
+                    </span>
                   </div>
                 </div>
 
-                {/* 2. Pertanyaan */}
+                {/* 2. Header Info Row (Tag, Title, Author) */}
+                <div className="space-y-1.5 px-0.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-[#8C66FF] bg-[#F0ECFF] px-2.5 py-0.5 rounded-md">
+                      Tugas
+                    </span>
+                    <span className="text-[10px] font-semibold text-[#9C98A6]">
+                      {user?.kelas || "IPA - Biologi"}
+                    </span>
+                  </div>
+
+                  <h1 className="text-base font-extrabold text-[#2C2B30] leading-snug">
+                    {selectedAnnouncement.title}
+                  </h1>
+
+                  <div className="flex items-center gap-2 pt-1">
+                    <div className="w-7 h-7 rounded-full bg-[#EDE9FE] text-[#8C66FF] font-black flex items-center justify-center text-xs shrink-0 border border-[#DDD6FE]">
+                      {selectedAnnouncement.authorName?.charAt(0).toUpperCase() || "G"}
+                    </div>
+                    <div className="text-xs">
+                      <p className="font-bold text-[#2C2B30] leading-tight">
+                        {selectedAnnouncement.authorName || "Guru"}
+                      </p>
+                      <p className="text-[10px] text-[#9C98A6] leading-tight">
+                        Pengajar
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 3. Soal / Permasalahan Card */}
+                {selectedAnnouncement.problem && (
+                  <div className="w-full bg-white rounded-2xl p-4 border border-[#F0EDFF] shadow-xs">
+                    <div className="flex items-center gap-2 mb-2 text-[#8C66FF]">
+                      <div className="w-6 h-6 rounded-lg bg-[#F0ECFF] flex items-center justify-center text-xs">
+                        📌
+                      </div>
+                      <h3 className="text-xs font-black uppercase tracking-wider text-[#2C2B30]">
+                        Soal / Permasalahan
+                      </h3>
+                    </div>
+                    <p className="text-xs text-[#524F5D] font-medium leading-relaxed whitespace-pre-line">
+                      {selectedAnnouncement.problem}
+                    </p>
+                  </div>
+                )}
+
+                {/* 4. Pertanyaan (Ordered List Style with Number Badges) */}
                 {selectedAnnouncement.question && (
-                  <div className="w-full bg-white rounded-3xl p-4.5 border border-[#F0EDFF] shadow-xs">
-                    <div className="flex items-center gap-2 mb-2 text-[#3B82F6]">
-                      <div className="w-7 h-7 rounded-xl bg-[#EFF6FF] flex items-center justify-center text-sm">
+                  <div className="space-y-2.5">
+                    <div className="flex items-center gap-2 px-0.5">
+                      <div className="w-6 h-6 rounded-lg bg-[#EFF6FF] flex items-center justify-center text-xs text-[#3B82F6]">
                         ❓
                       </div>
-                      <h3 className="text-xs uppercase tracking-wider font-extrabold text-[#2C2B30]">
-                        Pertanyaan Analisis
+                      <h3 className="text-xs font-black uppercase tracking-wider text-[#2C2B30]">
+                        Pertanyaan
                       </h3>
                     </div>
-                    <div className="text-xs text-[#2C2B30] font-medium leading-relaxed whitespace-pre-line bg-[#F8FAFC] p-3.5 rounded-2xl border border-[#E2E8F0]/70">
-                      {selectedAnnouncement.question}
+
+                    <div className="space-y-2">
+                      {parseListItems(selectedAnnouncement.question).map((qItem, idx) => (
+                        <div
+                          key={idx}
+                          className="w-full bg-white rounded-2xl p-3.5 border border-[#F0EDFF] shadow-xs flex items-start gap-3"
+                        >
+                          <div className="w-7 h-7 rounded-full bg-[#EDE9FE] text-[#8C66FF] font-black flex items-center justify-center text-xs shrink-0 mt-0.5 border border-[#DDD6FE]/60">
+                            {idx + 1}
+                          </div>
+                          <p className="text-xs text-[#2C2B30] font-semibold leading-relaxed flex-1 pt-0.5">
+                            {qItem}
+                          </p>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 )}
 
-                {/* 3. Informasi Tugas */}
-                {selectedAnnouncement.taskInfo && (
-                  <div className="w-full bg-white rounded-3xl p-4.5 border border-[#F0EDFF] shadow-xs">
-                    <div className="flex items-center gap-2 mb-2 text-[#E11D48]">
-                      <div className="w-7 h-7 rounded-xl bg-[#FFE4E6] flex items-center justify-center text-sm">
-                        📋
-                      </div>
-                      <h3 className="text-xs uppercase tracking-wider font-extrabold text-[#2C2B30]">
-                        Informasi Tugas
-                      </h3>
-                    </div>
-                    <div className="text-xs text-[#2C2B30] font-medium leading-relaxed whitespace-pre-line bg-[#FFF1F2] p-3.5 rounded-2xl border border-[#FFE4E6]">
-                      {selectedAnnouncement.taskInfo}
-                    </div>
-                  </div>
-                )}
-
-                {/* 4. Petunjuk Pengerjaan */}
+                {/* 5. Petunjuk (Unordered List Style with Bullet Points) */}
                 {selectedAnnouncement.instruction && (
-                  <div className="w-full bg-white rounded-3xl p-4.5 border border-[#F0EDFF] shadow-xs">
-                    <div className="flex items-center gap-2 mb-2 text-[#059669]">
-                      <div className="w-7 h-7 rounded-xl bg-[#D1FAE5] flex items-center justify-center text-sm">
+                  <div className="w-full bg-white rounded-2xl p-4 border border-[#F0EDFF] shadow-xs">
+                    <div className="flex items-center gap-2 mb-3 text-[#F59E0B]">
+                      <div className="w-6 h-6 rounded-lg bg-[#FFFBEB] flex items-center justify-center text-xs">
                         💡
                       </div>
-                      <h3 className="text-xs uppercase tracking-wider font-extrabold text-[#2C2B30]">
+                      <h3 className="text-xs font-black uppercase tracking-wider text-[#2C2B30]">
                         Petunjuk Pengerjaan
                       </h3>
                     </div>
-                    <div className="text-xs text-[#2C2B30] font-medium leading-relaxed whitespace-pre-line bg-[#F0FDF4] p-3.5 rounded-2xl border border-[#D1FAE5]">
-                      {selectedAnnouncement.instruction}
+
+                    <ul className="space-y-2.5">
+                      {parseListItems(selectedAnnouncement.instruction).map((instItem, idx) => (
+                        <li key={idx} className="flex items-start gap-2.5 text-xs text-[#524F5D] leading-relaxed">
+                          <span className="w-2 h-2 rounded-full bg-[#8C66FF] shrink-0 mt-1.5"></span>
+                          <span className="flex-1 font-medium">{instItem}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* 6. Informasi Tambahan Tugas (if provided) */}
+                {selectedAnnouncement.taskInfo && (
+                  <div className="w-full bg-white rounded-2xl p-4 border border-[#F0EDFF] shadow-xs">
+                    <div className="flex items-center gap-2 mb-2 text-[#E11D48]">
+                      <div className="w-6 h-6 rounded-lg bg-[#FFE4E6] flex items-center justify-center text-xs">
+                        📋
+                      </div>
+                      <h3 className="text-xs font-black uppercase tracking-wider text-[#2C2B30]">
+                        Informasi Tugas
+                      </h3>
+                    </div>
+                    <div className="text-xs text-[#524F5D] font-medium leading-relaxed whitespace-pre-line bg-[#FFF1F2] p-3 rounded-xl border border-[#FFE4E6]/80">
+                      {selectedAnnouncement.taskInfo}
                     </div>
                   </div>
                 )}
@@ -840,13 +893,6 @@ export default function RuangDiskusi() {
                     </div>
                   </div>
 
-                  <button
-                    onClick={() => setShowRankingModal(true)}
-                    className="px-2.5 py-1 bg-white border border-[#DFDCF0] rounded-full text-[9px] font-black text-[#8C66FF] flex items-center gap-1 shadow-2xs hover:bg-[#F0ECFF]"
-                  >
-                    <LuSparkles size={11} />
-                    <span>Ranking Keaktifan</span>
-                  </button>
                 </div>
 
                 {/* WhatsApp Messages Scroll Area */}
@@ -854,27 +900,35 @@ export default function RuangDiskusi() {
                   {loadingDiscussions ? (
                     <div className="py-12 flex flex-col items-center justify-center gap-2">
                       <div className="w-6 h-6 border-2 border-[#8C66FF] border-t-transparent rounded-full animate-spin"></div>
-                      <p className="text-[10px] text-[#9C98A6] font-bold">Memuat pesan diskusi...</p>
+                      <p className="text-[10px] text-[#9C98A6] font-bold">
+                        Memuat pesan diskusi...
+                      </p>
                     </div>
                   ) : discussions.length === 0 ? (
                     <div className="py-16 text-center px-4">
                       <div className="w-12 h-12 mx-auto mb-2 bg-white rounded-2xl flex items-center justify-center text-[#8C66FF] text-xl shadow-xs">
                         <LuMessageSquare />
                       </div>
-                      <p className="text-xs font-extrabold text-[#2C2B30]">Belum ada pesan diskusi</p>
+                      <p className="text-xs font-extrabold text-[#2C2B30]">
+                        Belum ada pesan diskusi
+                      </p>
                       <p className="text-[10px] text-[#9C98A6] mt-0.5">
-                        Jadilah yang pertama menyampaikan argumen atau pertanyaan!
+                        Jadilah yang pertama menyampaikan argumen atau
+                        pertanyaan!
                       </p>
                     </div>
                   ) : (
                     discussions.map((msg) => {
                       const isMe = msg.userId === user?.id;
-                      const isGuru = (msg.senderRole || "").toUpperCase() === "ADMIN";
+                      const isGuru =
+                        (msg.senderRole || "").toUpperCase() === "ADMIN";
 
                       return (
                         <div
                           key={msg.id}
-                          className={`w-full flex ${isMe ? "justify-end" : "justify-start"}`}
+                          className={`w-full flex ${
+                            isMe ? "justify-end" : "justify-start"
+                          }`}
                         >
                           <div
                             className={`max-w-[85%] rounded-2xl px-3.5 py-2 shadow-xs text-xs relative ${
@@ -913,7 +967,9 @@ export default function RuangDiskusi() {
                             {/* Timestamp & Read Indicator */}
                             <div className="flex items-center justify-end gap-1 mt-1 text-[9px] text-[#9C98A6]">
                               <span>{formatChatTime(msg.createdAt)}</span>
-                              {isMe && <FiCheck size={12} className="text-[#8C66FF]" />}
+                              {isMe && (
+                                <FiCheck size={12} className="text-[#8C66FF]" />
+                              )}
                             </div>
                           </div>
                         </div>
@@ -952,7 +1008,9 @@ export default function RuangDiskusi() {
                 {loadingSubmission ? (
                   <div className="py-16 flex flex-col items-center justify-center gap-2">
                     <div className="w-7 h-7 border-3 border-[#8C66FF] border-t-transparent rounded-full animate-spin"></div>
-                    <p className="text-xs text-[#9C98A6] font-bold">Memuat riwayat pengumpulan...</p>
+                    <p className="text-xs text-[#9C98A6] font-bold">
+                      Memuat riwayat pengumpulan...
+                    </p>
                   </div>
                 ) : mySubmission && !showSubmissionForm ? (
                   /* Existing Submission Display */
@@ -960,7 +1018,8 @@ export default function RuangDiskusi() {
                     {/* Status & Grade Banner */}
                     <div
                       className={`w-full rounded-3xl p-4.5 border flex flex-col gap-2 ${
-                        mySubmission.grade !== undefined && mySubmission.grade !== null
+                        mySubmission.grade !== undefined &&
+                        mySubmission.grade !== null
                           ? "bg-[#ECFDF5] border-[#A7F3D0]"
                           : "bg-[#FFFBEB] border-[#FDE68A]"
                       }`}
@@ -970,28 +1029,33 @@ export default function RuangDiskusi() {
                           <FiCheckCircle
                             size={18}
                             className={
-                              mySubmission.grade !== undefined && mySubmission.grade !== null
+                              mySubmission.grade !== undefined &&
+                              mySubmission.grade !== null
                                 ? "text-[#10B981]"
                                 : "text-[#F59E0B]"
                             }
                           />
                           <span className="text-xs uppercase font-extrabold tracking-wider text-[#2C2B30]">
-                            {mySubmission.grade !== undefined && mySubmission.grade !== null
+                            {mySubmission.grade !== undefined &&
+                            mySubmission.grade !== null
                               ? "Sudah Dinilai oleh Guru"
                               : "Menunggu Penilaian Guru"}
                           </span>
                         </div>
 
-                        {mySubmission.grade !== undefined && mySubmission.grade !== null && (
-                          <div className="px-3 py-1 bg-[#10B981] text-white font-black text-sm rounded-full shadow-2xs">
-                            Nilai: {mySubmission.grade} / 100
-                          </div>
-                        )}
+                        {mySubmission.grade !== undefined &&
+                          mySubmission.grade !== null && (
+                            <div className="px-3 py-1 bg-[#10B981] text-white font-black text-sm rounded-full shadow-2xs">
+                              Nilai: {mySubmission.grade} / 100
+                            </div>
+                          )}
                       </div>
 
                       <p className="text-[11px] text-[#524F5D]">
                         Dikumpulkan pada:{" "}
-                        <span className="font-bold">{formatDateIndo(mySubmission.submittedAt)}</span>
+                        <span className="font-bold">
+                          {formatDateIndo(mySubmission.submittedAt)}
+                        </span>
                       </p>
 
                       {/* Teacher Feedback if graded */}
@@ -1020,7 +1084,8 @@ export default function RuangDiskusi() {
                           Jawaban yang Dikumpulkan
                         </h3>
                         <span className="text-[10px] font-bold text-[#8C66FF] bg-[#F0ECFF] px-2.5 py-0.5 rounded-full">
-                          Kelas {mySubmission.studentClass || user?.kelas || "-"}
+                          Kelas{" "}
+                          {mySubmission.studentClass || user?.kelas || "-"}
                         </span>
                       </div>
 
@@ -1080,7 +1145,9 @@ export default function RuangDiskusi() {
                     <div>
                       <div className="flex justify-between items-center mb-1">
                         <h3 className="text-sm font-black text-[#2C2B30]">
-                          {mySubmission ? "Perbarui Jawaban Tugas" : "Kumpulkan Tugas"}
+                          {mySubmission
+                            ? "Perbarui Jawaban Tugas"
+                            : "Kumpulkan Tugas"}
                         </h3>
                         {showSubmissionForm && mySubmission && (
                           <button
@@ -1092,7 +1159,8 @@ export default function RuangDiskusi() {
                         )}
                       </div>
                       <p className="text-[11px] text-[#9C98A6]">
-                        Tuliskan jawaban Anda secara rinci berdasarkan petunjuk soal.
+                        Tuliskan jawaban Anda secara rinci berdasarkan petunjuk
+                        soal.
                       </p>
                     </div>
 
@@ -1135,7 +1203,9 @@ export default function RuangDiskusi() {
                         <label className="w-full py-4 border-2 border-dashed border-[#DFDCF0] hover:border-[#8C66FF] rounded-2xl flex flex-col items-center justify-center gap-1.5 cursor-pointer bg-[#FAF9FF] transition-colors">
                           <FiImage className="text-[#8C66FF]" size={20} />
                           <span className="text-xs font-bold text-[#8C66FF]">
-                            {compressingImage ? "Memproses Gambar..." : "Pilih Foto / Gambar"}
+                            {compressingImage
+                              ? "Memproses Gambar..."
+                              : "Pilih Foto / Gambar"}
                           </span>
                           <span className="text-[9px] text-[#9C98A6]">
                             Otomatis dikompres agar hemat kuota
@@ -1177,103 +1247,7 @@ export default function RuangDiskusi() {
         )}
       </div>
 
-      {/* ==================== RANKING MODAL (FRONTEND FILTER > 4 WORDS) ==================== */}
-      {showRankingModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
-          <div className="w-full max-w-sm bg-white rounded-3xl p-5 border border-[#F0EDFF] shadow-2xl flex flex-col gap-3.5">
-            <div className="flex justify-between items-center pb-2 border-b border-[#F0EDFF]">
-              <div className="flex items-center gap-2 text-[#D97706]">
-                <div className="w-8 h-8 rounded-xl bg-[#FFF9E6] flex items-center justify-center text-base font-black">
-                  <LuTrophy />
-                </div>
-                <div>
-                  <h3 className="text-sm font-black text-[#2C2B30]">
-                    Ranking Keaktifan Diskusi
-                  </h3>
-                  <p className="text-[10px] text-[#9C98A6] font-semibold">
-                    Filter: Komentar dengan &gt; 4 kata
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => setShowRankingModal(false)}
-                className="w-7 h-7 rounded-full bg-[#FAF9FF] text-[#9C98A6] flex items-center justify-center hover:text-[#2C2B30]"
-              >
-                <FiX size={15} />
-              </button>
-            </div>
 
-            {/* Note about rule */}
-            <div className="p-2.5 bg-[#FFFBEB] rounded-2xl border border-[#FDE68A] text-[10px] text-[#92400E] font-medium leading-relaxed">
-              💡 <strong>Aturan Keaktifan:</strong> Hanya komentar siswa yang memiliki{" "}
-              <strong>lebih dari 4 kata</strong> yang dihitung ke dalam ranking.
-            </div>
-
-            {/* Ranking list */}
-            <div className="max-h-64 overflow-y-auto space-y-2 pr-1 no-scrollbar">
-              {rankedStudents.length === 0 ? (
-                <div className="py-8 text-center text-xs text-[#9C98A6]">
-                  Belum ada siswa yang berdiskusi dengan lebih dari 4 kata.
-                </div>
-              ) : (
-                rankedStudents.map((item, index) => {
-                  let badgeColor = "bg-[#F3F4F6] text-[#4B5563]";
-                  let rankIcon = `#${index + 1}`;
-                  if (index === 0) {
-                    badgeColor = "bg-[#FEF3C7] text-[#D97706] font-black";
-                    rankIcon = "🥇 1";
-                  } else if (index === 1) {
-                    badgeColor = "bg-[#F1F5F9] text-[#64748B] font-black";
-                    rankIcon = "🥈 2";
-                  } else if (index === 2) {
-                    badgeColor = "bg-[#FFEDD5] text-[#C2410C] font-black";
-                    rankIcon = "🥉 3";
-                  }
-
-                  return (
-                    <div
-                      key={item.userId}
-                      className="w-full bg-[#FAF9FF] p-3 rounded-2xl border border-[#F0EDFF] flex items-center justify-between"
-                    >
-                      <div className="flex items-center gap-2.5 truncate">
-                        <span
-                          className={`w-9 h-7 rounded-xl flex items-center justify-center text-[10px] shrink-0 ${badgeColor}`}
-                        >
-                          {rankIcon}
-                        </span>
-                        <div className="truncate">
-                          <p className="text-xs font-black text-[#2C2B30] truncate">
-                            {item.name}
-                          </p>
-                          <p className="text-[9px] text-[#9C98A6] font-semibold">
-                            Kelas {item.studentClass}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="text-right shrink-0">
-                        <span className="text-xs font-black text-[#8C66FF]">
-                          {item.validCommentsCount}
-                        </span>
-                        <span className="text-[9px] text-[#9C98A6] block">
-                          argumen aktif
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
-
-            <button
-              onClick={() => setShowRankingModal(false)}
-              className="w-full py-2.5 bg-[#8C66FF] text-white font-extrabold text-xs rounded-2xl hover:bg-[#7B55F0] transition-colors"
-            >
-              Tutup
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Fullscreen Zoom Image Modal */}
       {zoomImageUrl && (
