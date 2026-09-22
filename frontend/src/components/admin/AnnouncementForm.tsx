@@ -29,6 +29,7 @@ export interface AnnouncementItemLike {
   instruction: string;
   authorName?: string;
   createdAt?: string;
+  updatedAt?: string;
   hasImage?: boolean;
   discussionsCount?: number;
   submissionsCount?: number;
@@ -165,8 +166,11 @@ export default function AnnouncementForm({
       setTaskInfo(initialData.taskInfo || "");
       setInstructions(parseToList(initialData.instruction));
       if (initialData.hasImage) {
+        // Bust browser cache only when the record was actually updated
+        // (updatedAt) instead of Date.now(), so max-age=86400 still applies
+        const version = initialData.updatedAt || initialData.createdAt || "";
         setImagePreviewUrl(
-          `${API_URL}/api/announcements/${initialData.id}/image?t=${Date.now()}`,
+          `${API_URL}/api/announcements/${initialData.id}/image${version ? `?v=${encodeURIComponent(version)}` : ""}`,
         );
       } else {
         setImagePreviewUrl("");

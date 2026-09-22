@@ -43,6 +43,7 @@ interface AnnouncementItem {
   instruction: string;
   authorName: string;
   createdAt: string;
+  updatedAt?: string;
   hasImage?: boolean;
   discussionsCount?: number;
   submissionsCount?: number;
@@ -190,6 +191,9 @@ export default function RuangDiskusi() {
   // Discussion State
   const [discussions, setDiscussions] = useState<DiscussionMessage[]>([]);
   const [loadingDiscussions, setLoadingDiscussions] = useState<boolean>(false);
+  const [loadedDiscussionsFor, setLoadedDiscussionsFor] = useState<
+    string | null
+  >(null);
   const [chatInput, setChatInput] = useState<string>("");
   const [sendingChat, setSendingChat] = useState<boolean>(false);
   const chatBottomRef = useRef<HTMLDivElement | null>(null);
@@ -197,6 +201,9 @@ export default function RuangDiskusi() {
   // Submission State
   const [mySubmission, setMySubmission] = useState<SubmissionItem | null>(null);
   const [loadingSubmission, setLoadingSubmission] = useState<boolean>(false);
+  const [loadedSubmissionsFor, setLoadedSubmissionsFor] = useState<
+    string | null
+  >(null);
 
   // Submission Form State
   const [taskAnswer, setTaskAnswer] = useState<string>("");
@@ -251,6 +258,7 @@ export default function RuangDiskusi() {
       try {
         const data = await getAnnouncementDiscussionsApi(token, annId, force);
         setDiscussions(data || []);
+        setLoadedDiscussionsFor(annId);
         setTimeout(() => {
           chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
         }, 200);
@@ -278,6 +286,7 @@ export default function RuangDiskusi() {
         } else {
           setMySubmission(null);
         }
+        setLoadedSubmissionsFor(annId);
       } catch (err) {
         console.error("Error fetching submissions:", err);
       } finally {
@@ -287,18 +296,59 @@ export default function RuangDiskusi() {
     [token],
   );
 
+  // Lazy-load discussions only when the Diskusi tab is opened
+  const ensureDiscussionsLoaded = useCallback(() => {
+    if (!selectedAnnouncement) return;
+    if (loadedDiscussionsFor === selectedAnnouncement.id) return;
+    fetchDiscussions(selectedAnnouncement.id);
+  }, [selectedAnnouncement, loadedDiscussionsFor, fetchDiscussions]);
+
+  // Lazy-load full submission only when needed (Riwayat tab / has existing sub)
+  const ensureSubmissionsLoaded = useCallback(() => {
+    if (!token || !selectedAnnouncement) return;
+    if (loadedSubmissionsFor === selectedAnnouncement.id) return;
+    // No submission known from list/detail — nothing to fetch for the form
+    if (!mySubmission && !selectedAnnouncement.mySubmission) {
+      setMySubmission(null);
+      setLoadedSubmissionsFor(selectedAnnouncement.id);
+      return;
+    }
+    fetchSubmissions(selectedAnnouncement.id);
+  }, [
+    token,
+    selectedAnnouncement,
+    loadedSubmissionsFor,
+    mySubmission,
+    fetchSubmissions,
+  ]);
+
   const handleSelectAnnouncement = useCallback(
     async (annId: string, force = false) => {
       if (!token) return;
+
+      // List payload already contains every detail field — skip the detail fetch
+      const fromList = announcementsList.find((a) => a.id === annId);
+      if (fromList && !force) {
+        setSelectedAnnouncement(fromList);
+        setActiveTab("informasi");
+        setShowSubmissionForm(false);
+        setDiscussions([]);
+        setLoadedDiscussionsFor(null);
+        setMySubmission(null);
+        setLoadedSubmissionsFor(null);
+        return;
+      }
+
       try {
         const detail = await getAnnouncementDetailApi(token, annId, force);
         setSelectedAnnouncement(detail);
-        setActiveTab("informasi"); // Default tab: Informasi!
+        setActiveTab("informasi");
         setShowSubmissionForm(false);
-
-        // Also fetch discussions and submissions
-        fetchDiscussions(annId, force);
-        fetchSubmissions(annId, force);
+        setDiscussions([]);
+        setLoadedDiscussionsFor(null);
+        setMySubmission(detail.mySubmission ?? null);
+        // Detail payload already includes the full mySubmission (or null)
+        setLoadedSubmissionsFor(annId);
       } catch (err: any) {
         showAlert(
           err.message || "Gagal memuat detail diskusi.",
@@ -306,15 +356,22 @@ export default function RuangDiskusi() {
         );
       }
     },
-    [token, fetchDiscussions, fetchSubmissions, showAlert],
+    [token, announcementsList, showAlert],
   );
 
-  // Load selected announcement if param is present
+  // Keep a ref so the deep-link effect only reacts to param/token changes
+  const selectAnnouncementRef = useRef(handleSelectAnnouncement);
   useEffect(() => {
-    if (paramAnnouncementId && token) {
-      handleSelectAnnouncement(paramAnnouncementId);
+    selectAnnouncementRef.current = handleSelectAnnouncement;
+  }, [handleSelectAnnouncement]);
+
+  // Load selected announcement if param is present.
+  // Wait for the list so we can reuse it and skip the detail fetch.
+  useEffect(() => {
+    if (paramAnnouncementId && token && !loadingList) {
+      selectAnnouncementRef.current(paramAnnouncementId);
     }
-  }, [paramAnnouncementId, token, handleSelectAnnouncement]);
+  }, [paramAnnouncementId, token, loadingList]);
 
   // Send Discussion Message
   const handleSendMessage = async (e?: React.FormEvent) => {
@@ -406,7 +463,11 @@ export default function RuangDiskusi() {
         formData.append("fileName", selectedFile.name);
       }
 
-      await submitAnnouncementTaskApi(token, selectedAnnouncement.id, formData);
+      const res = await submitAnnouncementTaskApi(
+        token,
+        selectedAnnouncement.id,
+        formData,
+      );
 
       showAlert(
         "Tugas Anda telah berhasil disimpan dan dikirimkan.",
@@ -417,8 +478,24 @@ export default function RuangDiskusi() {
       setTaskAnswer("");
       handleClearImage();
 
-      // Refresh announcement detail & submission
-      fetchSubmissions(selectedAnnouncement.id);
+      // Prefer the mutation response; keep prior grade fields on update
+      // (backend omits grade/feedback from the submit response)
+      const prev = mySubmission;
+      const raw = res?.data;
+      if (raw) {
+        setMySubmission({
+          ...raw,
+          announcementId: selectedAnnouncement.id,
+          grade: raw.grade ?? prev?.grade,
+          feedback: raw.feedback ?? prev?.feedback,
+          gradedAt: raw.gradedAt ?? prev?.gradedAt,
+          gradedBy: raw.gradedBy ?? prev?.gradedBy,
+        } as SubmissionItem);
+        setLoadedSubmissionsFor(selectedAnnouncement.id);
+      } else {
+        fetchSubmissions(selectedAnnouncement.id);
+      }
+      // List badges (mySubmission / submissionsCount) still need a refresh
       fetchAnnouncements();
     } catch (err: any) {
       showAlert(
@@ -441,11 +518,13 @@ export default function RuangDiskusi() {
     try {
       await deleteAnnouncementSubmissionApi(token, mySubmission.id);
       showAlert("Pengumpulan tugas berhasil dibatalkan.", "Tugas Dihapus");
+      // Local state already knows the answer — no submissions refetch needed
       setMySubmission(null);
-      if (selectedAnnouncement) {
-        fetchSubmissions(selectedAnnouncement.id);
-        fetchAnnouncements();
-      }
+      setLoadedSubmissionsFor(mySubmission.announcementId);
+      setSelectedAnnouncement((prev) =>
+        prev ? { ...prev, mySubmission: null } : prev,
+      );
+      fetchAnnouncements();
     } catch (err: any) {
       showAlert(
         err.message || "Gagal menghapus pengumpulan tugas.",
@@ -496,6 +575,35 @@ export default function RuangDiskusi() {
     }
     return true;
   });
+
+  // Full submission (state) or partial from list/detail — drives CTA & badges
+  const hasSubmission = !!(
+    mySubmission ||
+    selectedAnnouncement?.mySubmission
+  );
+
+  // Prefer live count once discussions are loaded; fall back to list count
+  const discussionCount =
+    selectedAnnouncement &&
+    loadedDiscussionsFor === selectedAnnouncement.id
+      ? discussions.length
+      : (selectedAnnouncement?.discussionsCount ?? discussions.length);
+
+  const openDiskusiTab = () => {
+    setActiveTab("diskusi");
+    ensureDiscussionsLoaded();
+    setTimeout(() => {
+      chatBottomRef.current?.scrollIntoView({
+        behavior: "smooth",
+      });
+    }, 150);
+  };
+
+  const openRiwayatTab = (showForm = false) => {
+    setActiveTab("riwayat");
+    if (showForm) setShowSubmissionForm(true);
+    ensureSubmissionsLoaded();
+  };
 
   return (
     <div className="w-full min-h-screen bg-[#FAF9FF] flex justify-center items-center text-[#2C2B30] font-sans select-none overflow-hidden relative">
@@ -684,14 +792,7 @@ export default function RuangDiskusi() {
               </button>
 
               <button
-                onClick={() => {
-                  setActiveTab("diskusi");
-                  setTimeout(() => {
-                    chatBottomRef.current?.scrollIntoView({
-                      behavior: "smooth",
-                    });
-                  }, 150);
-                }}
+                onClick={openDiskusiTab}
                 className={`py-2 text-xs font-black rounded-xl transition-all flex items-center justify-center gap-1.5 relative ${
                   activeTab === "diskusi"
                     ? "bg-[#8C66FF] text-white shadow-xs"
@@ -700,7 +801,7 @@ export default function RuangDiskusi() {
               >
                 <LuMessageSquare size={14} />
                 <span>Diskusi</span>
-                {discussions.length > 0 && (
+                {discussionCount > 0 && (
                   <span
                     className={`text-[9px] px-1.5 py-0.2 rounded-full font-black ${
                       activeTab === "diskusi"
@@ -708,13 +809,13 @@ export default function RuangDiskusi() {
                         : "bg-[#F0ECFF] text-[#8C66FF]"
                     }`}
                   >
-                    {discussions.length}
+                    {discussionCount}
                   </span>
                 )}
               </button>
 
               <button
-                onClick={() => setActiveTab("riwayat")}
+                onClick={() => openRiwayatTab()}
                 className={`py-2 text-xs font-black rounded-xl transition-all flex items-center justify-center gap-1.5 ${
                   activeTab === "riwayat"
                     ? "bg-[#8C66FF] text-white shadow-xs"
@@ -723,7 +824,7 @@ export default function RuangDiskusi() {
               >
                 <LuClock size={14} />
                 <span>Riwayat</span>
-                {mySubmission && (
+                {hasSubmission && (
                   <span className="w-2 h-2 rounded-full bg-[#10B981]"></span>
                 )}
               </button>
@@ -855,9 +956,9 @@ export default function RuangDiskusi() {
 
                 {/* Action CTA Button on Tab Informasi */}
                 <div className="pt-2">
-                  {mySubmission ? (
+                  {hasSubmission ? (
                     <button
-                      onClick={() => setActiveTab("riwayat")}
+                      onClick={() => openRiwayatTab()}
                       className="w-full py-3.5 bg-[#ECFDF5] border border-[#10B981]/30 text-[#065F46] font-black text-xs rounded-2xl flex items-center justify-center gap-2 shadow-xs active:scale-[0.99] transition-all cursor-pointer"
                     >
                       <FiCheckCircle size={16} className="text-[#10B981]" />
@@ -865,10 +966,7 @@ export default function RuangDiskusi() {
                     </button>
                   ) : (
                     <button
-                      onClick={() => {
-                        setActiveTab("riwayat");
-                        setShowSubmissionForm(true);
-                      }}
+                      onClick={() => openRiwayatTab(true)}
                       className="w-full py-3.5 bg-gradient-to-r from-[#8C66FF] to-[#6366F1] text-white font-black text-xs rounded-2xl flex items-center justify-center gap-2 shadow-md shadow-purple-200 active:scale-[0.99] transition-all cursor-pointer"
                     >
                       <LuUpload size={16} />
@@ -893,7 +991,7 @@ export default function RuangDiskusi() {
                         Forum Diskusi Topik
                       </p>
                       <p className="text-[9px] text-[#7A768A]">
-                        {discussions.length} pesan terkirim
+                        {discussionCount} pesan terkirim
                       </p>
                     </div>
                   </div>

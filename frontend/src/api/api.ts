@@ -607,6 +607,13 @@ const announcementDetailCache = new Map<string, CacheItem<any>>();
 const announcementDiscussionsCache = new Map<string, CacheItem<any>>();
 const announcementSubmissionsCache = new Map<string, CacheItem<any>>();
 
+// In-flight dedup: share one network promise per key so concurrent callers
+// (StrictMode double-effect, parallel tab loads) never issue duplicate fetches.
+let announcementsInflight: Promise<any> | null = null;
+const announcementDetailInflight = new Map<string, Promise<any>>();
+const announcementDiscussionsInflight = new Map<string, Promise<any>>();
+const announcementSubmissionsInflight = new Map<string, Promise<any>>();
+
 const ANNOUNCEMENT_TTL_MS = 60 * 1000; // 60s
 const DISCUSSION_TTL_MS = 8 * 1000;    // 8s (fast chat cache)
 const SUBMISSION_TTL_MS = 30 * 1000;   // 30s
@@ -620,43 +627,74 @@ export function clearAnnouncementsCache() {
 
 export async function getAnnouncementsApi(token: string, forceRefresh = false) {
   const now = Date.now();
-  if (!forceRefresh && announcementsCache && (now - announcementsCache.timestamp < ANNOUNCEMENT_TTL_MS)) {
-    return announcementsCache.data;
+  if (!forceRefresh) {
+    if (announcementsCache && (now - announcementsCache.timestamp < ANNOUNCEMENT_TTL_MS)) {
+      return announcementsCache.data;
+    }
+    if (announcementsInflight) {
+      return announcementsInflight;
+    }
   }
 
-  const response = await fetch(`${API_URL}/api/announcements`, {
-    method: "GET",
-    headers: {
-      "Authorization": `Bearer ${token}`
+  const promise = (async () => {
+    const response = await fetch(`${API_URL}/api/announcements`, {
+      method: "GET",
+      headers: {
+        "Authorization": `Bearer ${token}`
+      }
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.error || "Gagal mengambil daftar topik diskusi");
     }
-  });
-  const data = await response.json();
-  if (!response.ok) {
-    throw new Error(data.error || "Gagal mengambil daftar topik diskusi");
-  }
-  announcementsCache = { data: data.data, timestamp: now };
-  return data.data;
+    announcementsCache = { data: data.data, timestamp: Date.now() };
+    return data.data;
+  })();
+  announcementsInflight = promise;
+  const cleanup = () => {
+    if (announcementsInflight === promise) {
+      announcementsInflight = null;
+    }
+  };
+  promise.then(cleanup, cleanup);
+  return promise;
 }
 
 export async function getAnnouncementDetailApi(token: string, id: string, forceRefresh = false) {
   const now = Date.now();
-  const cached = announcementDetailCache.get(id);
-  if (!forceRefresh && cached && (now - cached.timestamp < ANNOUNCEMENT_TTL_MS)) {
-    return cached.data;
+  if (!forceRefresh) {
+    const cached = announcementDetailCache.get(id);
+    if (cached && (now - cached.timestamp < ANNOUNCEMENT_TTL_MS)) {
+      return cached.data;
+    }
+    const inflight = announcementDetailInflight.get(id);
+    if (inflight) {
+      return inflight;
+    }
   }
 
-  const response = await fetch(`${API_URL}/api/announcements/${id}`, {
-    method: "GET",
-    headers: {
-      "Authorization": `Bearer ${token}`
+  const promise = (async () => {
+    const response = await fetch(`${API_URL}/api/announcements/${id}`, {
+      method: "GET",
+      headers: {
+        "Authorization": `Bearer ${token}`
+      }
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.error || "Gagal mengambil detail topik diskusi");
     }
-  });
-  const data = await response.json();
-  if (!response.ok) {
-    throw new Error(data.error || "Gagal mengambil detail topik diskusi");
-  }
-  announcementDetailCache.set(id, { data: data.data, timestamp: now });
-  return data.data;
+    announcementDetailCache.set(id, { data: data.data, timestamp: Date.now() });
+    return data.data;
+  })();
+  announcementDetailInflight.set(id, promise);
+  const cleanup = () => {
+    if (announcementDetailInflight.get(id) === promise) {
+      announcementDetailInflight.delete(id);
+    }
+  };
+  promise.then(cleanup, cleanup);
+  return promise;
 }
 
 export async function createAnnouncementApi(token: string, body: FormData | {
@@ -725,23 +763,39 @@ export async function deleteAnnouncementApi(token: string, id: string) {
 
 export async function getAnnouncementDiscussionsApi(token: string, id: string, forceRefresh = false) {
   const now = Date.now();
-  const cached = announcementDiscussionsCache.get(id);
-  if (!forceRefresh && cached && (now - cached.timestamp < DISCUSSION_TTL_MS)) {
-    return cached.data;
+  if (!forceRefresh) {
+    const cached = announcementDiscussionsCache.get(id);
+    if (cached && (now - cached.timestamp < DISCUSSION_TTL_MS)) {
+      return cached.data;
+    }
+    const inflight = announcementDiscussionsInflight.get(id);
+    if (inflight) {
+      return inflight;
+    }
   }
 
-  const response = await fetch(`${API_URL}/api/announcements/${id}/discussions`, {
-    method: "GET",
-    headers: {
-      "Authorization": `Bearer ${token}`
+  const promise = (async () => {
+    const response = await fetch(`${API_URL}/api/announcements/${id}/discussions`, {
+      method: "GET",
+      headers: {
+        "Authorization": `Bearer ${token}`
+      }
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.error || "Gagal memuat diskusi");
     }
-  });
-  const data = await response.json();
-  if (!response.ok) {
-    throw new Error(data.error || "Gagal memuat diskusi");
-  }
-  announcementDiscussionsCache.set(id, { data: data.data, timestamp: now });
-  return data.data;
+    announcementDiscussionsCache.set(id, { data: data.data, timestamp: Date.now() });
+    return data.data;
+  })();
+  announcementDiscussionsInflight.set(id, promise);
+  const cleanup = () => {
+    if (announcementDiscussionsInflight.get(id) === promise) {
+      announcementDiscussionsInflight.delete(id);
+    }
+  };
+  promise.then(cleanup, cleanup);
+  return promise;
 }
 
 export async function sendAnnouncementDiscussionApi(token: string, id: string, content: string) {
@@ -763,23 +817,39 @@ export async function sendAnnouncementDiscussionApi(token: string, id: string, c
 
 export async function getAnnouncementSubmissionsApi(token: string, id: string, forceRefresh = false) {
   const now = Date.now();
-  const cached = announcementSubmissionsCache.get(id);
-  if (!forceRefresh && cached && (now - cached.timestamp < SUBMISSION_TTL_MS)) {
-    return cached.data;
+  if (!forceRefresh) {
+    const cached = announcementSubmissionsCache.get(id);
+    if (cached && (now - cached.timestamp < SUBMISSION_TTL_MS)) {
+      return cached.data;
+    }
+    const inflight = announcementSubmissionsInflight.get(id);
+    if (inflight) {
+      return inflight;
+    }
   }
 
-  const response = await fetch(`${API_URL}/api/announcements/${id}/submissions`, {
-    method: "GET",
-    headers: {
-      "Authorization": `Bearer ${token}`
+  const promise = (async () => {
+    const response = await fetch(`${API_URL}/api/announcements/${id}/submissions`, {
+      method: "GET",
+      headers: {
+        "Authorization": `Bearer ${token}`
+      }
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.error || "Gagal mengambil pengumpulan tugas");
     }
-  });
-  const data = await response.json();
-  if (!response.ok) {
-    throw new Error(data.error || "Gagal mengambil pengumpulan tugas");
-  }
-  announcementSubmissionsCache.set(id, { data: data.data, timestamp: now });
-  return data.data;
+    announcementSubmissionsCache.set(id, { data: data.data, timestamp: Date.now() });
+    return data.data;
+  })();
+  announcementSubmissionsInflight.set(id, promise);
+  const cleanup = () => {
+    if (announcementSubmissionsInflight.get(id) === promise) {
+      announcementSubmissionsInflight.delete(id);
+    }
+  };
+  promise.then(cleanup, cleanup);
+  return promise;
 }
 
 export async function submitAnnouncementTaskApi(token: string, id: string, formData: FormData) {

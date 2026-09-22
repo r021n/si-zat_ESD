@@ -1,4 +1,11 @@
-import { createContext, useContext, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 import { FiAlertCircle, FiHelpCircle, FiEdit3 } from "react-icons/fi";
 
 type DialogType = "alert" | "confirm" | "prompt";
@@ -29,31 +36,33 @@ export function CustomDialogProvider({ children }: { children: ReactNode }) {
   const [config, setConfig] = useState<DialogConfig | null>(null);
   const [inputValue, setInputValue] = useState("");
 
-  const showAlert = (message: ReactNode, title?: string): Promise<void> => {
-    return new Promise((resolve) => {
-      setConfig({ type: "alert", message, title, resolve });
-    });
-  };
+  const showAlert = useCallback(
+    (message: ReactNode, title?: string): Promise<void> => {
+      return new Promise((resolve) => {
+        setConfig({ type: "alert", message, title, resolve });
+      });
+    },
+    [],
+  );
 
-  const showConfirm = (
-    message: ReactNode,
-    title?: string,
-  ): Promise<boolean> => {
-    return new Promise((resolve) => {
-      setConfig({ type: "confirm", message, title, resolve });
-    });
-  };
+  const showConfirm = useCallback(
+    (message: ReactNode, title?: string): Promise<boolean> => {
+      return new Promise((resolve) => {
+        setConfig({ type: "confirm", message, title, resolve });
+      });
+    },
+    [],
+  );
 
-  const showPrompt = (
-    message: ReactNode,
-    defaultValue = "",
-    title?: string,
-  ): Promise<string | null> => {
-    setInputValue(defaultValue);
-    return new Promise((resolve) => {
-      setConfig({ type: "prompt", message, defaultValue, title, resolve });
-    });
-  };
+  const showPrompt = useCallback(
+    (message: ReactNode, defaultValue = "", title?: string): Promise<string | null> => {
+      setInputValue(defaultValue);
+      return new Promise((resolve) => {
+        setConfig({ type: "prompt", message, title, resolve });
+      });
+    },
+    [],
+  );
 
   const handleClose = (value: any) => {
     if (config) {
@@ -63,10 +72,13 @@ export function CustomDialogProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const contextValue = useMemo(
+    () => ({ showAlert, showConfirm, showPrompt }),
+    [showAlert, showConfirm, showPrompt],
+  );
+
   return (
-    <CustomDialogContext.Provider
-      value={{ showAlert, showConfirm, showPrompt }}
-    >
+    <CustomDialogContext.Provider value={contextValue}>
       {children}
 
       {config && (

@@ -47,6 +47,7 @@ interface AnnouncementItem {
   instruction: string;
   authorName: string;
   createdAt: string;
+  updatedAt?: string;
   hasImage?: boolean;
   discussionsCount?: number;
   submissionsCount?: number;
@@ -236,13 +237,16 @@ export default function AdminDiskusi() {
     }
   };
 
-  // Open Submissions List for an Announcement
-  const handleOpenSubmissions = async (ann: AnnouncementItem) => {
+  // Open Submissions List for an Announcement (force=true bypasses 30s cache)
+  const handleOpenSubmissions = async (
+    ann: AnnouncementItem,
+    force = false,
+  ) => {
     if (!token) return;
     setSelectedForSubmissions(ann);
     setLoadingSubmissions(true);
     try {
-      const data = await getAnnouncementSubmissionsApi(token, ann.id);
+      const data = await getAnnouncementSubmissionsApi(token, ann.id, force);
       setSubmissionsList(data || []);
     } catch (err: any) {
       showAlert(
@@ -322,6 +326,7 @@ export default function AdminDiskusi() {
   };
 
   // Open Ranking Modal (Filtered on frontend: comments > 4 words)
+  // Uses the discussions cache (8s TTL) to avoid duplicate fetches
   const handleOpenRanking = async (ann: AnnouncementItem) => {
     if (!token) return;
     setRankingAnnouncement(ann);
@@ -716,7 +721,9 @@ export default function AdminDiskusi() {
                 </button>
 
                 <button
-                  onClick={() => handleOpenSubmissions(selectedForSubmissions)}
+                  onClick={() =>
+                    handleOpenSubmissions(selectedForSubmissions, true)
+                  }
                   disabled={loadingSubmissions}
                   className="w-9 h-9 bg-white rounded-xl flex items-center justify-center border border-[#F0EDFF] text-[#8C66FF] shadow-xs active:scale-95 hover:bg-[#FAF9FF] transition-all cursor-pointer"
                   title="Refresh Pengumpulan"
