@@ -17,7 +17,6 @@ import {
 import {
   LuMessageSquare,
   LuClock,
-  LuFileText,
   LuInfo,
   LuUpload,
   LuPin,
@@ -162,6 +161,8 @@ function compressImage(
 }
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8787";
+const PLACEHOLDER_IMAGE_URL =
+  "https://placehold.co/800x400/e8e8e8/9C98A6?text=Tidak%20Ada%20Gambar";
 
 export default function RuangDiskusi() {
   const { id: paramAnnouncementId } = useParams();
@@ -590,15 +591,15 @@ export default function RuangDiskusi() {
                     >
                       {/* Left Square Thumbnail / Icon */}
                       <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#8C66FF] to-[#6366F1] flex items-center justify-center text-white text-xl shrink-0 shadow-xs overflow-hidden">
-                        {ann.hasImage ? (
-                          <img
-                            src={`${API_URL}/api/announcements/${ann.id}/image`}
-                            alt={ann.title}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <LuFileText size={24} />
-                        )}
+                        <img
+                          src={
+                            ann.hasImage
+                              ? `${API_URL}/api/announcements/${ann.id}/image`
+                              : PLACEHOLDER_IMAGE_URL
+                          }
+                          alt={ann.title}
+                          className="w-full h-full object-cover"
+                        />
                       </div>
 
                       {/* Right Details */}
@@ -741,16 +742,15 @@ export default function RuangDiskusi() {
                         className="absolute inset-0 w-full h-full object-cover"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent pointer-events-none"></div>
-                      <div className="absolute bottom-2 right-4 text-white/30 text-5xl font-black select-none pointer-events-none">
-                        ESD
-                      </div>
                     </>
                   ) : (
                     <>
-                      <div className="absolute top-[-20%] right-[-10%] w-32 h-32 bg-white/10 rounded-full blur-sm"></div>
-                      <div className="absolute bottom-2 right-4 text-white/20 text-6xl font-black select-none pointer-events-none">
-                        ESD
-                      </div>
+                      <img
+                        src={PLACEHOLDER_IMAGE_URL}
+                        alt={selectedAnnouncement.title}
+                        className="absolute inset-0 w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent pointer-events-none"></div>
                     </>
                   )}
                 </div>
@@ -1131,9 +1131,7 @@ export default function RuangDiskusi() {
                       <label className="w-full py-2.5 px-3 border border-dashed border-[#DFDCF0] hover:border-[#8C66FF] rounded-xl flex items-center gap-2 cursor-pointer bg-[#FAF9FF] transition-colors">
                         <FiImage className="text-[#8C66FF]" size={16} />
                         <span className="text-xs font-bold text-[#524F5D]">
-                          {compressingImage
-                            ? "Memproses..."
-                            : "Lampirkan Foto (Opsional)"}
+                          {compressingImage ? "Memproses..." : "Lampirkan Foto"}
                         </span>
                         <input
                           type="file"

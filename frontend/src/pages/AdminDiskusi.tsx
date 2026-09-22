@@ -88,6 +88,8 @@ interface RankedStudent {
 }
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8787";
+const PLACEHOLDER_IMAGE_URL =
+  "https://placehold.co/800x400/e8e8e8/9C98A6?text=Tidak%20Ada%20Gambar";
 
 export default function AdminDiskusi() {
   const navigate = useNavigate();
@@ -403,31 +405,12 @@ export default function AdminDiskusi() {
     );
   });
 
-  // Computed Statistics for View 1
-  const totalTopicsCount = announcements.length;
-  const totalSubmissionsAcrossTopics = announcements.reduce(
-    (sum, a) => sum + (a.submissionsCount || 0),
-    0,
-  );
-  const totalDiscussionsAcrossTopics = announcements.reduce(
-    (sum, a) => sum + (a.discussionsCount || 0),
-    0,
-  );
-
   // Submissions computed stats for View 2
   const totalSubmissionsCount = submissionsList.length;
-  const gradedSubmissions = submissionsList.filter(
+  const gradedCount = submissionsList.filter(
     (s) => s.grade !== undefined && s.grade !== null,
-  );
-  const gradedCount = gradedSubmissions.length;
+  ).length;
   const ungradedCount = totalSubmissionsCount - gradedCount;
-  const averageGrade =
-    gradedCount > 0
-      ? (
-          gradedSubmissions.reduce((acc, curr) => acc + (curr.grade || 0), 0) /
-          gradedCount
-        ).toFixed(1)
-      : "-";
 
   const filteredSubmissions = submissionsList.filter((s) => {
     if (
@@ -475,7 +458,7 @@ export default function AdminDiskusi() {
   });
 
   return (
-    <div className="w-full min-h-screen bg-[#FAF9FF] flex justify-center items-start text-[#2C2B30] font-sans select-none relative py-4 md:py-8">
+    <div className="w-full min-h-screen bg-[#FAF9FF] flex justify-center items-start text-[#2C2B30] font-sans select-none relative py-4 md:py-8 overflow-x-hidden">
       {/* Decorative Blur Bubbles */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
         <div className="absolute top-[-10%] right-[-10%] w-72 h-72 md:w-96 md:h-96 bg-[#E9E4FF] rounded-full filter blur-3xl opacity-50"></div>
@@ -483,13 +466,13 @@ export default function AdminDiskusi() {
       </div>
 
       {/* Main Responsive Desktop & Mobile Container */}
-      <div className="w-full max-w-107.5 md:max-w-5xl lg:max-w-6xl xl:max-w-7xl min-h-[calc(100vh-2rem)] md:min-h-[calc(100vh-4rem)] my-auto flex flex-col justify-between px-4 sm:px-6 md:px-8 py-4 md:py-6 z-10 transition-all duration-300">
+      <div className="w-full min-w-0 max-w-107.5 md:max-w-5xl lg:max-w-6xl xl:max-w-7xl min-h-[calc(100vh-2rem)] md:min-h-[calc(100vh-4rem)] my-auto flex flex-col justify-between px-4 sm:px-6 md:px-8 py-4 md:py-6 z-10 transition-all duration-300">
         {/* ==================== VIEW 1: ANNOUNCEMENTS MANAGEMENT ==================== */}
         {!selectedForSubmissions ? (
           <div className="w-full flex-1 flex flex-col">
             {/* Header */}
-            <div className="w-full flex items-center justify-between pb-4 mb-4 border-b border-[#F0EDFF]/80">
-              <div className="flex items-center gap-3 md:gap-4">
+            <div className="w-full flex items-center justify-between gap-3 pb-4 mb-4 border-b border-[#F0EDFF]/80">
+              <div className="flex items-center gap-3 md:gap-4 min-w-0 flex-1">
                 <button
                   onClick={() => goBack("/admin")}
                   className="w-10 h-10 md:w-11 md:h-11 bg-white rounded-2xl flex items-center justify-center shadow-xs border border-[#F0EDFF] text-[#8C66FF] active:scale-95 hover:bg-[#FAF9FF] transition-all shrink-0 cursor-pointer"
@@ -497,27 +480,22 @@ export default function AdminDiskusi() {
                 >
                   <FiArrowLeft size={20} />
                 </button>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <p className="text-[10px] md:text-xs uppercase tracking-widest text-[#9C98A6] font-bold">
-                      Panel Guru & Administrator
-                    </p>
-                    <span className="hidden sm:inline-block px-2.5 py-0.5 bg-[#F0ECFF] text-[#8C66FF] rounded-full text-[10px] font-extrabold">
-                      {totalTopicsCount} Topik Aktif
-                    </span>
-                  </div>
-                  <h1 className="text-xl md:text-2xl font-extrabold text-[#2C2B30] leading-tight mt-0.5">
+                <div className="min-w-0">
+                  <p className="text-[10px] md:text-xs uppercase tracking-widest text-[#9C98A6] font-bold truncate">
+                    Panel Guru & Administrator
+                  </p>
+                  <h1 className="text-lg sm:text-xl md:text-2xl font-extrabold text-[#2C2B30] leading-tight mt-0.5 truncate">
                     Kelola Ruang Diskusi
                   </h1>
                 </div>
               </div>
 
               {/* Action Buttons */}
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-2 shrink-0">
                 <button
                   onClick={() => fetchAnnouncements(true)}
                   disabled={loadingList}
-                  className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center border border-[#F0EDFF] text-[#8C66FF] shadow-xs active:scale-95 hover:bg-[#FAF9FF] transition-all cursor-pointer"
+                  className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center border border-[#F0EDFF] text-[#8C66FF] shadow-xs active:scale-95 hover:bg-[#FAF9FF] transition-all cursor-pointer shrink-0"
                   title="Segarkan Data Topik"
                 >
                   <FiRefreshCw
@@ -527,56 +505,12 @@ export default function AdminDiskusi() {
                 </button>
                 <button
                   onClick={handleOpenCreateForm}
-                  className="px-4 md:px-5 py-2.5 bg-[#8C66FF] hover:bg-[#7b55f0] text-white text-xs md:text-sm font-black rounded-2xl flex items-center gap-2 shadow-md shadow-purple-200 active:scale-95 transition-all cursor-pointer"
+                  className="px-3.5 md:px-5 py-2.5 bg-[#8C66FF] hover:bg-[#7b55f0] text-white text-xs md:text-sm font-black rounded-2xl flex items-center gap-2 shadow-md shadow-purple-200 active:scale-95 transition-all cursor-pointer whitespace-nowrap"
                 >
-                  <FiPlus size={16} />
-                  <span>Buat Topik Baru</span>
+                  <FiPlus size={16} className="shrink-0" />
+                  <span className="hidden sm:inline">Buat Topik Baru</span>
+                  <span className="sm:hidden">Buat</span>
                 </button>
-              </div>
-            </div>
-
-            {/* Desktop Metrics Row (Summary Cards) */}
-            <div className="hidden md:grid md:grid-cols-3 gap-4 mb-6">
-              <div className="bg-white rounded-3xl p-5 border border-[#F0EDFF] shadow-[0_4px_16px_rgba(0,0,0,0.02)] flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-[#F0ECFF] text-[#8C66FF] flex items-center justify-center text-2xl shrink-0">
-                  <LuMessageSquare />
-                </div>
-                <div>
-                  <p className="text-[11px] uppercase tracking-wider text-[#9C98A6] font-bold">
-                    Total Topik Diskusi
-                  </p>
-                  <h3 className="text-2xl font-black text-[#2C2B30] mt-0.5">
-                    {totalTopicsCount}
-                  </h3>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-3xl p-5 border border-[#F0EDFF] shadow-[0_4px_16px_rgba(0,0,0,0.02)] flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-[#ECFDF5] text-[#10B981] flex items-center justify-center text-2xl shrink-0">
-                  <LuAward />
-                </div>
-                <div>
-                  <p className="text-[11px] uppercase tracking-wider text-[#9C98A6] font-bold">
-                    Tugas Siswa Terkumpul
-                  </p>
-                  <h3 className="text-2xl font-black text-[#2C2B30] mt-0.5">
-                    {totalSubmissionsAcrossTopics}
-                  </h3>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-3xl p-5 border border-[#F0EDFF] shadow-[0_4px_16px_rgba(0,0,0,0.02)] flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-[#FFF9E6] text-[#D97706] flex items-center justify-center text-2xl shrink-0">
-                  <LuTrophy />
-                </div>
-                <div>
-                  <p className="text-[11px] uppercase tracking-wider text-[#9C98A6] font-bold">
-                    Interaksi Diskusi
-                  </p>
-                  <h3 className="text-2xl font-black text-[#2C2B30] mt-0.5">
-                    {totalDiscussionsAcrossTopics}
-                  </h3>
-                </div>
               </div>
             </div>
 
@@ -589,7 +523,7 @@ export default function AdminDiskusi() {
                 />
                 <input
                   type="text"
-                  placeholder="Cari topik diskusi berdasarkan judul atau studi kasus..."
+                  placeholder="Cari judul topik diskusi..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-11 pr-4 py-3 bg-white border border-[#F0EDFF] rounded-2xl text-xs md:text-sm font-semibold text-[#2C2B30] placeholder:text-[#9C98A6] focus:outline-none focus:border-[#8C66FF] shadow-[0_2px_12px_rgba(0,0,0,0.02)] transition-all"
@@ -649,14 +583,16 @@ export default function AdminDiskusi() {
                     >
                       <div className="flex flex-col gap-3">
                         {/* Top Row: Title, Date, Actions */}
-                        <div className="flex justify-between items-start gap-2">
-                          <div className="flex-1">
-                            <h2 className="text-sm md:text-base font-black text-[#2C2B30] leading-snug line-clamp-2 group-hover:text-[#8C66FF] transition-colors">
+                        <div className="flex justify-between items-start gap-2 min-w-0">
+                          <div className="flex-1 min-w-0">
+                            <h2 className="text-sm md:text-base font-black text-[#2C2B30] leading-snug line-clamp-2 group-hover:text-[#8C66FF] transition-colors break-words">
                               {ann.title}
                             </h2>
-                            <p className="text-[11px] text-[#9C98A6] font-semibold mt-1 flex items-center gap-1.5">
-                              <FiCalendar size={12} />{" "}
-                              {formatDateIndo(ann.createdAt)}
+                            <p className="text-[11px] text-[#9C98A6] font-semibold mt-1 flex items-center gap-1.5 min-w-0">
+                              <FiCalendar size={12} className="shrink-0" />
+                              <span className="truncate">
+                                {formatDateIndo(ann.createdAt)}
+                              </span>
                             </p>
                           </div>
 
@@ -681,79 +617,55 @@ export default function AdminDiskusi() {
                           </div>
                         </div>
 
-                        {/* Optional Banner Preview or Modern Placeholder */}
-                        {ann.hasImage ? (
-                          <div
-                            onClick={() =>
+                        {/* Banner Preview (placeholder when no image) */}
+                        <div
+                          onClick={() => {
+                            if (ann.hasImage)
                               setZoomImageUrl(
                                 `${API_URL}/api/announcements/${ann.id}/image`,
-                              )
+                              );
+                          }}
+                          className={`w-full h-36 rounded-2xl overflow-hidden border border-[#F0EDFF] relative group/img ${
+                            ann.hasImage ? "cursor-pointer" : "cursor-default"
+                          }`}
+                        >
+                          <img
+                            src={
+                              ann.hasImage
+                                ? `${API_URL}/api/announcements/${ann.id}/image`
+                                : PLACEHOLDER_IMAGE_URL
                             }
-                            className="w-full h-36 rounded-2xl overflow-hidden border border-[#F0EDFF] relative group/img cursor-pointer"
-                          >
-                            <img
-                              src={`${API_URL}/api/announcements/${ann.id}/image`}
-                              alt={ann.title}
-                              className="w-full h-full object-cover group-hover/img:scale-105 transition-transform duration-300"
-                            />
+                            alt={ann.title}
+                            className="w-full h-full object-cover group-hover/img:scale-105 transition-transform duration-300"
+                          />
+                          {ann.hasImage && (
                             <div className="absolute inset-0 bg-black/25 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center text-white text-[11px] font-bold">
                               Klik untuk memperbesar
                             </div>
-                          </div>
-                        ) : (
-                          <div className="w-full h-20 rounded-2xl bg-gradient-to-br from-[#FAF8FF] to-[#F3EEFF] border border-[#F0EDFF] flex items-center justify-center text-[#8C66FF]/40 gap-2">
-                            <LuMessageSquare size={20} />
-                            <span className="text-[11px] font-bold uppercase tracking-wider text-[#9C98A6]">
-                              Topik Diskusi
-                            </span>
-                          </div>
-                        )}
-
-                        {/* Problem Snippet */}
-                        {ann.problem && (
-                          <p className="text-xs text-[#524F5D] line-clamp-3 leading-relaxed bg-[#FAF9FF] p-3 rounded-2xl border border-[#F0EDFF]/80 font-medium">
-                            {ann.problem}
-                          </p>
-                        )}
+                          )}
+                        </div>
                       </div>
 
-                      {/* Card Footer: Metadata Chips & Action Buttons */}
+                      {/* Card Footer: Action Buttons */}
                       <div className="flex flex-col gap-3 pt-2 border-t border-[#F0EDFF]/70">
-                        {/* Stats Info */}
-                        <div className="flex items-center justify-between text-[11px] font-bold text-[#9C98A6]">
-                          <span className="flex items-center gap-1.5 bg-[#FAF9FF] px-2.5 py-1 rounded-xl border border-[#F0EDFF]">
-                            <LuAward size={13} className="text-[#8C66FF]" />
-                            <span>
-                              {ann.submissionsCount || 0} Pengumpulan
-                            </span>
-                          </span>
-                          <span className="flex items-center gap-1.5 bg-[#FAF9FF] px-2.5 py-1 rounded-xl border border-[#F0EDFF]">
-                            <LuMessageSquare
-                              size={13}
-                              className="text-[#D97706]"
-                            />
-                            <span>
-                              {ann.discussionsCount || 0} Komentar
-                            </span>
-                          </span>
-                        </div>
-
                         {/* Action Buttons */}
                         <div className="grid grid-cols-2 gap-2">
                           <button
                             onClick={() => handleOpenSubmissions(ann)}
-                            className="py-2.5 px-3 bg-[#8C66FF] hover:bg-[#7b55f0] text-white text-xs font-black rounded-2xl flex items-center justify-center gap-1.5 shadow-xs active:scale-95 transition-all cursor-pointer"
+                            className="py-2.5 px-2 md:px-3 bg-[#8C66FF] hover:bg-[#7b55f0] text-white text-[11px] md:text-xs font-black rounded-2xl flex items-center justify-center gap-1.5 shadow-xs active:scale-95 transition-all cursor-pointer min-w-0 whitespace-nowrap overflow-hidden"
                           >
-                            <LuAward size={15} />
-                            <span>Nilai Tugas ({ann.submissionsCount || 0})</span>
+                            <LuAward size={15} className="shrink-0" />
+                            <span className="truncate">
+                              Nilai ({ann.submissionsCount || 0})
+                            </span>
                           </button>
 
                           <button
                             onClick={() => handleOpenRanking(ann)}
-                            className="py-2.5 px-3 bg-[#FFF9E6] border border-[#FDE68A] text-[#D97706] hover:bg-[#FEF3C7] text-xs font-black rounded-2xl flex items-center justify-center gap-1.5 shadow-2xs active:scale-95 transition-all cursor-pointer"
+                            className="py-2.5 px-2 md:px-3 bg-[#FFF9E6] border border-[#FDE68A] text-[#D97706] hover:bg-[#FEF3C7] text-[11px] md:text-xs font-black rounded-2xl flex items-center justify-center gap-1.5 shadow-2xs active:scale-95 transition-all cursor-pointer min-w-0 whitespace-nowrap overflow-hidden"
                           >
-                            <LuTrophy size={15} />
-                            <span>Ranking Aktif</span>
+                            <LuTrophy size={15} className="shrink-0" />
+                            <span className="truncate">Ranking</span>
                           </button>
                         </div>
                       </div>
@@ -768,7 +680,7 @@ export default function AdminDiskusi() {
           <div className="w-full flex-1 flex flex-col">
             {/* Header for Submissions View */}
             <div className="w-full flex flex-col md:flex-row md:items-center md:justify-between pb-4 mb-4 border-b border-[#F0EDFF]/80 gap-3">
-              <div className="flex items-center gap-3 md:gap-4 truncate">
+              <div className="flex items-center gap-3 md:gap-4 min-w-0 flex-1">
                 <button
                   onClick={() => setSelectedForSubmissions(null)}
                   className="w-10 h-10 md:w-11 md:h-11 bg-white rounded-2xl flex items-center justify-center shadow-xs border border-[#F0EDFF] text-[#8C66FF] active:scale-95 hover:bg-[#FAF9FF] transition-all shrink-0 cursor-pointer"
@@ -776,15 +688,10 @@ export default function AdminDiskusi() {
                 >
                   <FiArrowLeft size={20} />
                 </button>
-                <div className="truncate">
-                  <div className="flex items-center gap-2">
-                    <p className="text-[10px] md:text-xs uppercase tracking-widest text-[#9C98A6] font-bold">
-                      Penilaian Pengumpulan Tugas Siswa
-                    </p>
-                    <span className="hidden sm:inline-block px-2 py-0.5 bg-[#ECFDF5] text-[#10B981] rounded-full text-[10px] font-extrabold">
-                      Terkumpul: {totalSubmissionsCount}
-                    </span>
-                  </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[10px] md:text-xs uppercase tracking-widest text-[#9C98A6] font-bold truncate">
+                    Penilaian Pengumpulan Tugas Siswa
+                  </p>
                   <h2 className="text-base md:text-xl font-black text-[#2C2B30] truncate mt-0.5">
                     {selectedForSubmissions.title}
                   </h2>
@@ -792,14 +699,14 @@ export default function AdminDiskusi() {
               </div>
 
               {/* Toggle Soal & Action */}
-              <div className="flex items-center gap-2.5 shrink-0">
+              <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
                 <button
                   onClick={() => setShowTopicDetails(!showTopicDetails)}
-                  className="px-3.5 py-2 bg-white hover:bg-[#FAF9FF] border border-[#F0EDFF] text-[#8C66FF] text-xs font-bold rounded-2xl flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
+                  className="px-3.5 py-2 bg-white hover:bg-[#FAF9FF] border border-[#F0EDFF] text-[#8C66FF] text-xs font-bold rounded-2xl flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer whitespace-nowrap"
                 >
                   <LuBookOpen size={14} />
                   <span>
-                    {showTopicDetails ? "Tutup Detail Soal" : "Lihat Soal & Petunjuk"}
+                    {showTopicDetails ? "Tutup Detail Soal" : "Lihat Soal"}
                   </span>
                   {showTopicDetails ? (
                     <FiChevronUp size={14} />
@@ -828,11 +735,8 @@ export default function AdminDiskusi() {
                 <div className="flex items-center justify-between pb-2 border-b border-[#F0EDFF]">
                   <h3 className="text-xs md:text-sm font-black text-[#2C2B30] flex items-center gap-2">
                     <LuBookOpen className="text-[#8C66FF]" />
-                    <span>Panduan & Kasus Diskusi untuk Siswa</span>
+                    <span>Soal & Kasus Diskusi</span>
                   </h3>
-                  <span className="text-[10px] text-[#9C98A6] font-semibold">
-                    Dibuat: {formatDateIndo(selectedForSubmissions.createdAt)}
-                  </span>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
@@ -868,91 +772,21 @@ export default function AdminDiskusi() {
                       </p>
                     </div>
                   )}
-
-                  {selectedForSubmissions.instruction && (
-                    <div className="bg-[#FAF9FF] p-3.5 rounded-2xl border border-[#F0EDFF]">
-                      <span className="font-black text-[#059669] block mb-1">
-                        💡 Petunjuk Pengerjaan:
-                      </span>
-                      <p className="text-[#524F5D] leading-relaxed whitespace-pre-line">
-                        {selectedForSubmissions.instruction}
-                      </p>
-                    </div>
-                  )}
                 </div>
               </div>
             )}
 
-            {/* Submissions Stats Metric Cards */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5 mb-5">
-              <div className="bg-white rounded-2xl md:rounded-3xl p-4 border border-[#F0EDFF] shadow-xs">
-                <p className="text-[10px] md:text-[11px] uppercase tracking-wider font-bold text-[#9C98A6]">
-                  Total Pengumpulan
-                </p>
-                <div className="flex items-center justify-between mt-1">
-                  <h4 className="text-xl md:text-2xl font-black text-[#2C2B30]">
-                    {totalSubmissionsCount}
-                  </h4>
-                  <span className="w-8 h-8 rounded-xl bg-[#F0ECFF] text-[#8C66FF] flex items-center justify-center text-sm font-bold">
-                    <LuAward />
-                  </span>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-2xl md:rounded-3xl p-4 border border-[#F0EDFF] shadow-xs">
-                <p className="text-[10px] md:text-[11px] uppercase tracking-wider font-bold text-[#D97706]">
-                  Perlu Dinilai
-                </p>
-                <div className="flex items-center justify-between mt-1">
-                  <h4 className="text-xl md:text-2xl font-black text-[#D97706]">
-                    {ungradedCount}
-                  </h4>
-                  <span className="w-8 h-8 rounded-xl bg-[#FFFBEB] text-[#D97706] flex items-center justify-center text-sm font-bold">
-                    <FiClock />
-                  </span>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-2xl md:rounded-3xl p-4 border border-[#F0EDFF] shadow-xs">
-                <p className="text-[10px] md:text-[11px] uppercase tracking-wider font-bold text-[#059669]">
-                  Selesai Dinilai
-                </p>
-                <div className="flex items-center justify-between mt-1">
-                  <h4 className="text-xl md:text-2xl font-black text-[#059669]">
-                    {gradedCount}
-                  </h4>
-                  <span className="w-8 h-8 rounded-xl bg-[#ECFDF5] text-[#059669] flex items-center justify-center text-sm font-bold">
-                    <FiCheckCircle />
-                  </span>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-2xl md:rounded-3xl p-4 border border-[#F0EDFF] shadow-xs">
-                <p className="text-[10px] md:text-[11px] uppercase tracking-wider font-bold text-[#8C66FF]">
-                  Rata-rata Nilai
-                </p>
-                <div className="flex items-center justify-between mt-1">
-                  <h4 className="text-xl md:text-2xl font-black text-[#8C66FF]">
-                    {averageGrade}
-                  </h4>
-                  <span className="w-8 h-8 rounded-xl bg-[#F0ECFF] text-[#8C66FF] flex items-center justify-center text-sm font-bold">
-                    <LuTrophy />
-                  </span>
-                </div>
-              </div>
-            </div>
-
             {/* Filter and Search Bar for Submissions */}
-            <div className="w-full flex flex-col md:flex-row gap-3 mb-5 items-stretch md:items-center justify-between">
+            <div className="w-full flex flex-col md:flex-row md:items-center gap-3 mb-5">
               {/* Search Bar */}
-              <div className="flex-1 relative">
+              <div className="w-full md:flex-1 relative min-w-0">
                 <FiSearch
                   className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#9C98A6]"
                   size={15}
                 />
                 <input
                   type="text"
-                  placeholder="Cari siswa berdasarkan nama atau kelas..."
+                  placeholder="Cari nama atau kelas siswa..."
                   value={searchSubmissionQuery}
                   onChange={(e) => setSearchSubmissionQuery(e.target.value)}
                   className="w-full pl-10 pr-4 py-2.5 bg-white border border-[#F0EDFF] rounded-2xl text-xs md:text-sm font-semibold text-[#2C2B30] placeholder:text-[#9C98A6] focus:outline-none focus:border-[#8C66FF] shadow-xs"
@@ -960,12 +794,12 @@ export default function AdminDiskusi() {
               </div>
 
               {/* Status Tabs & Sort Controls */}
-              <div className="flex items-center gap-2.5 flex-wrap">
+              <div className="w-full md:w-auto flex items-center gap-2.5 flex-wrap">
                 {/* Status Segmented Buttons */}
-                <div className="flex items-center bg-white p-1 rounded-2xl border border-[#F0EDFF] shadow-xs">
+                <div className="flex items-center bg-white p-1 rounded-2xl border border-[#F0EDFF] shadow-xs max-w-full overflow-x-auto no-scrollbar">
                   <button
                     onClick={() => setSubmissionFilterStatus("all")}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                    className={`px-2.5 md:px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                       submissionFilterStatus === "all"
                         ? "bg-[#8C66FF] text-white shadow-xs"
                         : "text-[#9C98A6] hover:text-[#2C2B30]"
@@ -975,39 +809,45 @@ export default function AdminDiskusi() {
                   </button>
                   <button
                     onClick={() => setSubmissionFilterStatus("ungraded")}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                    className={`px-2.5 md:px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                       submissionFilterStatus === "ungraded"
                         ? "bg-[#D97706] text-white shadow-xs"
                         : "text-[#9C98A6] hover:text-[#2C2B30]"
                     }`}
                   >
-                    Belum Dinilai ({ungradedCount})
+                    <span className="md:hidden">Belum</span>
+                    <span className="hidden md:inline">Belum Dinilai</span>
+                    {" "}
+                    ({ungradedCount})
                   </button>
                   <button
                     onClick={() => setSubmissionFilterStatus("graded")}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                    className={`px-2.5 md:px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                       submissionFilterStatus === "graded"
                         ? "bg-[#10B981] text-white shadow-xs"
                         : "text-[#9C98A6] hover:text-[#2C2B30]"
                     }`}
                   >
-                    Sudah Dinilai ({gradedCount})
+                    <span className="md:hidden">Sudah</span>
+                    <span className="hidden md:inline">Sudah Dinilai</span>
+                    {" "}
+                    ({gradedCount})
                   </button>
                 </div>
 
                 {/* Sort dropdown */}
-                <div className="flex items-center gap-1.5 bg-white px-3 py-2 rounded-2xl border border-[#F0EDFF] shadow-xs">
-                  <FiSliders size={13} className="text-[#9C98A6]" />
+                <div className="flex items-center gap-1.5 bg-white px-3 py-2 rounded-2xl border border-[#F0EDFF] shadow-xs shrink-0">
+                  <FiSliders size={13} className="text-[#9C98A6] shrink-0" />
                   <select
                     value={submissionSort}
                     onChange={(e: any) => setSubmissionSort(e.target.value)}
-                    className="bg-transparent text-xs font-bold text-[#2C2B30] focus:outline-none cursor-pointer"
+                    className="bg-transparent text-xs font-bold text-[#2C2B30] focus:outline-none cursor-pointer max-w-[150px]"
                   >
-                    <option value="newest">Waktu (Terbaru)</option>
-                    <option value="oldest">Waktu (Terlama)</option>
+                    <option value="newest">Terbaru</option>
+                    <option value="oldest">Terlama</option>
                     <option value="highest">Nilai Tertinggi</option>
                     <option value="lowest">Nilai Terendah</option>
-                    <option value="name">Nama Siswa (A-Z)</option>
+                    <option value="name">Nama (A-Z)</option>
                   </select>
                 </div>
               </div>
@@ -1053,12 +893,9 @@ export default function AdminDiskusi() {
                   {/* ================= DESKTOP DISPLAY: RICH DATA TABLE ================= */}
                   <div className="hidden md:block overflow-hidden border border-[#F0EDFF] rounded-[28px] shadow-[0_4px_20px_rgba(0,0,0,0.02)] bg-white">
                     <div className="overflow-x-auto">
-                      <table className="w-full text-left text-xs md:text-sm border-collapse">
+                      <table className="w-full min-w-[720px] text-left text-xs md:text-sm border-collapse">
                         <thead>
                           <tr className="bg-[#FAF9FF] text-[#2C2B30] border-b border-[#F0EDFF] uppercase font-black text-[10px] md:text-[11px] tracking-wider">
-                            <th className="p-4 border-r border-[#F0EDFF]/50 text-center w-14">
-                              #
-                            </th>
                             <th className="p-4 border-r border-[#F0EDFF]/50 whitespace-nowrap">
                               Siswa & Kelas
                             </th>
@@ -1073,9 +910,6 @@ export default function AdminDiskusi() {
                             </th>
                             <th className="p-4 border-r border-[#F0EDFF]/50 text-center whitespace-nowrap">
                               Nilai
-                            </th>
-                            <th className="p-4 border-r border-[#F0EDFF]/50 min-w-[180px]">
-                              Catatan Guru
                             </th>
                             <th className="p-4 text-center whitespace-nowrap">
                               Aksi
@@ -1102,22 +936,17 @@ export default function AdminDiskusi() {
                                     : "bg-white"
                                 }`}
                               >
-                                {/* # Index */}
-                                <td className="p-4 text-center font-bold text-[#9C98A6] text-xs">
-                                  {sIdx + 1}
-                                </td>
-
                                 {/* Student info */}
-                                <td className="p-4 border-r border-[#F0EDFF]/40">
-                                  <div className="flex items-center gap-3">
+                                <td className="p-4 border-r border-[#F0EDFF]/40 min-w-[160px] max-w-[220px]">
+                                  <div className="flex items-center gap-3 min-w-0">
                                     <div className="w-9 h-9 rounded-2xl bg-[#EDE9FE] text-[#8C66FF] font-black text-xs flex items-center justify-center shrink-0 border border-[#DDD6FE]/60 shadow-2xs">
                                       {initials}
                                     </div>
-                                    <div>
-                                      <p className="font-extrabold text-[#2C2B30] text-xs md:text-sm">
+                                    <div className="min-w-0">
+                                      <p className="font-extrabold text-[#2C2B30] text-xs md:text-sm truncate">
                                         {sub.studentName}
                                       </p>
-                                      <p className="text-[11px] text-[#9C98A6] font-semibold mt-0.5">
+                                      <p className="text-[11px] text-[#9C98A6] font-semibold mt-0.5 truncate">
                                         Kelas {sub.studentClass}
                                       </p>
                                     </div>
@@ -1135,7 +964,7 @@ export default function AdminDiskusi() {
                                 {/* Answer Snippet & View Modal trigger */}
                                 <td className="p-4 border-r border-[#F0EDFF]/40">
                                   <div className="flex flex-col gap-1">
-                                    <p className="text-xs text-[#524F5D] line-clamp-2 leading-relaxed font-medium">
+                                    <p className="text-xs text-[#524F5D] line-clamp-2 leading-relaxed font-medium break-words">
                                       {sub.answer}
                                     </p>
                                     <button
@@ -1179,32 +1008,12 @@ export default function AdminDiskusi() {
                                 {/* Grade & Status */}
                                 <td className="p-4 text-center border-r border-[#F0EDFF]/40 whitespace-nowrap">
                                   {isGraded ? (
-                                    <div className="inline-flex flex-col items-center">
-                                      <span className="text-xs md:text-sm font-black text-[#10B981] bg-[#ECFDF5] border border-[#A7F3D0] px-3 py-1 rounded-full shadow-2xs">
-                                        {sub.grade}
-                                      </span>
-                                      {sub.gradedBy && (
-                                        <span className="text-[9px] text-[#9C98A6] mt-0.5">
-                                          oleh {sub.gradedBy}
-                                        </span>
-                                      )}
-                                    </div>
+                                    <span className="text-xs md:text-sm font-black text-[#10B981] bg-[#ECFDF5] border border-[#A7F3D0] px-3 py-1 rounded-full shadow-2xs">
+                                      {sub.grade}
+                                    </span>
                                   ) : (
                                     <span className="text-[11px] font-extrabold text-[#D97706] bg-[#FFFBEB] border border-[#FDE68A] px-2.5 py-1 rounded-full">
                                       Belum Dinilai
-                                    </span>
-                                  )}
-                                </td>
-
-                                {/* Feedback */}
-                                <td className="p-4 border-r border-[#F0EDFF]/40">
-                                  {sub.feedback ? (
-                                    <p className="text-xs text-[#059669] italic bg-[#ECFDF5]/60 p-2 rounded-xl border border-[#A7F3D0]/40 line-clamp-2">
-                                      "{sub.feedback}"
-                                    </p>
-                                  ) : (
-                                    <span className="text-xs text-[#9C98A6] italic">
-                                      Belum ada catatan
                                     </span>
                                   )}
                                 </td>
@@ -1245,30 +1054,30 @@ export default function AdminDiskusi() {
                           className="w-full bg-white rounded-3xl p-4.5 border border-[#F0EDFF] shadow-xs flex flex-col gap-3"
                         >
                           {/* Student Info & Grade Badge */}
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <h3 className="text-sm font-black text-[#2C2B30]">
+                          <div className="flex justify-between items-start gap-3">
+                            <div className="min-w-0 flex-1">
+                              <h3 className="text-sm font-black text-[#2C2B30] truncate">
                                 {sub.studentName}
                               </h3>
-                              <p className="text-[11px] text-[#9C98A6] font-semibold mt-0.5">
+                              <p className="text-[11px] text-[#9C98A6] font-semibold mt-0.5 truncate">
                                 Kelas {sub.studentClass} •{" "}
                                 {formatDateIndo(sub.submittedAt)}
                               </p>
                             </div>
 
                             {isGraded ? (
-                              <span className="text-xs font-black text-[#10B981] bg-[#ECFDF5] border border-[#A7F3D0] px-3 py-1 rounded-full">
+                              <span className="text-xs font-black text-[#10B981] bg-[#ECFDF5] border border-[#A7F3D0] px-3 py-1 rounded-full shrink-0 whitespace-nowrap">
                                 Nilai: {sub.grade}
                               </span>
                             ) : (
-                              <span className="text-[10px] font-extrabold text-[#D97706] bg-[#FFFBEB] border border-[#FDE68A] px-2.5 py-1 rounded-full">
+                              <span className="text-[10px] font-extrabold text-[#D97706] bg-[#FFFBEB] border border-[#FDE68A] px-2.5 py-1 rounded-full shrink-0 whitespace-nowrap">
                                 Belum Dinilai
                               </span>
                             )}
                           </div>
 
                           {/* Answer Snippet */}
-                          <div className="text-xs text-[#524F5D] line-clamp-3 bg-[#FAF9FF] p-3 rounded-2xl border border-[#F0EDFF]/80 leading-relaxed whitespace-pre-line font-medium">
+                          <div className="text-xs text-[#524F5D] line-clamp-3 bg-[#FAF9FF] p-3 rounded-2xl border border-[#F0EDFF]/80 leading-relaxed whitespace-pre-line font-medium break-words overflow-hidden">
                             {sub.answer}
                           </div>
 
@@ -1285,13 +1094,6 @@ export default function AdminDiskusi() {
                               <FiImage size={14} />
                               <span>Lihat Foto Lampiran Siswa</span>
                             </div>
-                          )}
-
-                          {/* Feedback snippet if graded */}
-                          {isGraded && sub.feedback && (
-                            <p className="text-[11px] text-[#059669] italic bg-[#ECFDF5]/50 px-3 py-2 rounded-xl">
-                              Catatan Guru: "{sub.feedback}"
-                            </p>
                           )}
 
                           {/* Grade Button */}
@@ -1336,44 +1138,39 @@ export default function AdminDiskusi() {
       {/* ==================== MODAL: GRADING SUBMISSION (DESKTOP 2-COLUMN) ==================== */}
       {gradingSubmission && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
-          <div className="w-full max-w-lg md:max-w-3xl lg:max-w-4xl bg-white rounded-3xl p-5 md:p-6 border border-[#F0EDFF] shadow-2xl flex flex-col max-h-[90vh] animate-fade-in">
+          <div className="w-full max-w-lg md:max-w-3xl lg:max-w-4xl bg-white rounded-3xl p-5 md:p-6 border border-[#F0EDFF] shadow-2xl flex flex-col max-h-[90vh] animate-fade-in overflow-hidden">
             {/* Header */}
-            <div className="flex justify-between items-center pb-3 border-b border-[#F0EDFF]">
-              <div>
-                <div className="flex items-center gap-2">
+            <div className="flex justify-between items-start md:items-center gap-3 pb-3 border-b border-[#F0EDFF] shrink-0">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 flex-wrap">
                   <h3 className="text-sm md:text-base font-black text-[#2C2B30]">
                     Penilaian Tugas Siswa
                   </h3>
-                  <span className="px-2 py-0.5 bg-[#F0ECFF] text-[#8C66FF] rounded-full text-[10px] font-bold">
+                  <span className="px-2 py-0.5 bg-[#F0ECFF] text-[#8C66FF] rounded-full text-[10px] font-bold shrink-0 whitespace-nowrap">
                     Kelas {gradingSubmission.studentClass}
                   </span>
                 </div>
-                <p className="text-xs text-[#9C98A6] font-semibold mt-0.5">
-                  Siswa:{" "}
+                <p className="text-xs text-[#9C98A6] font-semibold mt-0.5 truncate">
                   <strong className="text-[#2C2B30]">
                     {gradingSubmission.studentName}
-                  </strong>{" "}
-                  • Dikumpulkan pada {formatDateIndo(gradingSubmission.submittedAt)}
+                  </strong>
                 </p>
               </div>
               <button
                 onClick={() => setGradingSubmission(null)}
-                className="w-8 h-8 rounded-full bg-[#FAF9FF] text-[#9C98A6] flex items-center justify-center hover:text-[#2C2B30] hover:bg-neutral-100 transition-colors cursor-pointer"
+                className="w-8 h-8 rounded-full bg-[#FAF9FF] text-[#9C98A6] flex items-center justify-center hover:text-[#2C2B30] hover:bg-neutral-100 transition-colors cursor-pointer shrink-0"
               >
                 <FiX size={17} />
               </button>
             </div>
 
             {/* Modal Body: Responsive 2 Columns on Desktop */}
-            <div className="flex-1 overflow-y-auto py-4 pr-1 no-scrollbar grid grid-cols-1 md:grid-cols-12 gap-5">
+            <div className="flex-1 min-h-0 overflow-y-auto py-4 pr-1 no-scrollbar grid grid-cols-1 md:grid-cols-12 gap-5">
               {/* Left Column: Student Answer & Image */}
               <div className="md:col-span-7 flex flex-col gap-3.5">
                 <div>
-                  <label className="text-xs font-black text-[#524F5D] block mb-1.5 flex items-center justify-between">
-                    <span>Jawaban Tugas Siswa:</span>
-                    <span className="text-[10px] font-normal text-[#9C98A6]">
-                      {gradingSubmission.answer.length} karakter
-                    </span>
+                  <label className="text-xs font-black text-[#524F5D] block mb-1.5">
+                    Jawaban Tugas Siswa:
                   </label>
                   <div className="p-4 bg-[#FAF9FF] border border-[#E9E6F5] rounded-2xl text-xs md:text-sm font-medium text-[#2C2B30] leading-relaxed whitespace-pre-line max-h-64 md:max-h-80 overflow-y-auto">
                     {gradingSubmission.answer}
@@ -1458,22 +1255,10 @@ export default function AdminDiskusi() {
                       className="w-full p-3.5 bg-[#FAF9FF] border border-[#E9E6F5] rounded-2xl font-medium text-xs text-[#2C2B30] focus:outline-none focus:border-[#8C66FF] focus:bg-white transition-colors leading-relaxed"
                     />
                   </div>
-
-                  {/* Previous Grading Info */}
-                  {gradingSubmission.grade !== undefined &&
-                    gradingSubmission.grade !== null && (
-                      <div className="p-3 bg-[#ECFDF5] rounded-xl border border-[#A7F3D0] text-[11px] text-[#065F46] flex items-center gap-2">
-                        <FiCheckCircle size={15} className="shrink-0 text-[#10B981]" />
-                        <span>
-                          Telah dinilai sebelumnya oleh{" "}
-                          <strong>{gradingSubmission.gradedBy || "Guru"}</strong>
-                        </span>
-                      </div>
-                    )}
                 </div>
 
                 {/* Footer Buttons */}
-                <div className="pt-3 border-t border-[#F0EDFF] flex gap-2.5">
+                <div className="pt-3 border-t border-[#F0EDFF] flex gap-2.5 shrink-0">
                   <button
                     type="button"
                     onClick={() => setGradingSubmission(null)}
@@ -1485,10 +1270,12 @@ export default function AdminDiskusi() {
                     type="button"
                     onClick={handleSaveGrade}
                     disabled={savingGrade}
-                    className="flex-1 py-3 bg-[#10B981] hover:bg-[#059669] text-white font-extrabold text-xs rounded-2xl shadow-md shadow-emerald-100 active:scale-95 disabled:opacity-50 transition-all cursor-pointer flex items-center justify-center gap-2"
+                    className="flex-1 py-3 bg-[#10B981] hover:bg-[#059669] text-white font-extrabold text-xs rounded-2xl shadow-md shadow-emerald-100 active:scale-95 disabled:opacity-50 transition-all cursor-pointer flex items-center justify-center gap-2 min-w-0 whitespace-nowrap overflow-hidden"
                   >
-                    <FiCheckCircle size={15} />
-                    <span>{savingGrade ? "Menyimpan..." : "Simpan Penilaian"}</span>
+                    <FiCheckCircle size={15} className="shrink-0" />
+                    <span className="truncate">
+                      {savingGrade ? "Menyimpan..." : "Simpan Penilaian"}
+                    </span>
                   </button>
                 </div>
               </div>
@@ -1500,26 +1287,26 @@ export default function AdminDiskusi() {
       {/* ==================== MODAL: PREVIEW COMPLETE ANSWER ==================== */}
       {viewingAnswerSub && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
-          <div className="w-full max-w-lg md:max-w-2xl bg-white rounded-3xl p-5 md:p-6 border border-[#F0EDFF] shadow-2xl flex flex-col max-h-[85vh] animate-fade-in">
-            <div className="flex justify-between items-center pb-3 border-b border-[#F0EDFF]">
-              <div>
-                <h3 className="text-sm md:text-base font-black text-[#2C2B30]">
+          <div className="w-full max-w-lg md:max-w-2xl bg-white rounded-3xl p-5 md:p-6 border border-[#F0EDFF] shadow-2xl flex flex-col max-h-[85vh] animate-fade-in overflow-hidden">
+            <div className="flex justify-between items-start gap-3 pb-3 border-b border-[#F0EDFF] shrink-0">
+              <div className="min-w-0 flex-1">
+                <h3 className="text-sm md:text-base font-black text-[#2C2B30] truncate">
                   Jawaban Tugas: {viewingAnswerSub.studentName}
                 </h3>
-                <p className="text-xs text-[#9C98A6] font-semibold mt-0.5">
+                <p className="text-xs text-[#9C98A6] font-semibold mt-0.5 truncate">
                   Kelas {viewingAnswerSub.studentClass} •{" "}
                   {formatDateIndo(viewingAnswerSub.submittedAt)}
                 </p>
               </div>
               <button
                 onClick={() => setViewingAnswerSub(null)}
-                className="w-8 h-8 rounded-full bg-[#FAF9FF] text-[#9C98A6] flex items-center justify-center hover:text-[#2C2B30] cursor-pointer"
+                className="w-8 h-8 rounded-full bg-[#FAF9FF] text-[#9C98A6] flex items-center justify-center hover:text-[#2C2B30] cursor-pointer shrink-0"
               >
                 <FiX size={17} />
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto py-4 space-y-4 no-scrollbar">
+            <div className="flex-1 min-h-0 overflow-y-auto py-4 space-y-4 no-scrollbar">
               <div className="p-4 bg-[#FAF9FF] border border-[#E9E6F5] rounded-2xl text-xs md:text-sm font-medium text-[#2C2B30] leading-relaxed whitespace-pre-line">
                 {viewingAnswerSub.answer}
               </div>
@@ -1558,7 +1345,7 @@ export default function AdminDiskusi() {
               )}
             </div>
 
-            <div className="pt-3 border-t border-[#F0EDFF] flex gap-2.5">
+            <div className="pt-3 border-t border-[#F0EDFF] flex gap-2.5 shrink-0">
               <button
                 type="button"
                 onClick={() => setViewingAnswerSub(null)}
@@ -1573,10 +1360,10 @@ export default function AdminDiskusi() {
                   setViewingAnswerSub(null);
                   handleOpenGradingModal(subToGrade);
                 }}
-                className="flex-1 py-2.5 bg-[#8C66FF] hover:bg-[#7b55f0] text-white font-black text-xs rounded-2xl shadow-md shadow-purple-200 cursor-pointer flex items-center justify-center gap-1.5"
+                className="flex-1 py-2.5 bg-[#8C66FF] hover:bg-[#7b55f0] text-white font-black text-xs rounded-2xl shadow-md shadow-purple-200 cursor-pointer flex items-center justify-center gap-1.5 min-w-0 whitespace-nowrap overflow-hidden"
               >
-                <LuAward size={15} />
-                <span>
+                <LuAward size={15} className="shrink-0" />
+                <span className="truncate">
                   {viewingAnswerSub.grade !== undefined &&
                   viewingAnswerSub.grade !== null
                     ? "Edit Nilai Tugas"
@@ -1591,31 +1378,31 @@ export default function AdminDiskusi() {
       {/* ==================== MODAL: RANKING KEAKTIFAN DISKUSI (> 4 WORDS FILTER) ==================== */}
       {rankingAnnouncement && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
-          <div className="w-full max-w-md md:max-w-xl lg:max-w-2xl bg-white rounded-3xl p-5 md:p-6 border border-[#F0EDFF] shadow-2xl flex flex-col gap-4 animate-fade-in">
-            <div className="flex justify-between items-center pb-3 border-b border-[#F0EDFF]">
-              <div className="flex items-center gap-3 text-[#D97706]">
-                <div className="w-10 h-10 rounded-2xl bg-[#FFF9E6] flex items-center justify-center text-xl font-black">
+          <div className="w-full max-w-md md:max-w-xl lg:max-w-2xl bg-white rounded-3xl p-5 md:p-6 border border-[#F0EDFF] shadow-2xl flex flex-col gap-4 max-h-[90vh] animate-fade-in overflow-hidden">
+            <div className="flex justify-between items-start gap-3 pb-3 border-b border-[#F0EDFF] shrink-0">
+              <div className="flex items-center gap-3 text-[#D97706] min-w-0 flex-1">
+                <div className="w-10 h-10 rounded-2xl bg-[#FFF9E6] flex items-center justify-center text-xl font-black shrink-0">
                   <LuTrophy />
                 </div>
-                <div>
-                  <h3 className="text-sm md:text-base font-black text-[#2C2B30]">
+                <div className="min-w-0">
+                  <h3 className="text-sm md:text-base font-black text-[#2C2B30] truncate">
                     Ranking Siswa Paling Aktif
                   </h3>
-                  <p className="text-[11px] text-[#9C98A6] font-semibold mt-0.5">
-                    Topik: {rankingAnnouncement.title} (Minimal tanggapan &gt; 4 kata)
+                  <p className="text-[11px] text-[#9C98A6] font-semibold mt-0.5 truncate">
+                    {rankingAnnouncement.title}
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setRankingAnnouncement(null)}
-                className="w-8 h-8 rounded-full bg-[#FAF9FF] text-[#9C98A6] flex items-center justify-center hover:text-[#2C2B30] cursor-pointer"
+                className="w-8 h-8 rounded-full bg-[#FAF9FF] text-[#9C98A6] flex items-center justify-center hover:text-[#2C2B30] cursor-pointer shrink-0"
               >
                 <FiX size={17} />
               </button>
             </div>
 
             {/* Ranking Content */}
-            <div className="max-h-80 overflow-y-auto space-y-2.5 pr-1 no-scrollbar">
+            <div className="flex-1 min-h-0 max-h-80 overflow-y-auto space-y-2.5 pr-1 no-scrollbar">
               {loadingRanking ? (
                 <div className="py-12 flex flex-col items-center justify-center gap-2">
                   <div className="w-7 h-7 border-3 border-[#8C66FF] border-t-transparent rounded-full animate-spin"></div>
@@ -1645,32 +1432,27 @@ export default function AdminDiskusi() {
                   return (
                     <div
                       key={item.userId}
-                      className="w-full bg-[#FAF9FF] p-3.5 rounded-2xl border border-[#F0EDFF] flex items-center justify-between hover:bg-[#F3EFFF] transition-colors"
+                      className="w-full bg-[#FAF9FF] p-3.5 rounded-2xl border border-[#F0EDFF] flex items-center justify-between gap-3 hover:bg-[#F3EFFF] transition-colors"
                     >
-                      <div className="flex items-center gap-3 truncate">
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
                         <span
                           className={`w-10 h-8 rounded-xl flex items-center justify-center text-xs shrink-0 ${badgeColor}`}
                         >
                           {rankIcon}
                         </span>
-                        <div className="truncate">
+                        <div className="min-w-0">
                           <p className="text-xs md:text-sm font-black text-[#2C2B30] truncate">
                             {item.name}
                           </p>
-                          <p className="text-[10px] md:text-[11px] text-[#9C98A6] font-semibold">
-                            Kelas {item.studentClass} • Total {item.totalCommentsCount} pesan dikirim
+                          <p className="text-[10px] md:text-[11px] text-[#9C98A6] font-semibold truncate">
+                            Kelas {item.studentClass}
                           </p>
                         </div>
                       </div>
 
-                      <div className="text-right shrink-0 pl-3">
-                        <span className="text-xs md:text-sm font-black text-[#8C66FF]">
-                          {item.validCommentsCount}
-                        </span>
-                        <span className="text-[10px] text-[#9C98A6] block">
-                          argumen aktif (&gt;4 kata)
-                        </span>
-                      </div>
+                      <span className="text-xs md:text-sm font-black text-[#8C66FF] shrink-0 whitespace-nowrap">
+                        {item.validCommentsCount} argumen
+                      </span>
                     </div>
                   );
                 })
@@ -1679,7 +1461,7 @@ export default function AdminDiskusi() {
 
             <button
               onClick={() => setRankingAnnouncement(null)}
-              className="w-full py-3 bg-[#8C66FF] hover:bg-[#7b55f0] text-white font-extrabold text-xs md:text-sm rounded-2xl transition-colors cursor-pointer"
+              className="w-full py-3 bg-[#8C66FF] hover:bg-[#7b55f0] text-white font-extrabold text-xs md:text-sm rounded-2xl transition-colors cursor-pointer shrink-0"
             >
               Tutup
             </button>

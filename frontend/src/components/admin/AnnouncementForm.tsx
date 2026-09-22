@@ -341,7 +341,7 @@ export default function AnnouncementForm({
   ).length;
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#FAF9FF] flex justify-center items-start text-[#2C2B30] font-sans select-none overflow-y-auto py-4 md:py-8">
+    <div className="fixed inset-0 z-50 bg-[#FAF9FF] flex justify-center items-start text-[#2C2B30] font-sans select-none overflow-y-auto overflow-x-hidden py-4 md:py-8">
       {/* Decorative Blur Bubble */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
         <div className="absolute top-[-10%] right-[-10%] w-72 h-72 bg-[#E9E4FF] rounded-full filter blur-3xl opacity-50"></div>
@@ -349,11 +349,11 @@ export default function AnnouncementForm({
       </div>
 
       {/* Main Full-Screen Responsive Container */}
-      <div className="w-full max-w-107.5 md:max-w-5xl lg:max-w-6xl xl:max-w-7xl min-h-[calc(100vh-2rem)] md:min-h-[calc(100vh-4rem)] my-auto flex flex-col justify-between px-4 sm:px-6 md:px-8 py-4 md:py-6 z-10 transition-all duration-300">
+      <div className="w-full min-w-0 max-w-107.5 md:max-w-5xl lg:max-w-6xl xl:max-w-7xl min-h-[calc(100vh-2rem)] md:min-h-[calc(100vh-4rem)] my-auto flex flex-col justify-between px-4 sm:px-6 md:px-8 py-4 md:py-6 z-10 transition-all duration-300">
         <div className="w-full flex-1 flex flex-col">
           {/* Header */}
-          <div className="w-full flex items-center justify-between pb-4 border-b border-[#F0EDFF]/80 shrink-0">
-            <div className="flex items-center gap-3 md:gap-4">
+          <div className="w-full flex items-center justify-between gap-3 pb-4 border-b border-[#F0EDFF]/80 shrink-0">
+            <div className="flex items-center gap-3 md:gap-4 min-w-0 flex-1">
               <button
                 type="button"
                 onClick={handleCancel}
@@ -362,27 +362,22 @@ export default function AnnouncementForm({
               >
                 <FiArrowLeft size={20} />
               </button>
-              <div>
-                <div className="flex items-center gap-2">
-                  <p className="text-[10px] md:text-xs uppercase tracking-widest text-[#9C98A6] font-bold">
-                    Panel Guru & Admin
-                  </p>
-                  <span className="hidden md:inline-block px-2 py-0.5 bg-[#F0ECFF] text-[#8C66FF] rounded-full text-[10px] font-extrabold">
-                    Ruang Diskusi
-                  </span>
-                </div>
-                <h1 className="text-lg md:text-2xl font-extrabold text-[#2C2B30] leading-tight mt-0.5">
+              <div className="min-w-0">
+                <p className="text-[10px] md:text-xs uppercase tracking-widest text-[#9C98A6] font-bold truncate">
+                  Panel Guru & Admin
+                </p>
+                <h1 className="text-base sm:text-lg md:text-2xl font-extrabold text-[#2C2B30] leading-tight mt-0.5 truncate">
                   {initialData ? "Edit Topik Diskusi" : "Buat Topik Diskusi Baru"}
                 </h1>
               </div>
             </div>
 
             {/* Desktop Action Buttons in Header */}
-            <div className="hidden sm:flex items-center gap-3">
+            <div className="hidden sm:flex items-center gap-3 shrink-0">
               <button
                 type="button"
                 onClick={handleCancel}
-                className="px-4 py-2.5 bg-white text-[#9C98A6] hover:text-[#2C2B30] text-xs font-bold rounded-2xl border border-[#F0EDFF] shadow-xs active:scale-95 transition-all cursor-pointer"
+                className="px-4 py-2.5 bg-white text-[#9C98A6] hover:text-[#2C2B30] text-xs font-bold rounded-2xl border border-[#F0EDFF] shadow-xs active:scale-95 transition-all cursor-pointer whitespace-nowrap"
               >
                 Batal
               </button>
@@ -390,9 +385,9 @@ export default function AnnouncementForm({
                 type="button"
                 onClick={handleSubmit}
                 disabled={isSubmitting || compressingImage}
-                className="px-6 py-2.5 bg-[#8C66FF] hover:bg-[#7b55f0] text-white text-xs font-black rounded-2xl flex items-center gap-2 shadow-md shadow-purple-200 active:scale-95 transition-all cursor-pointer disabled:opacity-50"
+                className="px-6 py-2.5 bg-[#8C66FF] hover:bg-[#7b55f0] text-white text-xs font-black rounded-2xl flex items-center gap-2 shadow-md shadow-purple-200 active:scale-95 transition-all cursor-pointer disabled:opacity-50 whitespace-nowrap"
               >
-                <FiSave size={15} />
+                <FiSave size={15} className="shrink-0" />
                 <span>{isSubmitting ? "Menyimpan..." : "Simpan Topik Diskusi"}</span>
               </button>
             </div>
@@ -407,9 +402,6 @@ export default function AnnouncementForm({
                 <label className="text-xs md:text-sm font-black text-[#2C2B30] block mb-1">
                   Judul Topik Diskusi <span className="text-red-500">*</span>
                 </label>
-                <p className="text-[11px] md:text-xs text-[#9C98A6] mb-2.5">
-                  Tulis judul utama topik diskusi yang menarik dan jelas bagi siswa.
-                </p>
                 <input
                   type="text"
                   placeholder="Contoh: Analisis Kritis Masalah Pencemaran Air di Sungai Bengawan Solo"
@@ -421,9 +413,9 @@ export default function AnnouncementForm({
 
               {/* 2. Banner / Foto Sampul Topik (Opsional) */}
               <div className="bg-white rounded-2xl md:rounded-3xl p-4 md:p-5 border border-[#F0EDFF] shadow-[0_4px_16px_rgba(0,0,0,0.02)] space-y-3">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <div className="flex items-center gap-2">
+                <div className="flex justify-between items-start gap-2 flex-wrap">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <label className="text-xs md:text-sm font-black text-[#2C2B30]">
                         🖼️ Foto / Banner Sampul Topik
                       </label>
@@ -431,16 +423,13 @@ export default function AnnouncementForm({
                         Opsional
                       </span>
                     </div>
-                    <p className="text-[11px] md:text-xs text-[#9C98A6] mt-0.5">
-                      Visualisasi topik diskusi (maks. 400 KB, otomatis dikompres).
-                    </p>
                   </div>
 
                   {imagePreviewUrl && (
                     <button
                       type="button"
                       onClick={handleRemoveImage}
-                      className="inline-flex items-center gap-1 px-2.5 py-1 text-red-500 hover:bg-red-50 font-bold text-xs rounded-xl transition-colors cursor-pointer border border-transparent hover:border-red-100 active:scale-95"
+                      className="inline-flex items-center gap-1 px-2.5 py-1 text-red-500 hover:bg-red-50 font-bold text-xs rounded-xl transition-colors cursor-pointer border border-transparent hover:border-red-100 active:scale-95 shrink-0"
                     >
                       <FiTrash2 size={13} />
                       <span>Hapus</span>
@@ -515,9 +504,6 @@ export default function AnnouncementForm({
                 <label className="text-xs md:text-sm font-black text-[#2C2B30] block mb-1">
                   📋 Informasi Tugas (Batas Waktu & Format)
                 </label>
-                <p className="text-[11px] md:text-xs text-[#9C98A6] mb-2.5">
-                  Tentukan tenggat waktu pengumpulan dan format pengiriman tugas oleh siswa.
-                </p>
                 <textarea
                   rows={3}
                   placeholder="Contoh: Batas pengumpulan: Jumat, 25 September 2026 pukul 23:59 WIB. Format: Ringkasan teks jawaban dan unggahan bagan/konsep."
@@ -535,9 +521,6 @@ export default function AnnouncementForm({
                 <label className="text-xs md:text-sm font-black text-[#2C2B30] block mb-1">
                   📌 Soal / Permasalahan Lingkungan
                 </label>
-                <p className="text-[11px] md:text-xs text-[#9C98A6] mb-2.5">
-                  Deskripsikan narasi studi kasus, fenomena nyata, atau permasalahan lingkungan yang akan dianalisis siswa.
-                </p>
                 <textarea
                   rows={4}
                   placeholder="Deskripsikan kasus atau permasalahan lingkungan yang dibahas secara mendalam..."
@@ -549,9 +532,9 @@ export default function AnnouncementForm({
 
               {/* 5. Pertanyaan Analisis */}
               <div className="bg-white rounded-2xl md:rounded-3xl p-4 md:p-5 border border-[#F0EDFF] shadow-[0_4px_16px_rgba(0,0,0,0.02)] space-y-3">
-                <div className="flex justify-between items-center pb-2 border-b border-[#F0EDFF]">
-                  <div>
-                    <div className="flex items-center gap-2">
+                <div className="flex justify-between items-center gap-2 flex-wrap pb-2 border-b border-[#F0EDFF]">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <label className="text-xs md:text-sm font-black text-[#2C2B30]">
                         ❓ Pertanyaan Analisis
                       </label>
@@ -559,14 +542,11 @@ export default function AnnouncementForm({
                         {validQuestionsCount} butir
                       </span>
                     </div>
-                    <p className="text-[11px] md:text-xs text-[#9C98A6] mt-0.5">
-                      Butir pertanyaan pemantik untuk melatih cara berpikir kritis dan sistem siswa.
-                    </p>
                   </div>
                   <button
                     type="button"
                     onClick={handleAddQuestion}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#F4F0FF] hover:bg-[#EDE9FE] text-[#8C66FF] font-bold text-xs rounded-xl transition-colors active:scale-95 cursor-pointer shadow-2xs shrink-0"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#F4F0FF] hover:bg-[#EDE9FE] text-[#8C66FF] font-bold text-xs rounded-xl transition-colors active:scale-95 cursor-pointer shadow-2xs shrink-0 whitespace-nowrap"
                   >
                     <FiPlus size={14} />
                     <span>Tambah Butir</span>
@@ -577,7 +557,7 @@ export default function AnnouncementForm({
                   {questions.map((q, idx) => (
                     <div
                       key={idx}
-                      className="flex items-start gap-2.5 p-3 bg-[#FAF9FF] border border-[#F0EDFF] rounded-2xl focus-within:border-[#8C66FF] focus-within:bg-white transition-colors"
+                      className="flex items-start gap-2.5 p-3 bg-[#FAF9FF] border border-[#F0EDFF] rounded-2xl focus-within:border-[#8C66FF] focus-within:bg-white transition-colors min-w-0"
                     >
                       <span className="w-7 h-7 rounded-xl bg-[#EDE9FE] text-[#8C66FF] font-black text-xs flex items-center justify-center shrink-0 mt-0.5 border border-[#DDD6FE]/60 shadow-2xs">
                         {idx + 1}
@@ -593,7 +573,7 @@ export default function AnnouncementForm({
                         }
                         value={q}
                         onChange={(e) => handleUpdateQuestion(idx, e.target.value)}
-                        className="flex-1 bg-transparent font-medium text-[#2C2B30] focus:outline-none leading-relaxed text-xs md:text-sm resize-none"
+                        className="flex-1 min-w-0 bg-transparent font-medium text-[#2C2B30] focus:outline-none leading-relaxed text-xs md:text-sm resize-none"
                       />
                       <button
                         type="button"
@@ -625,9 +605,9 @@ export default function AnnouncementForm({
 
               {/* 6. Petunjuk Pengerjaan */}
               <div className="bg-white rounded-2xl md:rounded-3xl p-4 md:p-5 border border-[#F0EDFF] shadow-[0_4px_16px_rgba(0,0,0,0.02)] space-y-3">
-                <div className="flex justify-between items-center pb-2 border-b border-[#F0EDFF]">
-                  <div>
-                    <div className="flex items-center gap-2">
+                <div className="flex justify-between items-center gap-2 flex-wrap pb-2 border-b border-[#F0EDFF]">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <label className="text-xs md:text-sm font-black text-[#2C2B30]">
                         💡 Petunjuk Pengerjaan
                       </label>
@@ -635,14 +615,11 @@ export default function AnnouncementForm({
                         {validInstructionsCount} poin
                       </span>
                     </div>
-                    <p className="text-[11px] md:text-xs text-[#9C98A6] mt-0.5">
-                      Panduan teknis dan tips yang memudahkan siswa dalam berdiskusi & menyelesaikan tugas.
-                    </p>
                   </div>
                   <button
                     type="button"
                     onClick={handleAddInstruction}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#ECFDF5] hover:bg-[#D1FAE5] text-[#059669] font-bold text-xs rounded-xl transition-colors active:scale-95 cursor-pointer shadow-2xs shrink-0"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#ECFDF5] hover:bg-[#D1FAE5] text-[#059669] font-bold text-xs rounded-xl transition-colors active:scale-95 cursor-pointer shadow-2xs shrink-0 whitespace-nowrap"
                   >
                     <FiPlus size={14} />
                     <span>Tambah Poin</span>
@@ -653,7 +630,7 @@ export default function AnnouncementForm({
                   {instructions.map((inst, idx) => (
                     <div
                       key={idx}
-                      className="flex items-start gap-2.5 p-3 bg-[#FAF9FF] border border-[#F0EDFF] rounded-2xl focus-within:border-[#059669] focus-within:bg-white transition-colors"
+                      className="flex items-start gap-2.5 p-3 bg-[#FAF9FF] border border-[#F0EDFF] rounded-2xl focus-within:border-[#059669] focus-within:bg-white transition-colors min-w-0"
                     >
                       <span className="w-7 h-7 rounded-xl bg-[#ECFDF5] text-[#059669] font-black text-sm flex items-center justify-center shrink-0 mt-0.5 border border-[#A7F3D0]/60 shadow-2xs">
                         •
@@ -669,7 +646,7 @@ export default function AnnouncementForm({
                         }
                         value={inst}
                         onChange={(e) => handleUpdateInstruction(idx, e.target.value)}
-                        className="flex-1 bg-transparent font-medium text-[#2C2B30] focus:outline-none leading-relaxed text-xs md:text-sm resize-none"
+                        className="flex-1 min-w-0 bg-transparent font-medium text-[#2C2B30] focus:outline-none leading-relaxed text-xs md:text-sm resize-none"
                       />
                       <button
                         type="button"
@@ -714,10 +691,10 @@ export default function AnnouncementForm({
               type="button"
               onClick={handleSubmit}
               disabled={isSubmitting || compressingImage}
-              className="flex-1 sm:flex-initial sm:px-10 py-3 bg-[#8C66FF] hover:bg-[#7b55f0] text-white font-extrabold text-xs md:text-sm rounded-2xl shadow-md shadow-purple-200 active:scale-95 transition-all cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
+              className="flex-1 sm:flex-initial sm:px-10 py-3 bg-[#8C66FF] hover:bg-[#7b55f0] text-white font-extrabold text-xs md:text-sm rounded-2xl shadow-md shadow-purple-200 active:scale-95 transition-all cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2 min-w-0 whitespace-nowrap overflow-hidden"
             >
-              <FiCheck size={16} />
-              <span>{isSubmitting ? "Menyimpan..." : "Simpan Topik Diskusi"}</span>
+              <FiCheck size={16} className="shrink-0" />
+              <span className="truncate">{isSubmitting ? "Menyimpan..." : "Simpan Topik Diskusi"}</span>
             </button>
           </div>
         </div>
