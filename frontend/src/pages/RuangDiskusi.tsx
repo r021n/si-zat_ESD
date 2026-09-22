@@ -44,6 +44,7 @@ interface AnnouncementItem {
   instruction: string;
   authorName: string;
   createdAt: string;
+  hasImage?: boolean;
   discussionsCount?: number;
   submissionsCount?: number;
   mySubmission?: {
@@ -588,8 +589,16 @@ export default function RuangDiskusi() {
                       className="w-full bg-white rounded-2xl p-3.5 border border-[#F0EDFF] shadow-xs active:scale-[0.99] transition-all cursor-pointer hover:border-[#8C66FF]/50 flex items-center gap-3.5"
                     >
                       {/* Left Square Thumbnail / Icon */}
-                      <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#8C66FF] to-[#6366F1] flex items-center justify-center text-white text-xl shrink-0 shadow-xs">
-                        <LuFileText size={24} />
+                      <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#8C66FF] to-[#6366F1] flex items-center justify-center text-white text-xl shrink-0 shadow-xs overflow-hidden">
+                        {ann.hasImage ? (
+                          <img
+                            src={`${API_URL}/api/announcements/${ann.id}/image`}
+                            alt={ann.title}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <LuFileText size={24} />
+                        )}
                       </div>
 
                       {/* Right Details */}
@@ -724,16 +733,26 @@ export default function RuangDiskusi() {
               <div className="flex-1 overflow-y-auto pr-0.5 space-y-4 no-scrollbar pb-6">
                 {/* 1. Cover Illustration Banner */}
                 <div className="w-full h-36 rounded-2xl bg-gradient-to-tr from-[#6366F1] via-[#8C66FF] to-[#A78BFA] p-4 flex flex-col justify-end relative overflow-hidden shadow-xs">
-                  <div className="absolute top-[-20%] right-[-10%] w-32 h-32 bg-white/10 rounded-full blur-sm"></div>
-                  <div className="absolute bottom-2 right-4 text-white/20 text-6xl font-black select-none pointer-events-none">
-                    ESD
-                  </div>
-                  {/* <div className="relative z-10">
-                    <span className="text-[10px] uppercase font-black tracking-wider text-white/80 bg-black/20 px-2.5 py-0.5 rounded-full inline-flex items-center gap-1">
-                      <FiCalendar size={10} />{" "}
-                      {formatDateIndo(selectedAnnouncement.createdAt)}
-                    </span>
-                  </div> */}
+                  {selectedAnnouncement.hasImage ? (
+                    <>
+                      <img
+                        src={`${API_URL}/api/announcements/${selectedAnnouncement.id}/image`}
+                        alt={selectedAnnouncement.title}
+                        className="absolute inset-0 w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent pointer-events-none"></div>
+                      <div className="absolute bottom-2 right-4 text-white/30 text-5xl font-black select-none pointer-events-none">
+                        ESD
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="absolute top-[-20%] right-[-10%] w-32 h-32 bg-white/10 rounded-full blur-sm"></div>
+                      <div className="absolute bottom-2 right-4 text-white/20 text-6xl font-black select-none pointer-events-none">
+                        ESD
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 {/* 2. Main Content Card (Unified Article Style) */}
@@ -998,10 +1017,8 @@ export default function RuangDiskusi() {
                     </p>
                   </div>
                 ) : mySubmission && !showSubmissionForm ? (
-                  /* Existing Submission Display - Unified Compact Card */
                   <div className="w-full bg-white rounded-2xl p-4 border border-[#F0EDFF] shadow-xs space-y-3">
-                    {/* Header: Status, Grade, and Timestamp in One Row */}
-                    <div className="flex items-center justify-between gap-2 pb-2.5 border-b border-[#F0EDFF]">
+                    <div className="flex items-center justify-between gap-2 pb-2 border-b border-[#F0EDFF]">
                       <div className="flex items-center gap-1.5 min-w-0">
                         <FiCheckCircle
                           size={15}
@@ -1015,93 +1032,44 @@ export default function RuangDiskusi() {
                         <span className="text-[11px] font-bold text-[#2C2B30] truncate">
                           {mySubmission.grade !== undefined &&
                           mySubmission.grade !== null
-                            ? "Sudah Dinilai"
+                            ? `Nilai: ${mySubmission.grade}/100`
                             : "Menunggu Penilaian"}
                         </span>
-                        <span className="text-[10px] text-[#9C98A6] hidden sm:inline">
-                          • {formatDateIndo(mySubmission.submittedAt)}
-                        </span>
                       </div>
-
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        {mySubmission.grade !== undefined &&
-                        mySubmission.grade !== null ? (
-                          <span className="px-2.5 py-0.5 bg-[#ECFDF5] border border-[#A7F3D0] text-[#059669] font-black text-xs rounded-full">
-                            Nilai: {mySubmission.grade}/100
-                          </span>
-                        ) : (
-                          <span className="px-2 py-0.5 bg-[#FFFBEB] text-[#D97706] font-bold text-[10px] rounded-full">
-                            Terkumpul
-                          </span>
-                        )}
-                        <span className="text-[9px] font-bold text-[#8C66FF] bg-[#F0ECFF] px-2 py-0.5 rounded-full">
-                          Kelas{" "}
-                          {mySubmission.studentClass || user?.kelas || "-"}
-                        </span>
-                      </div>
+                      <span className="text-[10px] text-[#9C98A6] shrink-0">
+                        {formatDateIndo(mySubmission.submittedAt)}
+                      </span>
                     </div>
 
-                    {/* Teacher Feedback (if graded) */}
                     {mySubmission.feedback && (
                       <div className="p-2.5 bg-[#F0FDF4] rounded-xl border border-[#BBF7D0]/80">
-                        <p className="text-[10px] font-extrabold uppercase text-[#16A34A] mb-0.5">
-                          Catatan Guru:
-                        </p>
                         <p className="text-xs text-[#1E293B] italic font-medium leading-relaxed">
                           "{mySubmission.feedback}"
                         </p>
-                        {mySubmission.gradedBy && (
-                          <p className="text-[9px] text-[#64748B] font-semibold mt-1 text-right">
-                            — {mySubmission.gradedBy}
-                          </p>
-                        )}
                       </div>
                     )}
 
-                    {/* Submitted Answer Content */}
-                    <div>
-                      <label className="text-[10px] font-extrabold uppercase tracking-wider text-[#9C98A6] block mb-1">
-                        Jawaban Anda
-                      </label>
-                      <div className="text-xs text-[#2C2B30] font-medium leading-relaxed whitespace-pre-line bg-[#FAF9FF] p-3 rounded-xl border border-[#F0EDFF]">
-                        {mySubmission.answer}
-                      </div>
+                    <div className="text-xs text-[#2C2B30] font-medium leading-relaxed whitespace-pre-line bg-[#FAF9FF] p-3 rounded-xl border border-[#F0EDFF]">
+                      {mySubmission.answer}
                     </div>
 
-                    {/* Attachment preview (Compact Horizontal Thumbnail) */}
                     {mySubmission.hasImage && (
-                      <div className="pt-1">
-                        <div
-                          onClick={() =>
-                            setZoomImageUrl(
-                              `${API_URL}/api/announcements/submissions/${mySubmission.id}/image`,
-                            )
-                          }
-                          className="w-full flex items-center gap-3 p-2 bg-[#FAF9FF] hover:bg-[#F3E8FF] rounded-xl border border-[#F0EDFF] transition-colors cursor-pointer group"
-                        >
-                          <div className="w-14 h-14 bg-white rounded-lg overflow-hidden border border-[#E2E8F0] shrink-0">
-                            <img
-                              src={`${API_URL}/api/announcements/submissions/${mySubmission.id}/image`}
-                              alt="Lampiran Tugas"
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                            />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs font-bold text-[#2C2B30] flex items-center gap-1.5">
-                              <FiImage className="text-[#8C66FF] shrink-0" />
-                              <span className="truncate">
-                                Lampiran Gambar Tugas
-                              </span>
-                            </p>
-                            <p className="text-[10px] text-[#8C66FF] font-medium mt-0.5 group-hover:underline">
-                              Klik untuk melihat gambar ukuran penuh
-                            </p>
-                          </div>
-                        </div>
+                      <div
+                        onClick={() =>
+                          setZoomImageUrl(
+                            `${API_URL}/api/announcements/submissions/${mySubmission.id}/image`,
+                          )
+                        }
+                        className="w-14 h-14 bg-white rounded-lg overflow-hidden border border-[#E2E8F0] cursor-pointer hover:opacity-80 transition-opacity"
+                      >
+                        <img
+                          src={`${API_URL}/api/announcements/submissions/${mySubmission.id}/image`}
+                          alt="Lampiran"
+                          className="w-full h-full object-cover"
+                        />
                       </div>
                     )}
 
-                    {/* Action buttons (Slim & Clean) */}
                     <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#F0EDFF]">
                       <button
                         onClick={handleDeleteSubmission}
@@ -1116,24 +1084,16 @@ export default function RuangDiskusi() {
                         }}
                         className="px-3.5 py-1.5 bg-[#FAF9FF] border border-[#8C66FF]/30 text-[#8C66FF] hover:bg-[#F0ECFF] rounded-xl text-xs font-bold transition-colors active:scale-95"
                       >
-                        Perbarui Jawaban
+                        Perbarui
                       </button>
                     </div>
                   </div>
                 ) : (
-                  /* Submission Form (When not submitted or editing) */
                   <div className="w-full bg-white rounded-2xl p-4 border border-[#F0EDFF] shadow-xs flex flex-col gap-3">
                     <div className="flex justify-between items-center pb-2 border-b border-[#F0EDFF]">
-                      <div>
-                        <h3 className="text-xs font-extrabold text-[#2C2B30]">
-                          {mySubmission
-                            ? "Perbarui Jawaban Tugas"
-                            : "Kumpulkan Tugas"}
-                        </h3>
-                        <p className="text-[10px] text-[#9C98A6]">
-                          Tuliskan jawaban Anda berdasarkan petunjuk tugas.
-                        </p>
-                      </div>
+                      <h3 className="text-xs font-extrabold text-[#2C2B30]">
+                        {mySubmission ? "Perbarui Jawaban" : "Kumpulkan Tugas"}
+                      </h3>
                       {showSubmissionForm && mySubmission && (
                         <button
                           onClick={() => setShowSubmissionForm(false)}
@@ -1144,58 +1104,46 @@ export default function RuangDiskusi() {
                       )}
                     </div>
 
-                    {/* Answer Textarea */}
-                    <div>
-                      <textarea
-                        rows={4}
-                        placeholder="Ketikkan jawaban Anda di sini..."
-                        value={taskAnswer}
-                        onChange={(e) => setTaskAnswer(e.target.value)}
-                        className="w-full p-3 bg-[#FAF9FF] border border-[#E9E6F5] rounded-xl text-xs font-medium text-[#2C2B30] placeholder:text-[#9C98A6] focus:outline-none focus:border-[#8C66FF] leading-relaxed resize-none"
-                      />
-                    </div>
+                    <textarea
+                      rows={4}
+                      placeholder="Ketikkan jawaban Anda di sini..."
+                      value={taskAnswer}
+                      onChange={(e) => setTaskAnswer(e.target.value)}
+                      className="w-full p-3 bg-[#FAF9FF] border border-[#E9E6F5] rounded-xl text-xs font-medium text-[#2C2B30] placeholder:text-[#9C98A6] focus:outline-none focus:border-[#8C66FF] leading-relaxed resize-none"
+                    />
 
-                    {/* Image Attachment */}
-                    <div>
-                      {imagePreviewUrl ? (
-                        <div className="relative w-full h-24 bg-[#F8FAFC] rounded-xl overflow-hidden border border-[#E2E8F0]">
-                          <img
-                            src={imagePreviewUrl}
-                            alt="Preview"
-                            className="w-full h-full object-cover"
-                          />
-                          <button
-                            type="button"
-                            onClick={handleClearImage}
-                            className="absolute top-1.5 right-1.5 w-6 h-6 bg-black/60 text-white rounded-full flex items-center justify-center hover:bg-black transition-colors"
-                          >
-                            <FiX size={12} />
-                          </button>
-                        </div>
-                      ) : (
-                        <label className="w-full py-2.5 px-3 border border-dashed border-[#DFDCF0] hover:border-[#8C66FF] rounded-xl flex items-center justify-between cursor-pointer bg-[#FAF9FF] transition-colors">
-                          <div className="flex items-center gap-2">
-                            <FiImage className="text-[#8C66FF]" size={16} />
-                            <span className="text-xs font-bold text-[#524F5D]">
-                              {compressingImage
-                                ? "Memproses..."
-                                : "Lampirkan Foto (Opsional)"}
-                            </span>
-                          </div>
-                          <span className="text-[10px] font-semibold text-[#8C66FF] bg-[#F0ECFF] px-2 py-0.5 rounded-lg">
-                            Pilih File
-                          </span>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={handleImageSelect}
-                            className="hidden"
-                          />
-                        </label>
-                      )}
-                    </div>
+                    {imagePreviewUrl ? (
+                      <div className="relative w-full h-24 bg-[#F8FAFC] rounded-xl overflow-hidden border border-[#E2E8F0]">
+                        <img
+                          src={imagePreviewUrl}
+                          alt="Preview"
+                          className="w-full h-full object-cover"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleClearImage}
+                          className="absolute top-1.5 right-1.5 w-6 h-6 bg-black/60 text-white rounded-full flex items-center justify-center hover:bg-black transition-colors"
+                        >
+                          <FiX size={12} />
+                        </button>
+                      </div>
+                    ) : (
+                      <label className="w-full py-2.5 px-3 border border-dashed border-[#DFDCF0] hover:border-[#8C66FF] rounded-xl flex items-center gap-2 cursor-pointer bg-[#FAF9FF] transition-colors">
+                        <FiImage className="text-[#8C66FF]" size={16} />
+                        <span className="text-xs font-bold text-[#524F5D]">
+                          {compressingImage
+                            ? "Memproses..."
+                            : "Lampirkan Foto (Opsional)"}
+                        </span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleImageSelect}
+                          className="hidden"
+                        />
+                      </label>
+                    )}
 
-                    {/* Submit Button */}
                     <button
                       type="button"
                       onClick={handleSubmitTask}

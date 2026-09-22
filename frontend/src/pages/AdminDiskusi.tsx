@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 import { useAppBack } from "../hooks/useAppBack";
 import { useCustomDialog } from "../components/CustomDialog";
+import AnnouncementForm from "../components/admin/AnnouncementForm";
 import {
   FiArrowLeft,
   FiPlus,
@@ -13,8 +14,20 @@ import {
   FiImage,
   FiCalendar,
   FiRefreshCw,
+  FiCheckCircle,
+  FiClock,
+  FiFileText,
+  FiEye,
+  FiChevronDown,
+  FiChevronUp,
+  FiSliders,
 } from "react-icons/fi";
-import { LuMessageSquare, LuTrophy, LuAward } from "react-icons/lu";
+import {
+  LuMessageSquare,
+  LuTrophy,
+  LuAward,
+  LuBookOpen,
+} from "react-icons/lu";
 import {
   getAnnouncementsApi,
   createAnnouncementApi,
@@ -34,6 +47,7 @@ interface AnnouncementItem {
   instruction: string;
   authorName: string;
   createdAt: string;
+  hasImage?: boolean;
   discussionsCount?: number;
   submissionsCount?: number;
 }
@@ -86,68 +100,10 @@ export default function AdminDiskusi() {
   const [loadingList, setLoadingList] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>("");
 
-  // Create / Edit Announcement Modal
+  // Create / Edit Announcement Fullscreen Form
   const [isFormOpen, setIsFormOpen] = useState<boolean>(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [formTitle, setFormTitle] = useState<string>("");
-  const [formProblem, setFormProblem] = useState<string>("");
-  const [formQuestions, setFormQuestions] = useState<string[]>([""]);
-  const [formTaskInfo, setFormTaskInfo] = useState<string>("");
-  const [formInstructions, setFormInstructions] = useState<string[]>([""]);
-  const [submittingForm, setSubmittingForm] = useState<boolean>(false);
-
-  // Helper to parse existing multi-line string to list array
-  const parseToList = (text?: string): string[] => {
-    if (!text || !text.trim()) return [""];
-    const lines = text
-      .split("\n")
-      .map((line) =>
-        line
-          .trim()
-          .replace(/^(\d+[.)]\s*|[-*•]\s*)/, "")
-          .trim(),
-      )
-      .filter((line) => line.length > 0);
-    return lines.length > 0 ? lines : [""];
-  };
-
-  const handleAddQuestion = () => {
-    setFormQuestions((prev) => [...prev, ""]);
-  };
-
-  const handleUpdateQuestion = (index: number, val: string) => {
-    setFormQuestions((prev) => {
-      const updated = [...prev];
-      updated[index] = val;
-      return updated;
-    });
-  };
-
-  const handleRemoveQuestion = (index: number) => {
-    setFormQuestions((prev) => {
-      const filtered = prev.filter((_, idx) => idx !== index);
-      return filtered.length > 0 ? filtered : [""];
-    });
-  };
-
-  const handleAddInstruction = () => {
-    setFormInstructions((prev) => [...prev, ""]);
-  };
-
-  const handleUpdateInstruction = (index: number, val: string) => {
-    setFormInstructions((prev) => {
-      const updated = [...prev];
-      updated[index] = val;
-      return updated;
-    });
-  };
-
-  const handleRemoveInstruction = (index: number) => {
-    setFormInstructions((prev) => {
-      const filtered = prev.filter((_, idx) => idx !== index);
-      return filtered.length > 0 ? filtered : [""];
-    });
-  };
+  const [editingAnnouncement, setEditingAnnouncement] =
+    useState<AnnouncementItem | null>(null);
 
   // Submissions Grading View
   const [selectedForSubmissions, setSelectedForSubmissions] =
@@ -159,6 +115,10 @@ export default function AdminDiskusi() {
   const [submissionFilterStatus, setSubmissionFilterStatus] = useState<
     "all" | "graded" | "ungraded"
   >("all");
+  const [submissionSort, setSubmissionSort] = useState<
+    "newest" | "oldest" | "highest" | "lowest" | "name"
+  >("newest");
+  const [showTopicDetails, setShowTopicDetails] = useState<boolean>(false);
 
   // Single Submission Grading Modal
   const [gradingSubmission, setGradingSubmission] =
@@ -166,6 +126,10 @@ export default function AdminDiskusi() {
   const [gradeScore, setGradeScore] = useState<string>("");
   const [gradeFeedback, setGradeFeedback] = useState<string>("");
   const [savingGrade, setSavingGrade] = useState<boolean>(false);
+
+  // Full Answer Preview Modal
+  const [viewingAnswerSub, setViewingAnswerSub] =
+    useState<SubmissionItem | null>(null);
 
   // Ranking Modal
   const [rankingAnnouncement, setRankingAnnouncement] =
@@ -213,60 +177,23 @@ export default function AdminDiskusi() {
 
   // Open Create Form
   const handleOpenCreateForm = () => {
-    setEditingId(null);
-    setFormTitle("");
-    setFormProblem("");
-    setFormQuestions([""]);
-    setFormTaskInfo("");
-    setFormInstructions([""]);
+    setEditingAnnouncement(null);
     setIsFormOpen(true);
   };
 
   // Open Edit Form
   const handleOpenEditForm = (ann: AnnouncementItem) => {
-    setEditingId(ann.id);
-    setFormTitle(ann.title);
-    setFormProblem(ann.problem || "");
-    setFormQuestions(parseToList(ann.question));
-    setFormTaskInfo(ann.taskInfo || "");
-    setFormInstructions(parseToList(ann.instruction));
+    setEditingAnnouncement(ann);
     setIsFormOpen(true);
   };
 
   // Save (Create or Update) Announcement
-  const handleSaveAnnouncement = async () => {
-    if (!formTitle.trim()) {
-      showAlert(
-        "Silakan masukkan judul topik diskusi.",
-        "Judul Kosong",
-      );
-      return;
-    }
-
+  const handleSaveAnnouncement = async (payload: FormData) => {
     if (!token) return;
-    setSubmittingForm(true);
 
     try {
-      const questionPayload = formQuestions
-        .map((q) => q.trim())
-        .filter((q) => q.length > 0)
-        .join("\n");
-
-      const instructionPayload = formInstructions
-        .map((inst) => inst.trim())
-        .filter((inst) => inst.length > 0)
-        .join("\n");
-
-      const payload = {
-        title: formTitle.trim(),
-        problem: formProblem.trim(),
-        question: questionPayload,
-        taskInfo: formTaskInfo.trim(),
-        instruction: instructionPayload,
-      };
-
-      if (editingId) {
-        await updateAnnouncementApi(token, editingId, payload);
+      if (editingAnnouncement) {
+        await updateAnnouncementApi(token, editingAnnouncement.id, payload);
         showAlert("Topik diskusi berhasil diubah.", "Berhasil Diperbarui");
       } else {
         await createAnnouncementApi(token, payload);
@@ -277,14 +204,13 @@ export default function AdminDiskusi() {
       }
 
       setIsFormOpen(false);
+      setEditingAnnouncement(null);
       fetchAnnouncements();
     } catch (err: any) {
       showAlert(
         err.message || "Terjadi kendala saat menyimpan topik diskusi.",
         "Gagal Menyimpan",
       );
-    } finally {
-      setSubmittingForm(false);
     }
   };
 
@@ -477,6 +403,32 @@ export default function AdminDiskusi() {
     );
   });
 
+  // Computed Statistics for View 1
+  const totalTopicsCount = announcements.length;
+  const totalSubmissionsAcrossTopics = announcements.reduce(
+    (sum, a) => sum + (a.submissionsCount || 0),
+    0,
+  );
+  const totalDiscussionsAcrossTopics = announcements.reduce(
+    (sum, a) => sum + (a.discussionsCount || 0),
+    0,
+  );
+
+  // Submissions computed stats for View 2
+  const totalSubmissionsCount = submissionsList.length;
+  const gradedSubmissions = submissionsList.filter(
+    (s) => s.grade !== undefined && s.grade !== null,
+  );
+  const gradedCount = gradedSubmissions.length;
+  const ungradedCount = totalSubmissionsCount - gradedCount;
+  const averageGrade =
+    gradedCount > 0
+      ? (
+          gradedSubmissions.reduce((acc, curr) => acc + (curr.grade || 0), 0) /
+          gradedCount
+        ).toFixed(1)
+      : "-";
+
   const filteredSubmissions = submissionsList.filter((s) => {
     if (
       submissionFilterStatus === "graded" &&
@@ -498,646 +450,1138 @@ export default function AdminDiskusi() {
     );
   });
 
-  return (
-    <div className="w-full min-h-screen bg-[#FAF9FF] flex justify-center items-center text-[#2C2B30] font-sans select-none overflow-hidden relative">
-      {/* Decorative Blur Bubble */}
-      <div className="absolute top-[-10%] right-[-10%] w-50 h-50 bg-[#E9E4FF] rounded-full filter blur-2xl opacity-50"></div>
+  const sortedSubmissions = [...filteredSubmissions].sort((a, b) => {
+    if (submissionSort === "name") {
+      return a.studentName.localeCompare(b.studentName);
+    }
+    if (submissionSort === "highest") {
+      const scoreA = a.grade ?? -1;
+      const scoreB = b.grade ?? -1;
+      return scoreB - scoreA;
+    }
+    if (submissionSort === "lowest") {
+      const scoreA = a.grade ?? 999;
+      const scoreB = b.grade ?? 999;
+      return scoreA - scoreB;
+    }
+    if (submissionSort === "oldest") {
+      return (
+        new Date(a.submittedAt).getTime() - new Date(b.submittedAt).getTime()
+      );
+    }
+    return (
+      new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime()
+    );
+  });
 
-      {/* Container Mobile Portrait */}
-      <div className="w-full max-w-107.5 min-h-screen flex flex-col justify-between px-6 py-6 z-10">
+  return (
+    <div className="w-full min-h-screen bg-[#FAF9FF] flex justify-center items-start text-[#2C2B30] font-sans select-none relative py-4 md:py-8">
+      {/* Decorative Blur Bubbles */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+        <div className="absolute top-[-10%] right-[-10%] w-72 h-72 md:w-96 md:h-96 bg-[#E9E4FF] rounded-full filter blur-3xl opacity-50"></div>
+        <div className="absolute bottom-[-10%] left-[-10%] w-72 h-72 md:w-96 md:h-96 bg-[#FFF9E6] rounded-full filter blur-3xl opacity-40"></div>
+      </div>
+
+      {/* Main Responsive Desktop & Mobile Container */}
+      <div className="w-full max-w-107.5 md:max-w-5xl lg:max-w-6xl xl:max-w-7xl min-h-[calc(100vh-2rem)] md:min-h-[calc(100vh-4rem)] my-auto flex flex-col justify-between px-4 sm:px-6 md:px-8 py-4 md:py-6 z-10 transition-all duration-300">
         {/* ==================== VIEW 1: ANNOUNCEMENTS MANAGEMENT ==================== */}
         {!selectedForSubmissions ? (
           <div className="w-full flex-1 flex flex-col">
             {/* Header */}
-            <div className="w-full flex items-center justify-between pb-3 mb-3 border-b border-[#F0EDFF]">
-              <div className="flex items-center gap-3">
+            <div className="w-full flex items-center justify-between pb-4 mb-4 border-b border-[#F0EDFF]/80">
+              <div className="flex items-center gap-3 md:gap-4">
                 <button
                   onClick={() => goBack("/admin")}
-                  className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-xs border border-[#F0EDFF] text-[#8C66FF] active:scale-95 transition-transform shrink-0"
+                  className="w-10 h-10 md:w-11 md:h-11 bg-white rounded-2xl flex items-center justify-center shadow-xs border border-[#F0EDFF] text-[#8C66FF] active:scale-95 hover:bg-[#FAF9FF] transition-all shrink-0 cursor-pointer"
                   title="Kembali ke Panel Admin"
                 >
-                  <FiArrowLeft size={19} />
+                  <FiArrowLeft size={20} />
                 </button>
                 <div>
-                  <p className="text-[10px] uppercase tracking-widest text-[#9C98A6] font-bold">
-                    Panel Guru & Admin
-                  </p>
-                  <h1 className="text-xl font-extrabold text-[#2C2B30] leading-tight">
+                  <div className="flex items-center gap-2">
+                    <p className="text-[10px] md:text-xs uppercase tracking-widest text-[#9C98A6] font-bold">
+                      Panel Guru & Administrator
+                    </p>
+                    <span className="hidden sm:inline-block px-2.5 py-0.5 bg-[#F0ECFF] text-[#8C66FF] rounded-full text-[10px] font-extrabold">
+                      {totalTopicsCount} Topik Aktif
+                    </span>
+                  </div>
+                  <h1 className="text-xl md:text-2xl font-extrabold text-[#2C2B30] leading-tight mt-0.5">
                     Kelola Ruang Diskusi
                   </h1>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
+              {/* Action Buttons */}
+              <div className="flex items-center gap-2.5">
                 <button
                   onClick={() => fetchAnnouncements(true)}
                   disabled={loadingList}
-                  className="w-9 h-9 bg-white rounded-xl flex items-center justify-center border border-[#F0EDFF] text-[#8C66FF] shadow-xs active:scale-95 transition-transform cursor-pointer"
-                  title="Refresh Diskusi"
+                  className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center border border-[#F0EDFF] text-[#8C66FF] shadow-xs active:scale-95 hover:bg-[#FAF9FF] transition-all cursor-pointer"
+                  title="Segarkan Data Topik"
                 >
                   <FiRefreshCw
-                    size={14}
+                    size={16}
                     className={loadingList ? "animate-spin" : ""}
                   />
                 </button>
                 <button
                   onClick={handleOpenCreateForm}
-                  className="px-3 py-2 bg-[#8C66FF] text-white text-xs font-black rounded-2xl flex items-center gap-1.5 shadow-md shadow-purple-200 active:scale-95 transition-transform cursor-pointer"
+                  className="px-4 md:px-5 py-2.5 bg-[#8C66FF] hover:bg-[#7b55f0] text-white text-xs md:text-sm font-black rounded-2xl flex items-center gap-2 shadow-md shadow-purple-200 active:scale-95 transition-all cursor-pointer"
                 >
                   <FiPlus size={16} />
-                  <span>Buat Topik</span>
+                  <span>Buat Topik Baru</span>
                 </button>
+              </div>
+            </div>
+
+            {/* Desktop Metrics Row (Summary Cards) */}
+            <div className="hidden md:grid md:grid-cols-3 gap-4 mb-6">
+              <div className="bg-white rounded-3xl p-5 border border-[#F0EDFF] shadow-[0_4px_16px_rgba(0,0,0,0.02)] flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-[#F0ECFF] text-[#8C66FF] flex items-center justify-center text-2xl shrink-0">
+                  <LuMessageSquare />
+                </div>
+                <div>
+                  <p className="text-[11px] uppercase tracking-wider text-[#9C98A6] font-bold">
+                    Total Topik Diskusi
+                  </p>
+                  <h3 className="text-2xl font-black text-[#2C2B30] mt-0.5">
+                    {totalTopicsCount}
+                  </h3>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-3xl p-5 border border-[#F0EDFF] shadow-[0_4px_16px_rgba(0,0,0,0.02)] flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-[#ECFDF5] text-[#10B981] flex items-center justify-center text-2xl shrink-0">
+                  <LuAward />
+                </div>
+                <div>
+                  <p className="text-[11px] uppercase tracking-wider text-[#9C98A6] font-bold">
+                    Tugas Siswa Terkumpul
+                  </p>
+                  <h3 className="text-2xl font-black text-[#2C2B30] mt-0.5">
+                    {totalSubmissionsAcrossTopics}
+                  </h3>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-3xl p-5 border border-[#F0EDFF] shadow-[0_4px_16px_rgba(0,0,0,0.02)] flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-[#FFF9E6] text-[#D97706] flex items-center justify-center text-2xl shrink-0">
+                  <LuTrophy />
+                </div>
+                <div>
+                  <p className="text-[11px] uppercase tracking-wider text-[#9C98A6] font-bold">
+                    Interaksi Diskusi
+                  </p>
+                  <h3 className="text-2xl font-black text-[#2C2B30] mt-0.5">
+                    {totalDiscussionsAcrossTopics}
+                  </h3>
+                </div>
               </div>
             </div>
 
             {/* Search Bar */}
-            <div className="w-full relative mb-3">
-              <FiSearch
-                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#9C98A6]"
-                size={15}
-              />
-              <input
-                type="text"
-                placeholder="Cari topik diskusi..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 bg-white border border-[#F0EDFF] rounded-2xl text-xs font-semibold text-[#2C2B30] placeholder:text-[#9C98A6] focus:outline-none focus:border-[#8C66FF] shadow-xs"
-              />
+            <div className="w-full flex items-center gap-3 mb-5">
+              <div className="flex-1 relative">
+                <FiSearch
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9C98A6]"
+                  size={16}
+                />
+                <input
+                  type="text"
+                  placeholder="Cari topik diskusi berdasarkan judul atau studi kasus..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-11 pr-4 py-3 bg-white border border-[#F0EDFF] rounded-2xl text-xs md:text-sm font-semibold text-[#2C2B30] placeholder:text-[#9C98A6] focus:outline-none focus:border-[#8C66FF] shadow-[0_2px_12px_rgba(0,0,0,0.02)] transition-all"
+                />
+              </div>
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="px-3.5 py-3 bg-white hover:bg-neutral-50 text-[#9C98A6] text-xs font-bold rounded-2xl border border-[#F0EDFF] shadow-xs cursor-pointer transition-colors"
+                >
+                  Reset
+                </button>
+              )}
             </div>
 
-            {/* Announcements List */}
-            <div className="flex-1 overflow-y-auto pr-0.5 space-y-3.5 no-scrollbar pb-6">
+            {/* Announcements Desktop Grid / Mobile List */}
+            <div className="flex-1 pb-8">
               {loadingList ? (
-                <div className="py-20 flex flex-col items-center justify-center gap-2">
-                  <div className="w-8 h-8 border-3 border-[#8C66FF] border-t-transparent rounded-full animate-spin"></div>
-                  <p className="text-xs text-[#9C98A6] font-bold uppercase tracking-wider">
-                    Memuat Topik Diskusi...
+                <div className="py-24 flex flex-col items-center justify-center gap-3">
+                  <div className="w-9 h-9 border-3 border-[#8C66FF] border-t-transparent rounded-full animate-spin"></div>
+                  <p className="text-xs text-[#9C98A6] font-black uppercase tracking-wider animate-pulse">
+                    Memuat data topik diskusi...
                   </p>
                 </div>
               ) : filteredAnnouncements.length === 0 ? (
-                <div className="py-16 text-center bg-white rounded-3xl p-6 border border-[#F0EDFF] shadow-xs">
-                  <div className="w-14 h-14 mx-auto mb-3 bg-[#F0ECFF] text-[#8C66FF] rounded-2xl flex items-center justify-center text-2xl">
+                <div className="py-20 text-center bg-white rounded-3xl p-8 border border-[#F0EDFF] shadow-[0_4px_16px_rgba(0,0,0,0.02)] max-w-lg mx-auto">
+                  <div className="w-16 h-16 mx-auto mb-4 bg-[#F0ECFF] text-[#8C66FF] rounded-3xl flex items-center justify-center text-3xl">
                     <LuMessageSquare />
                   </div>
-                  <h3 className="text-sm font-extrabold text-[#2C2B30]">
-                    Belum Ada Topik Diskusi
+                  <h3 className="text-base font-extrabold text-[#2C2B30]">
+                    {searchQuery
+                      ? "Topik Tidak Ditemukan"
+                      : "Belum Ada Topik Diskusi"}
                   </h3>
-                  <p className="text-xs text-[#9C98A6] mt-1 mb-4">
-                    Mulai dengan membuat topik diskusi atau tugas pertama
-                    Anda.
+                  <p className="text-xs md:text-sm text-[#9C98A6] mt-1.5 mb-6 max-w-sm mx-auto leading-relaxed">
+                    {searchQuery
+                      ? `Tidak ditemukan topik dengan kata kunci "${searchQuery}". Coba kata kunci lain.`
+                      : "Mulai buat topik diskusi atau tugas analisis baru untuk siswa Anda."}
                   </p>
                   <button
-                    onClick={handleOpenCreateForm}
-                    className="px-4 py-2.5 bg-[#8C66FF] text-white text-xs font-bold rounded-full shadow-md shadow-purple-100"
+                    onClick={
+                      searchQuery
+                        ? () => setSearchQuery("")
+                        : handleOpenCreateForm
+                    }
+                    className="px-5 py-3 bg-[#8C66FF] hover:bg-[#7b55f0] text-white text-xs md:text-sm font-bold rounded-2xl shadow-md shadow-purple-100 cursor-pointer active:scale-95 transition-all"
                   >
-                    + Buat Topik Sekarang
+                    {searchQuery ? "Hapus Pencarian" : "+ Buat Topik Sekarang"}
                   </button>
                 </div>
               ) : (
-                filteredAnnouncements.map((ann) => (
-                  <div
-                    key={ann.id}
-                    className="w-full bg-white rounded-3xl p-4.5 border border-[#F0EDFF] shadow-[0_4px_16px_rgba(140,102,255,0.05)] flex flex-col gap-3"
-                  >
-                    {/* Top Row: Title & Actions */}
-                    <div className="flex justify-between items-start gap-2">
-                      <div>
-                        <h2 className="text-sm font-black text-[#2C2B30] leading-snug">
-                          {ann.title}
-                        </h2>
-                        <p className="text-[10px] text-[#9C98A6] font-semibold mt-0.5 flex items-center gap-1">
-                          <FiCalendar size={11} />{" "}
-                          {formatDateIndo(ann.createdAt)}
-                        </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                  {filteredAnnouncements.map((ann) => (
+                    <div
+                      key={ann.id}
+                      className="bg-white rounded-3xl p-5 border border-[#F0EDFF] shadow-[0_4px_16px_rgba(140,102,255,0.05)] hover:border-[#8C66FF]/50 hover:shadow-[0_8px_24px_rgba(140,102,255,0.1)] transition-all duration-200 flex flex-col justify-between gap-4 group"
+                    >
+                      <div className="flex flex-col gap-3">
+                        {/* Top Row: Title, Date, Actions */}
+                        <div className="flex justify-between items-start gap-2">
+                          <div className="flex-1">
+                            <h2 className="text-sm md:text-base font-black text-[#2C2B30] leading-snug line-clamp-2 group-hover:text-[#8C66FF] transition-colors">
+                              {ann.title}
+                            </h2>
+                            <p className="text-[11px] text-[#9C98A6] font-semibold mt-1 flex items-center gap-1.5">
+                              <FiCalendar size={12} />{" "}
+                              {formatDateIndo(ann.createdAt)}
+                            </p>
+                          </div>
+
+                          {/* Edit / Delete Buttons */}
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <button
+                              onClick={() => handleOpenEditForm(ann)}
+                              className="w-8 h-8 rounded-xl bg-[#FAF9FF] border border-[#F0EDFF] text-[#8C66FF] flex items-center justify-center hover:bg-[#F0ECFF] active:scale-95 transition-all cursor-pointer"
+                              title="Edit Topik Diskusi"
+                            >
+                              <FiEdit2 size={13} />
+                            </button>
+                            <button
+                              onClick={() =>
+                                handleDeleteAnnouncement(ann.id, ann.title)
+                              }
+                              className="w-8 h-8 rounded-xl bg-[#FFF1F2] border border-[#FFE4E6] text-[#E11D48] flex items-center justify-center hover:bg-[#FFE4E6] active:scale-95 transition-all cursor-pointer"
+                              title="Hapus Topik Diskusi"
+                            >
+                              <FiTrash2 size={13} />
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Optional Banner Preview or Modern Placeholder */}
+                        {ann.hasImage ? (
+                          <div
+                            onClick={() =>
+                              setZoomImageUrl(
+                                `${API_URL}/api/announcements/${ann.id}/image`,
+                              )
+                            }
+                            className="w-full h-36 rounded-2xl overflow-hidden border border-[#F0EDFF] relative group/img cursor-pointer"
+                          >
+                            <img
+                              src={`${API_URL}/api/announcements/${ann.id}/image`}
+                              alt={ann.title}
+                              className="w-full h-full object-cover group-hover/img:scale-105 transition-transform duration-300"
+                            />
+                            <div className="absolute inset-0 bg-black/25 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center text-white text-[11px] font-bold">
+                              Klik untuk memperbesar
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="w-full h-20 rounded-2xl bg-gradient-to-br from-[#FAF8FF] to-[#F3EEFF] border border-[#F0EDFF] flex items-center justify-center text-[#8C66FF]/40 gap-2">
+                            <LuMessageSquare size={20} />
+                            <span className="text-[11px] font-bold uppercase tracking-wider text-[#9C98A6]">
+                              Topik Diskusi
+                            </span>
+                          </div>
+                        )}
+
+                        {/* Problem Snippet */}
+                        {ann.problem && (
+                          <p className="text-xs text-[#524F5D] line-clamp-3 leading-relaxed bg-[#FAF9FF] p-3 rounded-2xl border border-[#F0EDFF]/80 font-medium">
+                            {ann.problem}
+                          </p>
+                        )}
                       </div>
 
-                      {/* Edit / Delete Buttons */}
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        <button
-                          onClick={() => handleOpenEditForm(ann)}
-                          className="w-8 h-8 rounded-xl bg-[#FAF9FF] border border-[#F0EDFF] text-[#8C66FF] flex items-center justify-center hover:bg-[#F0ECFF] transition-colors"
-                          title="Edit Topik Diskusi"
-                        >
-                          <FiEdit2 size={13} />
-                        </button>
-                        <button
-                          onClick={() =>
-                            handleDeleteAnnouncement(ann.id, ann.title)
-                          }
-                          className="w-8 h-8 rounded-xl bg-[#FFF1F2] border border-[#FFE4E6] text-[#E11D48] flex items-center justify-center hover:bg-[#FFE4E6] transition-colors"
-                          title="Hapus Topik Diskusi"
-                        >
-                          <FiTrash2 size={13} />
-                        </button>
+                      {/* Card Footer: Metadata Chips & Action Buttons */}
+                      <div className="flex flex-col gap-3 pt-2 border-t border-[#F0EDFF]/70">
+                        {/* Stats Info */}
+                        <div className="flex items-center justify-between text-[11px] font-bold text-[#9C98A6]">
+                          <span className="flex items-center gap-1.5 bg-[#FAF9FF] px-2.5 py-1 rounded-xl border border-[#F0EDFF]">
+                            <LuAward size={13} className="text-[#8C66FF]" />
+                            <span>
+                              {ann.submissionsCount || 0} Pengumpulan
+                            </span>
+                          </span>
+                          <span className="flex items-center gap-1.5 bg-[#FAF9FF] px-2.5 py-1 rounded-xl border border-[#F0EDFF]">
+                            <LuMessageSquare
+                              size={13}
+                              className="text-[#D97706]"
+                            />
+                            <span>
+                              {ann.discussionsCount || 0} Komentar
+                            </span>
+                          </span>
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            onClick={() => handleOpenSubmissions(ann)}
+                            className="py-2.5 px-3 bg-[#8C66FF] hover:bg-[#7b55f0] text-white text-xs font-black rounded-2xl flex items-center justify-center gap-1.5 shadow-xs active:scale-95 transition-all cursor-pointer"
+                          >
+                            <LuAward size={15} />
+                            <span>Nilai Tugas ({ann.submissionsCount || 0})</span>
+                          </button>
+
+                          <button
+                            onClick={() => handleOpenRanking(ann)}
+                            className="py-2.5 px-3 bg-[#FFF9E6] border border-[#FDE68A] text-[#D97706] hover:bg-[#FEF3C7] text-xs font-black rounded-2xl flex items-center justify-center gap-1.5 shadow-2xs active:scale-95 transition-all cursor-pointer"
+                          >
+                            <LuTrophy size={15} />
+                            <span>Ranking Aktif</span>
+                          </button>
+                        </div>
                       </div>
                     </div>
-
-                    {/* Problem Snippet */}
-                    {ann.problem && (
-                      <p className="text-xs text-[#524F5D] line-clamp-2 leading-relaxed bg-[#FAF9FF] p-2.5 rounded-xl border border-[#F0EDFF]/80">
-                        {ann.problem}
-                      </p>
-                    )}
-
-                    {/* Admin Action Buttons (Penilaian & Ranking Keaktifan) */}
-                    <div className="grid grid-cols-2 gap-2 pt-1">
-                      <button
-                        onClick={() => handleOpenSubmissions(ann)}
-                        className="py-2.5 px-3 bg-[#8C66FF] text-white text-xs font-black rounded-2xl flex items-center justify-center gap-1.5 shadow-xs hover:bg-[#7B55F0] active:scale-95 transition-all cursor-pointer"
-                      >
-                        <LuAward size={14} />
-                        <span>Nilai Tugas ({ann.submissionsCount || 0})</span>
-                      </button>
-
-                      <button
-                        onClick={() => handleOpenRanking(ann)}
-                        className="py-2.5 px-3 bg-[#FFF9E6] border border-[#FDE68A] text-[#D97706] text-xs font-black rounded-2xl flex items-center justify-center gap-1.5 shadow-2xs hover:bg-[#FEF3C7] active:scale-95 transition-all cursor-pointer"
-                      >
-                        <LuTrophy size={14} />
-                        <span>Ranking Keaktifan</span>
-                      </button>
-                    </div>
-                  </div>
-                ))
+                  ))}
+                </div>
               )}
             </div>
           </div>
         ) : (
-          /* ==================== VIEW 2: SUBMISSIONS & GRADING ==================== */
+          /* ==================== VIEW 2: SUBMISSIONS & GRADING (DESKTOP TABLE) ==================== */
           <div className="w-full flex-1 flex flex-col">
             {/* Header for Submissions View */}
-            <div className="w-full flex items-center justify-between pb-3 mb-2 border-b border-[#F0EDFF]">
-              <div className="flex items-center gap-3 truncate">
+            <div className="w-full flex flex-col md:flex-row md:items-center md:justify-between pb-4 mb-4 border-b border-[#F0EDFF]/80 gap-3">
+              <div className="flex items-center gap-3 md:gap-4 truncate">
                 <button
                   onClick={() => setSelectedForSubmissions(null)}
-                  className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-xs border border-[#F0EDFF] text-[#8C66FF] active:scale-95 transition-transform shrink-0"
-                  title="Kembali ke Daftar Topik"
+                  className="w-10 h-10 md:w-11 md:h-11 bg-white rounded-2xl flex items-center justify-center shadow-xs border border-[#F0EDFF] text-[#8C66FF] active:scale-95 hover:bg-[#FAF9FF] transition-all shrink-0 cursor-pointer"
+                  title="Kembali ke Daftar Topik Diskusi"
                 >
-                  <FiArrowLeft size={19} />
+                  <FiArrowLeft size={20} />
                 </button>
                 <div className="truncate">
-                  <p className="text-[10px] uppercase tracking-widest text-[#9C98A6] font-bold">
-                    Penilaian Pengumpulan Tugas
-                  </p>
-                  <h2 className="text-base font-black text-[#2C2B30] truncate">
+                  <div className="flex items-center gap-2">
+                    <p className="text-[10px] md:text-xs uppercase tracking-widest text-[#9C98A6] font-bold">
+                      Penilaian Pengumpulan Tugas Siswa
+                    </p>
+                    <span className="hidden sm:inline-block px-2 py-0.5 bg-[#ECFDF5] text-[#10B981] rounded-full text-[10px] font-extrabold">
+                      Terkumpul: {totalSubmissionsCount}
+                    </span>
+                  </div>
+                  <h2 className="text-base md:text-xl font-black text-[#2C2B30] truncate mt-0.5">
                     {selectedForSubmissions.title}
                   </h2>
                 </div>
               </div>
+
+              {/* Toggle Soal & Action */}
+              <div className="flex items-center gap-2.5 shrink-0">
+                <button
+                  onClick={() => setShowTopicDetails(!showTopicDetails)}
+                  className="px-3.5 py-2 bg-white hover:bg-[#FAF9FF] border border-[#F0EDFF] text-[#8C66FF] text-xs font-bold rounded-2xl flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
+                >
+                  <LuBookOpen size={14} />
+                  <span>
+                    {showTopicDetails ? "Tutup Detail Soal" : "Lihat Soal & Petunjuk"}
+                  </span>
+                  {showTopicDetails ? (
+                    <FiChevronUp size={14} />
+                  ) : (
+                    <FiChevronDown size={14} />
+                  )}
+                </button>
+
+                <button
+                  onClick={() => handleOpenSubmissions(selectedForSubmissions)}
+                  disabled={loadingSubmissions}
+                  className="w-9 h-9 bg-white rounded-xl flex items-center justify-center border border-[#F0EDFF] text-[#8C66FF] shadow-xs active:scale-95 hover:bg-[#FAF9FF] transition-all cursor-pointer"
+                  title="Refresh Pengumpulan"
+                >
+                  <FiRefreshCw
+                    size={14}
+                    className={loadingSubmissions ? "animate-spin" : ""}
+                  />
+                </button>
+              </div>
             </div>
 
-            {/* Filter and Search inside Submissions */}
-            <div className="w-full flex gap-2 mb-3">
+            {/* Collapsible Topic Details Preview */}
+            {showTopicDetails && (
+              <div className="w-full bg-white rounded-3xl p-5 md:p-6 border border-[#F0EDFF] shadow-[0_4px_16px_rgba(0,0,0,0.02)] mb-5 space-y-4 animate-fade-in">
+                <div className="flex items-center justify-between pb-2 border-b border-[#F0EDFF]">
+                  <h3 className="text-xs md:text-sm font-black text-[#2C2B30] flex items-center gap-2">
+                    <LuBookOpen className="text-[#8C66FF]" />
+                    <span>Panduan & Kasus Diskusi untuk Siswa</span>
+                  </h3>
+                  <span className="text-[10px] text-[#9C98A6] font-semibold">
+                    Dibuat: {formatDateIndo(selectedForSubmissions.createdAt)}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                  {selectedForSubmissions.problem && (
+                    <div className="bg-[#FAF9FF] p-3.5 rounded-2xl border border-[#F0EDFF]">
+                      <span className="font-black text-[#8C66FF] block mb-1">
+                        📌 Soal / Permasalahan:
+                      </span>
+                      <p className="text-[#524F5D] leading-relaxed whitespace-pre-line">
+                        {selectedForSubmissions.problem}
+                      </p>
+                    </div>
+                  )}
+
+                  {selectedForSubmissions.question && (
+                    <div className="bg-[#FAF9FF] p-3.5 rounded-2xl border border-[#F0EDFF]">
+                      <span className="font-black text-[#8C66FF] block mb-1">
+                        ❓ Pertanyaan Analisis:
+                      </span>
+                      <p className="text-[#524F5D] leading-relaxed whitespace-pre-line">
+                        {selectedForSubmissions.question}
+                      </p>
+                    </div>
+                  )}
+
+                  {selectedForSubmissions.taskInfo && (
+                    <div className="bg-[#FAF9FF] p-3.5 rounded-2xl border border-[#F0EDFF]">
+                      <span className="font-black text-[#8C66FF] block mb-1">
+                        📋 Info & Batas Waktu Tugas:
+                      </span>
+                      <p className="text-[#524F5D] leading-relaxed">
+                        {selectedForSubmissions.taskInfo}
+                      </p>
+                    </div>
+                  )}
+
+                  {selectedForSubmissions.instruction && (
+                    <div className="bg-[#FAF9FF] p-3.5 rounded-2xl border border-[#F0EDFF]">
+                      <span className="font-black text-[#059669] block mb-1">
+                        💡 Petunjuk Pengerjaan:
+                      </span>
+                      <p className="text-[#524F5D] leading-relaxed whitespace-pre-line">
+                        {selectedForSubmissions.instruction}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Submissions Stats Metric Cards */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5 mb-5">
+              <div className="bg-white rounded-2xl md:rounded-3xl p-4 border border-[#F0EDFF] shadow-xs">
+                <p className="text-[10px] md:text-[11px] uppercase tracking-wider font-bold text-[#9C98A6]">
+                  Total Pengumpulan
+                </p>
+                <div className="flex items-center justify-between mt-1">
+                  <h4 className="text-xl md:text-2xl font-black text-[#2C2B30]">
+                    {totalSubmissionsCount}
+                  </h4>
+                  <span className="w-8 h-8 rounded-xl bg-[#F0ECFF] text-[#8C66FF] flex items-center justify-center text-sm font-bold">
+                    <LuAward />
+                  </span>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-2xl md:rounded-3xl p-4 border border-[#F0EDFF] shadow-xs">
+                <p className="text-[10px] md:text-[11px] uppercase tracking-wider font-bold text-[#D97706]">
+                  Perlu Dinilai
+                </p>
+                <div className="flex items-center justify-between mt-1">
+                  <h4 className="text-xl md:text-2xl font-black text-[#D97706]">
+                    {ungradedCount}
+                  </h4>
+                  <span className="w-8 h-8 rounded-xl bg-[#FFFBEB] text-[#D97706] flex items-center justify-center text-sm font-bold">
+                    <FiClock />
+                  </span>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-2xl md:rounded-3xl p-4 border border-[#F0EDFF] shadow-xs">
+                <p className="text-[10px] md:text-[11px] uppercase tracking-wider font-bold text-[#059669]">
+                  Selesai Dinilai
+                </p>
+                <div className="flex items-center justify-between mt-1">
+                  <h4 className="text-xl md:text-2xl font-black text-[#059669]">
+                    {gradedCount}
+                  </h4>
+                  <span className="w-8 h-8 rounded-xl bg-[#ECFDF5] text-[#059669] flex items-center justify-center text-sm font-bold">
+                    <FiCheckCircle />
+                  </span>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-2xl md:rounded-3xl p-4 border border-[#F0EDFF] shadow-xs">
+                <p className="text-[10px] md:text-[11px] uppercase tracking-wider font-bold text-[#8C66FF]">
+                  Rata-rata Nilai
+                </p>
+                <div className="flex items-center justify-between mt-1">
+                  <h4 className="text-xl md:text-2xl font-black text-[#8C66FF]">
+                    {averageGrade}
+                  </h4>
+                  <span className="w-8 h-8 rounded-xl bg-[#F0ECFF] text-[#8C66FF] flex items-center justify-center text-sm font-bold">
+                    <LuTrophy />
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Filter and Search Bar for Submissions */}
+            <div className="w-full flex flex-col md:flex-row gap-3 mb-5 items-stretch md:items-center justify-between">
+              {/* Search Bar */}
               <div className="flex-1 relative">
                 <FiSearch
                   className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#9C98A6]"
-                  size={14}
+                  size={15}
                 />
                 <input
                   type="text"
-                  placeholder="Cari siswa atau kelas..."
+                  placeholder="Cari siswa berdasarkan nama atau kelas..."
                   value={searchSubmissionQuery}
                   onChange={(e) => setSearchSubmissionQuery(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 bg-white border border-[#F0EDFF] rounded-xl text-xs font-semibold text-[#2C2B30] placeholder:text-[#9C98A6] focus:outline-none focus:border-[#8C66FF]"
+                  className="w-full pl-10 pr-4 py-2.5 bg-white border border-[#F0EDFF] rounded-2xl text-xs md:text-sm font-semibold text-[#2C2B30] placeholder:text-[#9C98A6] focus:outline-none focus:border-[#8C66FF] shadow-xs"
                 />
               </div>
 
-              {/* Status Filter */}
-              <select
-                value={submissionFilterStatus}
-                onChange={(e: any) => setSubmissionFilterStatus(e.target.value)}
-                className="bg-white border border-[#F0EDFF] rounded-xl px-2 py-2 text-xs font-bold text-[#2C2B30] focus:outline-none focus:border-[#8C66FF]"
-              >
-                <option value="all">Semua ({submissionsList.length})</option>
-                <option value="ungraded">Belum Dinilai</option>
-                <option value="graded">Sudah Dinilai</option>
-              </select>
+              {/* Status Tabs & Sort Controls */}
+              <div className="flex items-center gap-2.5 flex-wrap">
+                {/* Status Segmented Buttons */}
+                <div className="flex items-center bg-white p-1 rounded-2xl border border-[#F0EDFF] shadow-xs">
+                  <button
+                    onClick={() => setSubmissionFilterStatus("all")}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                      submissionFilterStatus === "all"
+                        ? "bg-[#8C66FF] text-white shadow-xs"
+                        : "text-[#9C98A6] hover:text-[#2C2B30]"
+                    }`}
+                  >
+                    Semua ({submissionsList.length})
+                  </button>
+                  <button
+                    onClick={() => setSubmissionFilterStatus("ungraded")}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                      submissionFilterStatus === "ungraded"
+                        ? "bg-[#D97706] text-white shadow-xs"
+                        : "text-[#9C98A6] hover:text-[#2C2B30]"
+                    }`}
+                  >
+                    Belum Dinilai ({ungradedCount})
+                  </button>
+                  <button
+                    onClick={() => setSubmissionFilterStatus("graded")}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                      submissionFilterStatus === "graded"
+                        ? "bg-[#10B981] text-white shadow-xs"
+                        : "text-[#9C98A6] hover:text-[#2C2B30]"
+                    }`}
+                  >
+                    Sudah Dinilai ({gradedCount})
+                  </button>
+                </div>
+
+                {/* Sort dropdown */}
+                <div className="flex items-center gap-1.5 bg-white px-3 py-2 rounded-2xl border border-[#F0EDFF] shadow-xs">
+                  <FiSliders size={13} className="text-[#9C98A6]" />
+                  <select
+                    value={submissionSort}
+                    onChange={(e: any) => setSubmissionSort(e.target.value)}
+                    className="bg-transparent text-xs font-bold text-[#2C2B30] focus:outline-none cursor-pointer"
+                  >
+                    <option value="newest">Waktu (Terbaru)</option>
+                    <option value="oldest">Waktu (Terlama)</option>
+                    <option value="highest">Nilai Tertinggi</option>
+                    <option value="lowest">Nilai Terendah</option>
+                    <option value="name">Nama Siswa (A-Z)</option>
+                  </select>
+                </div>
+              </div>
             </div>
 
-            {/* Submissions List */}
-            <div className="flex-1 overflow-y-auto pr-0.5 space-y-3 no-scrollbar pb-6">
+            {/* Submissions Content: Responsive Desktop Table & Mobile Cards */}
+            <div className="flex-1 pb-8">
               {loadingSubmissions ? (
-                <div className="py-20 flex flex-col items-center justify-center gap-2">
-                  <div className="w-7 h-7 border-3 border-[#8C66FF] border-t-transparent rounded-full animate-spin"></div>
+                <div className="py-24 flex flex-col items-center justify-center gap-2">
+                  <div className="w-8 h-8 border-3 border-[#8C66FF] border-t-transparent rounded-full animate-spin"></div>
                   <p className="text-xs text-[#9C98A6] font-bold">
                     Memuat data tugas siswa...
                   </p>
                 </div>
-              ) : filteredSubmissions.length === 0 ? (
-                <div className="py-16 text-center bg-white rounded-3xl p-6 border border-[#F0EDFF]">
-                  <p className="text-xs font-bold text-[#9C98A6]">
-                    Tidak ada tugas siswa yang sesuai dengan filter.
+              ) : sortedSubmissions.length === 0 ? (
+                <div className="py-20 text-center bg-white rounded-3xl p-8 border border-[#F0EDFF] max-w-md mx-auto">
+                  <div className="w-14 h-14 mx-auto mb-3 bg-[#FAF9FF] text-[#9C98A6] rounded-2xl flex items-center justify-center text-2xl">
+                    <FiFileText />
+                  </div>
+                  <h4 className="text-sm font-bold text-[#2C2B30]">
+                    Tidak Ada Tugas Ditemukan
+                  </h4>
+                  <p className="text-xs text-[#9C98A6] mt-1">
+                    {searchSubmissionQuery || submissionFilterStatus !== "all"
+                      ? "Tidak ada tugas siswa yang sesuai dengan filter atau kata kunci pencarian Anda."
+                      : "Belum ada siswa yang mengumpulkan tugas untuk topik diskusi ini."}
                   </p>
+                  {(searchSubmissionQuery ||
+                    submissionFilterStatus !== "all") && (
+                    <button
+                      onClick={() => {
+                        setSearchSubmissionQuery("");
+                        setSubmissionFilterStatus("all");
+                      }}
+                      className="mt-4 px-4 py-2 bg-[#FAF9FF] text-[#8C66FF] hover:bg-[#F0ECFF] text-xs font-bold rounded-xl border border-[#F0EDFF] transition-colors cursor-pointer"
+                    >
+                      Reset Filter
+                    </button>
+                  )}
                 </div>
               ) : (
-                filteredSubmissions.map((sub) => {
-                  const isGraded =
-                    sub.grade !== undefined && sub.grade !== null;
+                <>
+                  {/* ================= DESKTOP DISPLAY: RICH DATA TABLE ================= */}
+                  <div className="hidden md:block overflow-hidden border border-[#F0EDFF] rounded-[28px] shadow-[0_4px_20px_rgba(0,0,0,0.02)] bg-white">
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-xs md:text-sm border-collapse">
+                        <thead>
+                          <tr className="bg-[#FAF9FF] text-[#2C2B30] border-b border-[#F0EDFF] uppercase font-black text-[10px] md:text-[11px] tracking-wider">
+                            <th className="p-4 border-r border-[#F0EDFF]/50 text-center w-14">
+                              #
+                            </th>
+                            <th className="p-4 border-r border-[#F0EDFF]/50 whitespace-nowrap">
+                              Siswa & Kelas
+                            </th>
+                            <th className="p-4 border-r border-[#F0EDFF]/50 text-center whitespace-nowrap">
+                              Waktu Kirim
+                            </th>
+                            <th className="p-4 border-r border-[#F0EDFF]/50 min-w-[280px]">
+                              Jawaban Siswa
+                            </th>
+                            <th className="p-4 border-r border-[#F0EDFF]/50 text-center whitespace-nowrap">
+                              Lampiran
+                            </th>
+                            <th className="p-4 border-r border-[#F0EDFF]/50 text-center whitespace-nowrap">
+                              Nilai
+                            </th>
+                            <th className="p-4 border-r border-[#F0EDFF]/50 min-w-[180px]">
+                              Catatan Guru
+                            </th>
+                            <th className="p-4 text-center whitespace-nowrap">
+                              Aksi
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {sortedSubmissions.map((sub, sIdx) => {
+                            const isGraded =
+                              sub.grade !== undefined && sub.grade !== null;
+                            const initials = (sub.studentName || "S")
+                              .split(" ")
+                              .map((n) => n[0])
+                              .slice(0, 2)
+                              .join("")
+                              .toUpperCase();
 
-                  return (
-                    <div
-                      key={sub.id}
-                      className="w-full bg-white rounded-3xl p-4 border border-[#F0EDFF] shadow-xs flex flex-col gap-2.5"
-                    >
-                      {/* Student Info & Grade Badge */}
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <h3 className="text-xs font-black text-[#2C2B30]">
-                            {sub.studentName}
-                          </h3>
-                          <p className="text-[10px] text-[#9C98A6] font-semibold">
-                            Kelas {sub.studentClass} •{" "}
-                            {formatDateIndo(sub.submittedAt)}
-                          </p>
-                        </div>
+                            return (
+                              <tr
+                                key={sub.id}
+                                className={`border-b border-[#F0EDFF]/60 transition-colors hover:bg-[#F9F7FF] ${
+                                  sIdx % 2 === 1
+                                    ? "bg-[#FAF9FF]/40"
+                                    : "bg-white"
+                                }`}
+                              >
+                                {/* # Index */}
+                                <td className="p-4 text-center font-bold text-[#9C98A6] text-xs">
+                                  {sIdx + 1}
+                                </td>
 
-                        {isGraded ? (
-                          <span className="text-xs font-black text-[#10B981] bg-[#ECFDF5] border border-[#A7F3D0] px-3 py-1 rounded-full">
-                            Nilai: {sub.grade}
-                          </span>
-                        ) : (
-                          <span className="text-[10px] font-extrabold text-[#D97706] bg-[#FFFBEB] border border-[#FDE68A] px-2.5 py-1 rounded-full">
-                            Belum Dinilai
-                          </span>
-                        )}
-                      </div>
+                                {/* Student info */}
+                                <td className="p-4 border-r border-[#F0EDFF]/40">
+                                  <div className="flex items-center gap-3">
+                                    <div className="w-9 h-9 rounded-2xl bg-[#EDE9FE] text-[#8C66FF] font-black text-xs flex items-center justify-center shrink-0 border border-[#DDD6FE]/60 shadow-2xs">
+                                      {initials}
+                                    </div>
+                                    <div>
+                                      <p className="font-extrabold text-[#2C2B30] text-xs md:text-sm">
+                                        {sub.studentName}
+                                      </p>
+                                      <p className="text-[11px] text-[#9C98A6] font-semibold mt-0.5">
+                                        Kelas {sub.studentClass}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </td>
 
-                      {/* Answer Snippet */}
-                      <div className="text-xs text-[#524F5D] line-clamp-3 bg-[#FAF9FF] p-3 rounded-2xl border border-[#F0EDFF]/80 leading-relaxed whitespace-pre-line font-medium">
-                        {sub.answer}
-                      </div>
+                                {/* Submitted at */}
+                                <td className="p-4 text-center border-r border-[#F0EDFF]/40 whitespace-nowrap">
+                                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#524F5D] bg-[#FAF9FF] px-2.5 py-1 rounded-xl border border-[#F0EDFF]">
+                                    <FiClock size={11} className="text-[#9C98A6]" />
+                                    <span>{formatDateIndo(sub.submittedAt)}</span>
+                                  </span>
+                                </td>
 
-                      {/* Attachment indicator if image exists */}
-                      {sub.hasImage && (
-                        <div
-                          onClick={() =>
-                            setZoomImageUrl(
-                              `${API_URL}/api/announcements/submissions/${sub.id}/image`,
-                            )
-                          }
-                          className="flex items-center gap-1.5 text-[11px] font-bold text-[#8C66FF] cursor-pointer hover:underline"
-                        >
-                          <FiImage size={13} />
-                          <span>Lihat Foto Lampiran Siswa</span>
-                        </div>
-                      )}
+                                {/* Answer Snippet & View Modal trigger */}
+                                <td className="p-4 border-r border-[#F0EDFF]/40">
+                                  <div className="flex flex-col gap-1">
+                                    <p className="text-xs text-[#524F5D] line-clamp-2 leading-relaxed font-medium">
+                                      {sub.answer}
+                                    </p>
+                                    <button
+                                      onClick={() => setViewingAnswerSub(sub)}
+                                      className="text-[11px] font-bold text-[#8C66FF] hover:underline self-start flex items-center gap-1 mt-0.5 cursor-pointer"
+                                    >
+                                      <FiEye size={12} />
+                                      <span>Buka Jawaban Lengkap</span>
+                                    </button>
+                                  </div>
+                                </td>
 
-                      {/* Feedback snippet if graded */}
-                      {isGraded && sub.feedback && (
-                        <p className="text-[10px] text-[#059669] italic bg-[#ECFDF5]/50 px-2.5 py-1.5 rounded-xl">
-                          Catatan Guru: "{sub.feedback}"
-                        </p>
-                      )}
+                                {/* Attachment */}
+                                <td className="p-4 text-center border-r border-[#F0EDFF]/40">
+                                  {sub.hasImage ? (
+                                    <button
+                                      onClick={() =>
+                                        setZoomImageUrl(
+                                          `${API_URL}/api/announcements/submissions/${sub.id}/image`,
+                                        )
+                                      }
+                                      className="group/img relative inline-block w-12 h-12 rounded-xl overflow-hidden border border-[#E9E6F5] cursor-pointer hover:border-[#8C66FF] transition-all"
+                                      title="Klik untuk melihat foto lampiran"
+                                    >
+                                      <img
+                                        src={`${API_URL}/api/announcements/submissions/${sub.id}/image`}
+                                        alt="Thumbnail"
+                                        className="w-full h-full object-cover group-hover/img:scale-110 transition-transform"
+                                      />
+                                      <div className="absolute inset-0 bg-black/30 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center text-white">
+                                        <FiEye size={14} />
+                                      </div>
+                                    </button>
+                                  ) : (
+                                    <span className="text-xs text-[#9C98A6] font-semibold">
+                                      -
+                                    </span>
+                                  )}
+                                </td>
 
-                      {/* Grade Button */}
-                      <button
-                        onClick={() => handleOpenGradingModal(sub)}
-                        className={`w-full py-2.5 text-xs font-black rounded-2xl flex items-center justify-center gap-1.5 shadow-2xs active:scale-95 transition-all cursor-pointer ${
-                          isGraded
-                            ? "bg-[#FAF9FF] border border-[#8C66FF]/30 text-[#8C66FF] hover:bg-[#F0ECFF]"
-                            : "bg-[#8C66FF] text-white hover:bg-[#7B55F0]"
-                        }`}
-                      >
-                        <LuAward size={14} />
-                        <span>
-                          {isGraded
-                            ? "Edit Nilai & Catatan"
-                            : "Beri Nilai Siswa"}
-                        </span>
-                      </button>
+                                {/* Grade & Status */}
+                                <td className="p-4 text-center border-r border-[#F0EDFF]/40 whitespace-nowrap">
+                                  {isGraded ? (
+                                    <div className="inline-flex flex-col items-center">
+                                      <span className="text-xs md:text-sm font-black text-[#10B981] bg-[#ECFDF5] border border-[#A7F3D0] px-3 py-1 rounded-full shadow-2xs">
+                                        {sub.grade}
+                                      </span>
+                                      {sub.gradedBy && (
+                                        <span className="text-[9px] text-[#9C98A6] mt-0.5">
+                                          oleh {sub.gradedBy}
+                                        </span>
+                                      )}
+                                    </div>
+                                  ) : (
+                                    <span className="text-[11px] font-extrabold text-[#D97706] bg-[#FFFBEB] border border-[#FDE68A] px-2.5 py-1 rounded-full">
+                                      Belum Dinilai
+                                    </span>
+                                  )}
+                                </td>
+
+                                {/* Feedback */}
+                                <td className="p-4 border-r border-[#F0EDFF]/40">
+                                  {sub.feedback ? (
+                                    <p className="text-xs text-[#059669] italic bg-[#ECFDF5]/60 p-2 rounded-xl border border-[#A7F3D0]/40 line-clamp-2">
+                                      "{sub.feedback}"
+                                    </p>
+                                  ) : (
+                                    <span className="text-xs text-[#9C98A6] italic">
+                                      Belum ada catatan
+                                    </span>
+                                  )}
+                                </td>
+
+                                {/* Action Button */}
+                                <td className="p-4 text-center">
+                                  <button
+                                    onClick={() => handleOpenGradingModal(sub)}
+                                    className={`px-3.5 py-2 text-xs font-black rounded-xl inline-flex items-center gap-1.5 shadow-2xs active:scale-95 transition-all cursor-pointer ${
+                                      isGraded
+                                        ? "bg-[#FAF9FF] border border-[#8C66FF]/30 text-[#8C66FF] hover:bg-[#F0ECFF]"
+                                        : "bg-[#8C66FF] hover:bg-[#7b55f0] text-white shadow-purple-200"
+                                    }`}
+                                  >
+                                    <LuAward size={14} />
+                                    <span>
+                                      {isGraded ? "Ubah Nilai" : "Beri Nilai"}
+                                    </span>
+                                  </button>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
                     </div>
-                  );
-                })
+                  </div>
+
+                  {/* ================= MOBILE DISPLAY: RESPONSIVE CARDS ================= */}
+                  <div className="block md:hidden space-y-3.5">
+                    {sortedSubmissions.map((sub) => {
+                      const isGraded =
+                        sub.grade !== undefined && sub.grade !== null;
+
+                      return (
+                        <div
+                          key={sub.id}
+                          className="w-full bg-white rounded-3xl p-4.5 border border-[#F0EDFF] shadow-xs flex flex-col gap-3"
+                        >
+                          {/* Student Info & Grade Badge */}
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <h3 className="text-sm font-black text-[#2C2B30]">
+                                {sub.studentName}
+                              </h3>
+                              <p className="text-[11px] text-[#9C98A6] font-semibold mt-0.5">
+                                Kelas {sub.studentClass} •{" "}
+                                {formatDateIndo(sub.submittedAt)}
+                              </p>
+                            </div>
+
+                            {isGraded ? (
+                              <span className="text-xs font-black text-[#10B981] bg-[#ECFDF5] border border-[#A7F3D0] px-3 py-1 rounded-full">
+                                Nilai: {sub.grade}
+                              </span>
+                            ) : (
+                              <span className="text-[10px] font-extrabold text-[#D97706] bg-[#FFFBEB] border border-[#FDE68A] px-2.5 py-1 rounded-full">
+                                Belum Dinilai
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Answer Snippet */}
+                          <div className="text-xs text-[#524F5D] line-clamp-3 bg-[#FAF9FF] p-3 rounded-2xl border border-[#F0EDFF]/80 leading-relaxed whitespace-pre-line font-medium">
+                            {sub.answer}
+                          </div>
+
+                          {/* Attachment indicator if image exists */}
+                          {sub.hasImage && (
+                            <div
+                              onClick={() =>
+                                setZoomImageUrl(
+                                  `${API_URL}/api/announcements/submissions/${sub.id}/image`,
+                                )
+                              }
+                              className="flex items-center gap-1.5 text-xs font-bold text-[#8C66FF] cursor-pointer hover:underline"
+                            >
+                              <FiImage size={14} />
+                              <span>Lihat Foto Lampiran Siswa</span>
+                            </div>
+                          )}
+
+                          {/* Feedback snippet if graded */}
+                          {isGraded && sub.feedback && (
+                            <p className="text-[11px] text-[#059669] italic bg-[#ECFDF5]/50 px-3 py-2 rounded-xl">
+                              Catatan Guru: "{sub.feedback}"
+                            </p>
+                          )}
+
+                          {/* Grade Button */}
+                          <button
+                            onClick={() => handleOpenGradingModal(sub)}
+                            className={`w-full py-2.5 text-xs font-black rounded-2xl flex items-center justify-center gap-1.5 shadow-2xs active:scale-95 transition-all cursor-pointer ${
+                              isGraded
+                                ? "bg-[#FAF9FF] border border-[#8C66FF]/30 text-[#8C66FF] hover:bg-[#F0ECFF]"
+                                : "bg-[#8C66FF] text-white hover:bg-[#7B55F0]"
+                            }`}
+                          >
+                            <LuAward size={15} />
+                            <span>
+                              {isGraded
+                                ? "Edit Nilai & Catatan"
+                                : "Beri Nilai Siswa"}
+                            </span>
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
               )}
             </div>
           </div>
         )}
       </div>
 
-      {/* ==================== MODAL: CREATE / EDIT ANNOUNCEMENT ==================== */}
+      {/* ==================== FULLSCREEN: CREATE / EDIT ANNOUNCEMENT ==================== */}
       {isFormOpen && (
+        <AnnouncementForm
+          initialData={editingAnnouncement}
+          onSave={handleSaveAnnouncement}
+          onCancel={() => {
+            setIsFormOpen(false);
+            setEditingAnnouncement(null);
+          }}
+        />
+      )}
+
+      {/* ==================== MODAL: GRADING SUBMISSION (DESKTOP 2-COLUMN) ==================== */}
+      {gradingSubmission && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
-          <div className="w-full max-w-md bg-white rounded-3xl p-5 border border-[#F0EDFF] shadow-2xl flex flex-col max-h-[90vh]">
-            <div className="flex justify-between items-center pb-2.5 border-b border-[#F0EDFF]">
-              <h3 className="text-sm font-black text-[#2C2B30]">
-                {editingId
-                  ? "Edit Topik Diskusi"
-                  : "Buat Topik Diskusi Baru"}
-              </h3>
+          <div className="w-full max-w-lg md:max-w-3xl lg:max-w-4xl bg-white rounded-3xl p-5 md:p-6 border border-[#F0EDFF] shadow-2xl flex flex-col max-h-[90vh] animate-fade-in">
+            {/* Header */}
+            <div className="flex justify-between items-center pb-3 border-b border-[#F0EDFF]">
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm md:text-base font-black text-[#2C2B30]">
+                    Penilaian Tugas Siswa
+                  </h3>
+                  <span className="px-2 py-0.5 bg-[#F0ECFF] text-[#8C66FF] rounded-full text-[10px] font-bold">
+                    Kelas {gradingSubmission.studentClass}
+                  </span>
+                </div>
+                <p className="text-xs text-[#9C98A6] font-semibold mt-0.5">
+                  Siswa:{" "}
+                  <strong className="text-[#2C2B30]">
+                    {gradingSubmission.studentName}
+                  </strong>{" "}
+                  • Dikumpulkan pada {formatDateIndo(gradingSubmission.submittedAt)}
+                </p>
+              </div>
               <button
-                onClick={() => setIsFormOpen(false)}
-                className="w-7 h-7 rounded-full bg-[#FAF9FF] text-[#9C98A6] flex items-center justify-center hover:text-[#2C2B30]"
+                onClick={() => setGradingSubmission(null)}
+                className="w-8 h-8 rounded-full bg-[#FAF9FF] text-[#9C98A6] flex items-center justify-center hover:text-[#2C2B30] hover:bg-neutral-100 transition-colors cursor-pointer"
               >
-                <FiX size={15} />
+                <FiX size={17} />
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto space-y-3 py-3 pr-1 no-scrollbar text-xs">
-              {/* Judul */}
-              <div>
-                <label className="font-bold text-[#524F5D] block mb-1">
-                  Judul Topik Diskusi *
-                </label>
-                <input
-                  type="text"
-                  placeholder="Contoh: Diskusi Pencemaran Air Sungai Bengawan Solo"
-                  value={formTitle}
-                  onChange={(e) => setFormTitle(e.target.value)}
-                  className="w-full px-3 py-2.5 bg-[#FAF9FF] border border-[#E9E6F5] rounded-xl font-semibold text-[#2C2B30] focus:outline-none focus:border-[#8C66FF]"
-                />
-              </div>
-
-              {/* Soal / Permasalahan */}
-              <div>
-                <label className="font-bold text-[#524F5D] block mb-1">
-                  📌 Soal / Permasalahan Lingkungan
-                </label>
-                <textarea
-                  rows={3}
-                  placeholder="Deskripsikan kasus atau permasalahan lingkungan yang dibahas..."
-                  value={formProblem}
-                  onChange={(e) => setFormProblem(e.target.value)}
-                  className="w-full p-3 bg-[#FAF9FF] border border-[#E9E6F5] rounded-xl font-medium text-[#2C2B30] focus:outline-none focus:border-[#8C66FF] leading-relaxed"
-                />
-              </div>
-
-              {/* Pertanyaan */}
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-1.5">
-                    <label className="font-bold text-[#524F5D]">
-                      ❓ Pertanyaan Analisis
-                    </label>
-                    <span className="text-[10px] bg-[#EDE9FE] text-[#8C66FF] font-bold px-2 py-0.5 rounded-full">
-                      {formQuestions.filter((q) => q.trim().length > 0).length} butir
+            {/* Modal Body: Responsive 2 Columns on Desktop */}
+            <div className="flex-1 overflow-y-auto py-4 pr-1 no-scrollbar grid grid-cols-1 md:grid-cols-12 gap-5">
+              {/* Left Column: Student Answer & Image */}
+              <div className="md:col-span-7 flex flex-col gap-3.5">
+                <div>
+                  <label className="text-xs font-black text-[#524F5D] block mb-1.5 flex items-center justify-between">
+                    <span>Jawaban Tugas Siswa:</span>
+                    <span className="text-[10px] font-normal text-[#9C98A6]">
+                      {gradingSubmission.answer.length} karakter
                     </span>
+                  </label>
+                  <div className="p-4 bg-[#FAF9FF] border border-[#E9E6F5] rounded-2xl text-xs md:text-sm font-medium text-[#2C2B30] leading-relaxed whitespace-pre-line max-h-64 md:max-h-80 overflow-y-auto">
+                    {gradingSubmission.answer}
                   </div>
-                  <button
-                    type="button"
-                    onClick={handleAddQuestion}
-                    className="inline-flex items-center gap-1 px-2.5 py-1 bg-[#F4F0FF] hover:bg-[#EDE9FE] text-[#8C66FF] font-bold text-[11px] rounded-lg transition-colors active:scale-95 cursor-pointer shadow-2xs"
-                  >
-                    <FiPlus size={13} />
-                    <span>Tambah</span>
-                  </button>
                 </div>
 
-                <div className="space-y-2">
-                  {formQuestions.map((q, idx) => (
-                    <div key={idx} className="flex items-start gap-2">
-                      <span className="w-6 h-6 rounded-lg bg-[#EDE9FE] text-[#8C66FF] font-black text-[11px] flex items-center justify-center shrink-0 mt-1 border border-[#DDD6FE]/60 shadow-2xs">
-                        {idx + 1}
-                      </span>
-                      <textarea
-                        rows={2}
-                        placeholder={
-                          idx === 0
-                            ? "Contoh: Apa saja kemungkinan penyebab pencemaran danau tersebut?"
-                            : idx === 1
-                              ? "Contoh: Apa dampak pencemaran tersebut terhadap lingkungan dan masyarakat?"
-                              : `Tulis butir pertanyaan ${idx + 1}...`
-                        }
-                        value={q}
-                        onChange={(e) => handleUpdateQuestion(idx, e.target.value)}
-                        className="flex-1 px-3 py-2 bg-[#FAF9FF] border border-[#E9E6F5] rounded-xl font-medium text-[#2C2B30] focus:outline-none focus:border-[#8C66FF] leading-relaxed text-xs resize-none"
+                {/* Attachment Preview if any */}
+                {gradingSubmission.hasImage && (
+                  <div>
+                    <label className="text-xs font-black text-[#524F5D] block mb-1.5">
+                      Lampiran Foto Siswa:
+                    </label>
+                    <div
+                      onClick={() =>
+                        setZoomImageUrl(
+                          `${API_URL}/api/announcements/submissions/${gradingSubmission.id}/image`,
+                        )
+                      }
+                      className="w-full h-44 bg-[#F8FAFC] rounded-2xl overflow-hidden border border-[#E2E8F0] relative cursor-pointer group"
+                    >
+                      <img
+                        src={`${API_URL}/api/announcements/submissions/${gradingSubmission.id}/image`}
+                        alt="Lampiran"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
                       />
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveQuestion(idx)}
-                        className="w-8 h-8 rounded-xl flex items-center justify-center text-[#9C98A6] hover:text-red-500 hover:bg-red-50 border border-transparent hover:border-red-100 transition-colors shrink-0 mt-0.5 active:scale-90 cursor-pointer"
-                        title={
-                          formQuestions.length === 1 && idx === 0
-                            ? "Kosongkan butir ini"
-                            : "Hapus butir pertanyaan ini"
-                        }
-                      >
-                        <FiTrash2 size={15} />
-                      </button>
+                      <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold gap-1.5">
+                        <FiEye size={15} />
+                        <span>Klik untuk memperbesar gambar</span>
+                      </div>
                     </div>
-                  ))}
-                </div>
-
-                {formQuestions.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={handleAddQuestion}
-                    className="w-full py-1.5 border border-dashed border-[#8C66FF]/40 bg-[#FAF8FF] hover:bg-[#F3EFFF] text-[#8C66FF] font-bold text-[11px] rounded-xl flex items-center justify-center gap-1.5 transition-colors cursor-pointer active:scale-98"
-                  >
-                    <FiPlus size={13} />
-                    <span>Tambah Butir Pertanyaan Baru</span>
-                  </button>
+                  </div>
                 )}
               </div>
 
-              {/* Informasi Tugas */}
-              <div>
-                <label className="font-bold text-[#524F5D] block mb-1">
-                  📋 Informasi Tugas (Batas Waktu & Format)
-                </label>
-                <textarea
-                  rows={2}
-                  placeholder="Batas pengumpulan: Jumat, 25 September 2026. Format: Teks & foto bagan."
-                  value={formTaskInfo}
-                  onChange={(e) => setFormTaskInfo(e.target.value)}
-                  className="w-full p-3 bg-[#FAF9FF] border border-[#E9E6F5] rounded-xl font-medium text-[#2C2B30] focus:outline-none focus:border-[#8C66FF] leading-relaxed"
-                />
-              </div>
-
-              {/* Petunjuk */}
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-1.5">
-                    <label className="font-bold text-[#524F5D]">
-                      💡 Petunjuk Pengerjaan
+              {/* Right Column: Teacher Score & Feedback Inputs */}
+              <div className="md:col-span-5 flex flex-col justify-between gap-4 md:border-l md:border-[#F0EDFF] md:pl-5">
+                <div className="space-y-4">
+                  {/* Nilai Input (0 - 100) */}
+                  <div>
+                    <label className="font-extrabold uppercase text-[#524F5D] tracking-wider text-[11px] block mb-1.5">
+                      Nilai Tugas (Skala 0 - 100) <span className="text-red-500">*</span>
                     </label>
-                    <span className="text-[10px] bg-[#ECFDF5] text-[#059669] font-bold px-2 py-0.5 rounded-full">
-                      {formInstructions.filter((inst) => inst.trim().length > 0).length} poin
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleAddInstruction}
-                    className="inline-flex items-center gap-1 px-2.5 py-1 bg-[#ECFDF5] hover:bg-[#D1FAE5] text-[#059669] font-bold text-[11px] rounded-lg transition-colors active:scale-95 cursor-pointer shadow-2xs"
-                  >
-                    <FiPlus size={13} />
-                    <span>Tambah</span>
-                  </button>
-                </div>
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      placeholder="Contoh: 85"
+                      value={gradeScore}
+                      onChange={(e) => setGradeScore(e.target.value)}
+                      className="w-full px-4 py-3 bg-[#FAF9FF] border border-[#E9E6F5] rounded-2xl font-black text-lg text-[#8C66FF] focus:outline-none focus:border-[#8C66FF] focus:bg-white transition-colors"
+                    />
 
-                <div className="space-y-2">
-                  {formInstructions.map((inst, idx) => (
-                    <div key={idx} className="flex items-start gap-2">
-                      <span className="w-6 h-6 rounded-lg bg-[#ECFDF5] text-[#059669] font-black text-sm flex items-center justify-center shrink-0 mt-1 border border-[#A7F3D0]/60 shadow-2xs">
-                        •
-                      </span>
-                      <textarea
-                        rows={2}
-                        placeholder={
-                          idx === 0
-                            ? "Contoh: Gunakan data dari materi, hasil simulasi, atau sumber relevan."
-                            : idx === 1
-                              ? "Contoh: Kerjakan secara berkelompok dan diskusikan di kolom diskusi."
-                              : `Tulis poin petunjuk ${idx + 1}...`
-                        }
-                        value={inst}
-                        onChange={(e) => handleUpdateInstruction(idx, e.target.value)}
-                        className="flex-1 px-3 py-2 bg-[#FAF9FF] border border-[#E9E6F5] rounded-xl font-medium text-[#2C2B30] focus:outline-none focus:border-[#059669] leading-relaxed text-xs resize-none"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveInstruction(idx)}
-                        className="w-8 h-8 rounded-xl flex items-center justify-center text-[#9C98A6] hover:text-red-500 hover:bg-red-50 border border-transparent hover:border-red-100 transition-colors shrink-0 mt-0.5 active:scale-90 cursor-pointer"
-                        title={
-                          formInstructions.length === 1 && idx === 0
-                            ? "Kosongkan poin ini"
-                            : "Hapus poin petunjuk ini"
-                        }
-                      >
-                        <FiTrash2 size={15} />
-                      </button>
+                    {/* Quick Score Chips */}
+                    <div className="flex flex-wrap gap-1.5 mt-2">
+                      {[60, 70, 75, 80, 85, 90, 95, 100].map((score) => (
+                        <button
+                          key={score}
+                          type="button"
+                          onClick={() => setGradeScore(String(score))}
+                          className={`px-2.5 py-1 text-[11px] font-bold rounded-lg border transition-all cursor-pointer ${
+                            gradeScore === String(score)
+                              ? "bg-[#8C66FF] text-white border-[#8C66FF]"
+                              : "bg-[#FAF9FF] text-[#524F5D] border-[#E9E6F5] hover:bg-[#F0ECFF]"
+                          }`}
+                        >
+                          {score}
+                        </button>
+                      ))}
                     </div>
-                  ))}
+                  </div>
+
+                  {/* Feedback Textarea */}
+                  <div>
+                    <label className="font-extrabold uppercase text-[#524F5D] tracking-wider text-[11px] block mb-1.5">
+                      Catatan & Masukan Guru (Opsional)
+                    </label>
+                    <textarea
+                      rows={4}
+                      placeholder="Tuliskan apresiasi, saran, atau perbaikan untuk pemahaman siswa..."
+                      value={gradeFeedback}
+                      onChange={(e) => setGradeFeedback(e.target.value)}
+                      className="w-full p-3.5 bg-[#FAF9FF] border border-[#E9E6F5] rounded-2xl font-medium text-xs text-[#2C2B30] focus:outline-none focus:border-[#8C66FF] focus:bg-white transition-colors leading-relaxed"
+                    />
+                  </div>
+
+                  {/* Previous Grading Info */}
+                  {gradingSubmission.grade !== undefined &&
+                    gradingSubmission.grade !== null && (
+                      <div className="p-3 bg-[#ECFDF5] rounded-xl border border-[#A7F3D0] text-[11px] text-[#065F46] flex items-center gap-2">
+                        <FiCheckCircle size={15} className="shrink-0 text-[#10B981]" />
+                        <span>
+                          Telah dinilai sebelumnya oleh{" "}
+                          <strong>{gradingSubmission.gradedBy || "Guru"}</strong>
+                        </span>
+                      </div>
+                    )}
                 </div>
 
-                {formInstructions.length > 1 && (
+                {/* Footer Buttons */}
+                <div className="pt-3 border-t border-[#F0EDFF] flex gap-2.5">
                   <button
                     type="button"
-                    onClick={handleAddInstruction}
-                    className="w-full py-1.5 border border-dashed border-[#059669]/40 bg-[#F0FDF4] hover:bg-[#DCFCE7] text-[#059669] font-bold text-[11px] rounded-xl flex items-center justify-center gap-1.5 transition-colors cursor-pointer active:scale-98"
+                    onClick={() => setGradingSubmission(null)}
+                    className="flex-1 py-3 bg-[#FAF9FF] hover:bg-neutral-100 text-[#9C98A6] hover:text-[#2C2B30] font-bold text-xs rounded-2xl transition-colors cursor-pointer"
                   >
-                    <FiPlus size={13} />
-                    <span>Tambah Poin Petunjuk Baru</span>
+                    Batal
                   </button>
-                )}
+                  <button
+                    type="button"
+                    onClick={handleSaveGrade}
+                    disabled={savingGrade}
+                    className="flex-1 py-3 bg-[#10B981] hover:bg-[#059669] text-white font-extrabold text-xs rounded-2xl shadow-md shadow-emerald-100 active:scale-95 disabled:opacity-50 transition-all cursor-pointer flex items-center justify-center gap-2"
+                  >
+                    <FiCheckCircle size={15} />
+                    <span>{savingGrade ? "Menyimpan..." : "Simpan Penilaian"}</span>
+                  </button>
+                </div>
               </div>
-            </div>
-
-            <div className="pt-2 border-t border-[#F0EDFF] flex gap-2">
-              <button
-                type="button"
-                onClick={() => setIsFormOpen(false)}
-                className="flex-1 py-2.5 bg-[#FAF9FF] text-[#9C98A6] font-bold text-xs rounded-2xl hover:text-[#2C2B30]"
-              >
-                Batal
-              </button>
-              <button
-                type="button"
-                onClick={handleSaveAnnouncement}
-                disabled={submittingForm}
-                className="flex-1 py-2.5 bg-[#8C66FF] text-white font-extrabold text-xs rounded-2xl shadow-md shadow-purple-200 active:scale-95 disabled:opacity-50"
-              >
-                {submittingForm ? "Menyimpan..." : "Simpan Topik Diskusi"}
-              </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* ==================== MODAL: GRADING SUBMISSION ==================== */}
-      {gradingSubmission && (
+      {/* ==================== MODAL: PREVIEW COMPLETE ANSWER ==================== */}
+      {viewingAnswerSub && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
-          <div className="w-full max-w-md bg-white rounded-3xl p-5 border border-[#F0EDFF] shadow-2xl flex flex-col max-h-[90vh]">
-            <div className="flex justify-between items-center pb-2.5 border-b border-[#F0EDFF]">
+          <div className="w-full max-w-lg md:max-w-2xl bg-white rounded-3xl p-5 md:p-6 border border-[#F0EDFF] shadow-2xl flex flex-col max-h-[85vh] animate-fade-in">
+            <div className="flex justify-between items-center pb-3 border-b border-[#F0EDFF]">
               <div>
-                <h3 className="text-sm font-black text-[#2C2B30]">
-                  Penilaian Tugas Siswa
+                <h3 className="text-sm md:text-base font-black text-[#2C2B30]">
+                  Jawaban Tugas: {viewingAnswerSub.studentName}
                 </h3>
-                <p className="text-[10px] text-[#9C98A6] font-semibold">
-                  {gradingSubmission.studentName} (Kelas{" "}
-                  {gradingSubmission.studentClass})
+                <p className="text-xs text-[#9C98A6] font-semibold mt-0.5">
+                  Kelas {viewingAnswerSub.studentClass} •{" "}
+                  {formatDateIndo(viewingAnswerSub.submittedAt)}
                 </p>
               </div>
               <button
-                onClick={() => setGradingSubmission(null)}
-                className="w-7 h-7 rounded-full bg-[#FAF9FF] text-[#9C98A6] flex items-center justify-center hover:text-[#2C2B30]"
+                onClick={() => setViewingAnswerSub(null)}
+                className="w-8 h-8 rounded-full bg-[#FAF9FF] text-[#9C98A6] flex items-center justify-center hover:text-[#2C2B30] cursor-pointer"
               >
-                <FiX size={15} />
+                <FiX size={17} />
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto space-y-3 py-3 pr-1 no-scrollbar text-xs">
-              {/* Answer Content */}
-              <div>
-                <label className="font-bold text-[#524F5D] block mb-1">
-                  Jawaban Siswa:
-                </label>
-                <div className="p-3 bg-[#FAF9FF] border border-[#E9E6F5] rounded-2xl text-xs font-medium text-[#2C2B30] leading-relaxed whitespace-pre-line max-h-48 overflow-y-auto">
-                  {gradingSubmission.answer}
-                </div>
+            <div className="flex-1 overflow-y-auto py-4 space-y-4 no-scrollbar">
+              <div className="p-4 bg-[#FAF9FF] border border-[#E9E6F5] rounded-2xl text-xs md:text-sm font-medium text-[#2C2B30] leading-relaxed whitespace-pre-line">
+                {viewingAnswerSub.answer}
               </div>
 
-              {/* Attachment Preview if any */}
-              {gradingSubmission.hasImage && (
+              {viewingAnswerSub.hasImage && (
                 <div>
-                  <label className="font-bold text-[#524F5D] block mb-1">
-                    Lampiran Foto Siswa:
-                  </label>
+                  <p className="text-xs font-black text-[#524F5D] mb-1.5">
+                    Lampiran Foto:
+                  </p>
                   <div
                     onClick={() =>
                       setZoomImageUrl(
-                        `${API_URL}/api/announcements/submissions/${gradingSubmission.id}/image`,
+                        `${API_URL}/api/announcements/submissions/${viewingAnswerSub.id}/image`,
                       )
                     }
-                    className="w-full h-36 bg-[#F8FAFC] rounded-2xl overflow-hidden border border-[#E2E8F0] relative cursor-pointer group"
+                    className="w-full h-52 bg-[#F8FAFC] rounded-2xl overflow-hidden border border-[#E2E8F0] relative cursor-pointer group"
                   >
                     <img
-                      src={`${API_URL}/api/announcements/submissions/${gradingSubmission.id}/image`}
+                      src={`${API_URL}/api/announcements/submissions/${viewingAnswerSub.id}/image`}
                       alt="Lampiran"
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                     />
-                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold">
-                      Klik untuk memperbesar
+                    <div className="absolute inset-0 bg-black/25 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold gap-1">
+                      <FiEye size={15} />
+                      <span>Klik untuk memperbesar</span>
                     </div>
                   </div>
                 </div>
               )}
 
-              {/* Nilai Input (0 - 100) */}
-              <div>
-                <label className="font-extrabold uppercase text-[#524F5D] tracking-wider block mb-1">
-                  Nilai Tugas (0 - 100) *
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  max="100"
-                  placeholder="Contoh: 85"
-                  value={gradeScore}
-                  onChange={(e) => setGradeScore(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-[#FAF9FF] border border-[#E9E6F5] rounded-xl font-black text-sm text-[#8C66FF] focus:outline-none focus:border-[#8C66FF]"
-                />
-              </div>
-
-              {/* Feedback Textarea */}
-              <div>
-                <label className="font-extrabold uppercase text-[#524F5D] tracking-wider block mb-1">
-                  Catatan & Masukan Guru (Opsional)
-                </label>
-                <textarea
-                  rows={3}
-                  placeholder="Tuliskan apresiasi atau perbaikan untuk siswa..."
-                  value={gradeFeedback}
-                  onChange={(e) => setGradeFeedback(e.target.value)}
-                  className="w-full p-3 bg-[#FAF9FF] border border-[#E9E6F5] rounded-xl font-medium text-xs text-[#2C2B30] focus:outline-none focus:border-[#8C66FF] leading-relaxed"
-                />
-              </div>
+              {viewingAnswerSub.feedback && (
+                <div className="p-3 bg-[#ECFDF5] border border-[#A7F3D0] rounded-2xl text-xs text-[#065F46]">
+                  <strong className="block mb-0.5">Catatan Guru:</strong>
+                  <p className="italic">"{viewingAnswerSub.feedback}"</p>
+                </div>
+              )}
             </div>
 
-            <div className="pt-2 border-t border-[#F0EDFF] flex gap-2">
+            <div className="pt-3 border-t border-[#F0EDFF] flex gap-2.5">
               <button
                 type="button"
-                onClick={() => setGradingSubmission(null)}
-                className="flex-1 py-2.5 bg-[#FAF9FF] text-[#9C98A6] font-bold text-xs rounded-2xl hover:text-[#2C2B30]"
+                onClick={() => setViewingAnswerSub(null)}
+                className="flex-1 py-2.5 bg-[#FAF9FF] text-[#9C98A6] hover:text-[#2C2B30] font-bold text-xs rounded-2xl cursor-pointer"
               >
-                Batal
+                Tutup
               </button>
               <button
                 type="button"
-                onClick={handleSaveGrade}
-                disabled={savingGrade}
-                className="flex-1 py-2.5 bg-[#10B981] text-white font-extrabold text-xs rounded-2xl shadow-md shadow-emerald-100 active:scale-95 disabled:opacity-50"
+                onClick={() => {
+                  const subToGrade = viewingAnswerSub;
+                  setViewingAnswerSub(null);
+                  handleOpenGradingModal(subToGrade);
+                }}
+                className="flex-1 py-2.5 bg-[#8C66FF] hover:bg-[#7b55f0] text-white font-black text-xs rounded-2xl shadow-md shadow-purple-200 cursor-pointer flex items-center justify-center gap-1.5"
               >
-                {savingGrade ? "Menyimpan..." : "Simpan Penilaian"}
+                <LuAward size={15} />
+                <span>
+                  {viewingAnswerSub.grade !== undefined &&
+                  viewingAnswerSub.grade !== null
+                    ? "Edit Nilai Tugas"
+                    : "Beri Nilai Siswa"}
+                </span>
               </button>
             </div>
           </div>
@@ -1147,92 +1591,84 @@ export default function AdminDiskusi() {
       {/* ==================== MODAL: RANKING KEAKTIFAN DISKUSI (> 4 WORDS FILTER) ==================== */}
       {rankingAnnouncement && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
-          <div className="w-full max-w-sm bg-white rounded-3xl p-5 border border-[#F0EDFF] shadow-2xl flex flex-col gap-3.5">
-            <div className="flex justify-between items-center pb-2 border-b border-[#F0EDFF]">
-              <div className="flex items-center gap-2 text-[#D97706]">
-                <div className="w-8 h-8 rounded-xl bg-[#FFF9E6] flex items-center justify-center text-base font-black">
+          <div className="w-full max-w-md md:max-w-xl lg:max-w-2xl bg-white rounded-3xl p-5 md:p-6 border border-[#F0EDFF] shadow-2xl flex flex-col gap-4 animate-fade-in">
+            <div className="flex justify-between items-center pb-3 border-b border-[#F0EDFF]">
+              <div className="flex items-center gap-3 text-[#D97706]">
+                <div className="w-10 h-10 rounded-2xl bg-[#FFF9E6] flex items-center justify-center text-xl font-black">
                   <LuTrophy />
                 </div>
                 <div>
-                  <h3 className="text-sm font-black text-[#2C2B30]">
-                    Ranking Siswa Teraktif
+                  <h3 className="text-sm md:text-base font-black text-[#2C2B30]">
+                    Ranking Siswa Paling Aktif
                   </h3>
-                  <p className="text-[10px] text-[#9C98A6] font-semibold">
-                    Topik: {rankingAnnouncement.title}
+                  <p className="text-[11px] text-[#9C98A6] font-semibold mt-0.5">
+                    Topik: {rankingAnnouncement.title} (Minimal tanggapan &gt; 4 kata)
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setRankingAnnouncement(null)}
-                className="w-7 h-7 rounded-full bg-[#FAF9FF] text-[#9C98A6] flex items-center justify-center hover:text-[#2C2B30]"
+                className="w-8 h-8 rounded-full bg-[#FAF9FF] text-[#9C98A6] flex items-center justify-center hover:text-[#2C2B30] cursor-pointer"
               >
-                <FiX size={15} />
+                <FiX size={17} />
               </button>
             </div>
 
-            {/* Filter Explanation Card */}
-            <div className="p-2.5 bg-[#FFFBEB] rounded-2xl border border-[#FDE68A] text-[10px] text-[#92400E] font-medium leading-relaxed">
-              💡 <strong>Ketentuan Ranking:</strong>
-              hanya komentar siswa yang memiliki lebih dari 4 kata yang dihitung
-            </div>
-
-            {/* Ranking List */}
-            <div className="max-h-64 overflow-y-auto space-y-2 pr-1 no-scrollbar">
+            {/* Ranking Content */}
+            <div className="max-h-80 overflow-y-auto space-y-2.5 pr-1 no-scrollbar">
               {loadingRanking ? (
-                <div className="py-8 flex flex-col items-center justify-center gap-2">
-                  <div className="w-6 h-6 border-2 border-[#8C66FF] border-t-transparent rounded-full animate-spin"></div>
-                  <p className="text-[10px] text-[#9C98A6] font-bold">
-                    Menghitung keaktifan...
+                <div className="py-12 flex flex-col items-center justify-center gap-2">
+                  <div className="w-7 h-7 border-3 border-[#8C66FF] border-t-transparent rounded-full animate-spin"></div>
+                  <p className="text-xs text-[#9C98A6] font-bold">
+                    Menghitung keaktifan siswa...
                   </p>
                 </div>
               ) : rankedStudents.length === 0 ? (
-                <div className="py-8 text-center text-xs text-[#9C98A6]">
-                  Belum ada komentar siswa yang memiliki lebih dari 4 kata pada
-                  topik ini.
+                <div className="py-12 text-center text-xs md:text-sm text-[#9C98A6]">
+                  Belum ada komentar siswa yang memenuhi kriteria keaktifan (&gt; 4 kata).
                 </div>
               ) : (
                 rankedStudents.map((item, index) => {
                   let badgeColor = "bg-[#F3F4F6] text-[#4B5563]";
                   let rankIcon = `#${index + 1}`;
                   if (index === 0) {
-                    badgeColor = "bg-[#FEF3C7] text-[#D97706] font-black";
+                    badgeColor = "bg-[#FEF3C7] text-[#D97706] font-black border border-[#FDE68A]";
                     rankIcon = "🥇 1";
                   } else if (index === 1) {
-                    badgeColor = "bg-[#F1F5F9] text-[#64748B] font-black";
+                    badgeColor = "bg-[#F1F5F9] text-[#64748B] font-black border border-[#CBD5E1]";
                     rankIcon = "🥈 2";
                   } else if (index === 2) {
-                    badgeColor = "bg-[#FFEDD5] text-[#C2410C] font-black";
+                    badgeColor = "bg-[#FFEDD5] text-[#C2410C] font-black border border-[#FED7AA]";
                     rankIcon = "🥉 3";
                   }
 
                   return (
                     <div
                       key={item.userId}
-                      className="w-full bg-[#FAF9FF] p-3 rounded-2xl border border-[#F0EDFF] flex items-center justify-between"
+                      className="w-full bg-[#FAF9FF] p-3.5 rounded-2xl border border-[#F0EDFF] flex items-center justify-between hover:bg-[#F3EFFF] transition-colors"
                     >
-                      <div className="flex items-center gap-2.5 truncate">
+                      <div className="flex items-center gap-3 truncate">
                         <span
-                          className={`w-9 h-7 rounded-xl flex items-center justify-center text-[10px] shrink-0 ${badgeColor}`}
+                          className={`w-10 h-8 rounded-xl flex items-center justify-center text-xs shrink-0 ${badgeColor}`}
                         >
                           {rankIcon}
                         </span>
                         <div className="truncate">
-                          <p className="text-xs font-black text-[#2C2B30] truncate">
+                          <p className="text-xs md:text-sm font-black text-[#2C2B30] truncate">
                             {item.name}
                           </p>
-                          <p className="text-[9px] text-[#9C98A6] font-semibold">
-                            Kelas {item.studentClass} • Total{" "}
-                            {item.totalCommentsCount} pesan
+                          <p className="text-[10px] md:text-[11px] text-[#9C98A6] font-semibold">
+                            Kelas {item.studentClass} • Total {item.totalCommentsCount} pesan dikirim
                           </p>
                         </div>
                       </div>
 
-                      <div className="text-right shrink-0">
-                        <span className="text-xs font-black text-[#8C66FF]">
+                      <div className="text-right shrink-0 pl-3">
+                        <span className="text-xs md:text-sm font-black text-[#8C66FF]">
                           {item.validCommentsCount}
                         </span>
-                        <span className="text-[9px] text-[#9C98A6] block">
-                          argumen aktif
+                        <span className="text-[10px] text-[#9C98A6] block">
+                          argumen aktif (&gt;4 kata)
                         </span>
                       </div>
                     </div>
@@ -1243,7 +1679,7 @@ export default function AdminDiskusi() {
 
             <button
               onClick={() => setRankingAnnouncement(null)}
-              className="w-full py-2.5 bg-[#8C66FF] text-white font-extrabold text-xs rounded-2xl hover:bg-[#7B55F0] transition-colors"
+              className="w-full py-3 bg-[#8C66FF] hover:bg-[#7b55f0] text-white font-extrabold text-xs md:text-sm rounded-2xl transition-colors cursor-pointer"
             >
               Tutup
             </button>
@@ -1255,7 +1691,7 @@ export default function AdminDiskusi() {
       {zoomImageUrl && (
         <div
           onClick={() => setZoomImageUrl(null)}
-          className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-sm cursor-pointer"
+          className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-sm cursor-pointer animate-fade-in"
         >
           <div className="relative max-w-full max-h-full">
             <img
@@ -1265,9 +1701,9 @@ export default function AdminDiskusi() {
             />
             <button
               onClick={() => setZoomImageUrl(null)}
-              className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/60 text-white flex items-center justify-center"
+              className="absolute top-3 right-3 w-9 h-9 rounded-full bg-black/60 hover:bg-black/80 text-white flex items-center justify-center cursor-pointer transition-colors"
             >
-              <FiX size={16} />
+              <FiX size={18} />
             </button>
           </div>
         </div>

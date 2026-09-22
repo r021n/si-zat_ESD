@@ -108,6 +108,8 @@ export const announcements = sqliteTable('announcements', {
   instruction: text('instruction').notNull().default(''),
   authorId: integer('author_id').references(() => users.id, { onDelete: 'set null' }),
   authorName: text('author_name').notNull().default('Guru'),
+  imageBlob: blob('image_blob', { mode: 'buffer' }),
+  imageType: text('image_type'),
   createdAt: text('created_at').notNull(),
   updatedAt: text('updated_at'),
 })

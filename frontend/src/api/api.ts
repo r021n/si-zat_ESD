@@ -659,7 +659,7 @@ export async function getAnnouncementDetailApi(token: string, id: string, forceR
   return data.data;
 }
 
-export async function createAnnouncementApi(token: string, body: {
+export async function createAnnouncementApi(token: string, body: FormData | {
   title: string;
   problem: string;
   question: string;
@@ -667,13 +667,14 @@ export async function createAnnouncementApi(token: string, body: {
   instruction: string;
 }) {
   clearAnnouncementsCache();
+  const isFormData = body instanceof FormData;
   const response = await fetch(`${API_URL}/api/announcements`, {
     method: "POST",
     headers: {
-      "Content-Type": "application/json",
+      ...(isFormData ? {} : { "Content-Type": "application/json" }),
       "Authorization": `Bearer ${token}`
     },
-    body: JSON.stringify(body)
+    body: isFormData ? body : JSON.stringify(body)
   });
   const data = await response.json();
   if (!response.ok) {
@@ -682,21 +683,23 @@ export async function createAnnouncementApi(token: string, body: {
   return data;
 }
 
-export async function updateAnnouncementApi(token: string, id: string, body: {
+export async function updateAnnouncementApi(token: string, id: string, body: FormData | {
   title: string;
   problem: string;
   question: string;
   taskInfo: string;
   instruction: string;
+  removeImage?: boolean;
 }) {
   clearAnnouncementsCache();
+  const isFormData = body instanceof FormData;
   const response = await fetch(`${API_URL}/api/announcements/${id}`, {
     method: "PUT",
     headers: {
-      "Content-Type": "application/json",
+      ...(isFormData ? {} : { "Content-Type": "application/json" }),
       "Authorization": `Bearer ${token}`
     },
-    body: JSON.stringify(body)
+    body: isFormData ? body : JSON.stringify(body)
   });
   const data = await response.json();
   if (!response.ok) {

@@ -28,10 +28,18 @@ async function ensureTables() {
         instruction TEXT NOT NULL DEFAULT '',
         author_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
         author_name TEXT NOT NULL DEFAULT 'Guru',
+        image_blob BLOB,
+        image_type TEXT,
         created_at TEXT NOT NULL,
         updated_at TEXT
       )
     `);
+    try {
+      await db.run(sql`ALTER TABLE announcements ADD COLUMN image_blob BLOB`);
+    } catch {}
+    try {
+      await db.run(sql`ALTER TABLE announcements ADD COLUMN image_type TEXT`);
+    } catch {}
     await db.run(sql`
       CREATE TABLE IF NOT EXISTS announcement_submissions (
         id TEXT PRIMARY KEY,
@@ -151,6 +159,37 @@ async function adminMiddleware(c: any, next: any) {
   }
 }
 
+// GET /api/announcements/:id/image - Stream announcement banner image
+announcementsRoute.get("/:id/image", async (c: any) => {
+  await ensureTables();
+  try {
+    const id = c.req.param("id");
+    const [ann] = await db
+      .select({
+        imageBlob: announcements.imageBlob,
+        imageType: announcements.imageType,
+      })
+      .from(announcements)
+      .where(eq(announcements.id, id))
+      .limit(1);
+
+    if (!ann || !ann.imageBlob) {
+      return c.json({ error: "Gambar tidak ditemukan." }, 404);
+    }
+
+    const mimeType = ann.imageType || "image/jpeg";
+    return new Response(ann.imageBlob as any, {
+      headers: {
+        "Content-Type": mimeType,
+        "Cache-Control": "public, max-age=86400",
+      },
+    });
+  } catch (err: any) {
+    console.error("Error streaming announcement image:", err);
+    return c.json({ error: "Gagal memuat gambar." }, 500);
+  }
+});
+
 // GET /api/announcements/submissions/:submissionId/image - Stream binary blob
 announcementsRoute.get("/submissions/:submissionId/image", async (c: any) => {
   await ensureTables();
@@ -186,7 +225,21 @@ announcementsRoute.get("/submissions/:submissionId/image", async (c: any) => {
 announcementsRoute.get("/", authMiddleware, async (c: any) => {
   try {
     const user = c.get("user");
-    const allAnnouncements = await db.select().from(announcements);
+    const allAnnouncements = await db
+      .select({
+        id: announcements.id,
+        title: announcements.title,
+        problem: announcements.problem,
+        question: announcements.question,
+        taskInfo: announcements.taskInfo,
+        instruction: announcements.instruction,
+        authorId: announcements.authorId,
+        authorName: announcements.authorName,
+        hasImage: sql<boolean>`${announcements.imageBlob} IS NOT NULL`,
+        createdAt: announcements.createdAt,
+        updatedAt: announcements.updatedAt,
+      })
+      .from(announcements);
 
     // Sort newest first
     allAnnouncements.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
@@ -254,7 +307,19 @@ announcementsRoute.get("/:id", authMiddleware, async (c: any) => {
     const user = c.get("user");
 
     const [announcement] = await db
-      .select()
+      .select({
+        id: announcements.id,
+        title: announcements.title,
+        problem: announcements.problem,
+        question: announcements.question,
+        taskInfo: announcements.taskInfo,
+        instruction: announcements.instruction,
+        authorId: announcements.authorId,
+        authorName: announcements.authorName,
+        hasImage: sql<boolean>`${announcements.imageBlob} IS NOT NULL`,
+        createdAt: announcements.createdAt,
+        updatedAt: announcements.updatedAt,
+      })
       .from(announcements)
       .where(eq(announcements.id, id))
       .limit(1);
@@ -303,12 +368,46 @@ announcementsRoute.get("/:id", authMiddleware, async (c: any) => {
   }
 });
 
-// POST /api/announcements - Admin creates new announcement
+// POST /api/announcements - Admin creates new announcement (supports optional image)
 announcementsRoute.post("/", adminMiddleware, async (c: any) => {
   try {
     const user = c.get("user");
-    const body = await c.req.json();
-    const { title, problem, question, taskInfo, instruction } = body;
+    const contentType = c.req.header("content-type") || "";
+
+    let title = "";
+    let problem = "";
+    let question = "";
+    let taskInfo = "";
+    let instruction = "";
+    let imageBuffer: Buffer | null = null;
+    let imageType: string | null = null;
+
+    if (contentType.includes("multipart/form-data")) {
+      const body = await c.req.parseBody();
+      title = (body["title"] as string) || "";
+      problem = (body["problem"] as string) || "";
+      question = (body["question"] as string) || "";
+      taskInfo = (body["taskInfo"] as string) || "";
+      instruction = (body["instruction"] as string) || "";
+      const file = body["file"] as any;
+      if (
+        file &&
+        typeof file === "object" &&
+        typeof file.arrayBuffer === "function" &&
+        file.size > 0
+      ) {
+        const arrayBuffer = await file.arrayBuffer();
+        imageBuffer = Buffer.from(arrayBuffer);
+        imageType = file.type || "image/jpeg";
+      }
+    } else {
+      const body = await c.req.json();
+      title = body.title || "";
+      problem = body.problem || "";
+      question = body.question || "";
+      taskInfo = body.taskInfo || "";
+      instruction = body.instruction || "";
+    }
 
     if (!title || !title.trim()) {
       return c.json({ error: "Judul diskusi harus diisi." }, 400);
@@ -328,6 +427,8 @@ announcementsRoute.post("/", adminMiddleware, async (c: any) => {
       instruction: instruction ? instruction.trim() : "",
       authorId: user.id,
       authorName,
+      imageBlob: imageBuffer,
+      imageType,
       createdAt: now,
     });
 
@@ -342,6 +443,7 @@ announcementsRoute.post("/", adminMiddleware, async (c: any) => {
         taskInfo,
         instruction,
         authorName,
+        hasImage: !!imageBuffer,
         createdAt: now,
       },
     });
@@ -351,14 +453,52 @@ announcementsRoute.post("/", adminMiddleware, async (c: any) => {
   }
 });
 
-// PUT /api/announcements/:id - Admin updates announcement
+// PUT /api/announcements/:id - Admin updates announcement (supports optional image update/delete)
 announcementsRoute.put("/:id", adminMiddleware, async (c: any) => {
   try {
     const id = c.req.param("id");
-    const body = await c.req.json();
-    const { title, problem, question, taskInfo, instruction } = body;
+    const contentType = c.req.header("content-type") || "";
 
-    if (!title || !title.trim()) {
+    let title: string | undefined;
+    let problem: string | undefined;
+    let question: string | undefined;
+    let taskInfo: string | undefined;
+    let instruction: string | undefined;
+    let imageBuffer: Buffer | null = null;
+    let imageType: string | null = null;
+    let removeImage = false;
+
+    if (contentType.includes("multipart/form-data")) {
+      const body = await c.req.parseBody();
+      title = body["title"] as string;
+      problem = body["problem"] as string;
+      question = body["question"] as string;
+      taskInfo = body["taskInfo"] as string;
+      instruction = body["instruction"] as string;
+      removeImage =
+        body["removeImage"] === "true" || body["removeImage"] === true;
+      const file = body["file"] as any;
+      if (
+        file &&
+        typeof file === "object" &&
+        typeof file.arrayBuffer === "function" &&
+        file.size > 0
+      ) {
+        const arrayBuffer = await file.arrayBuffer();
+        imageBuffer = Buffer.from(arrayBuffer);
+        imageType = file.type || "image/jpeg";
+      }
+    } else {
+      const body = await c.req.json();
+      title = body.title;
+      problem = body.problem;
+      question = body.question;
+      taskInfo = body.taskInfo;
+      instruction = body.instruction;
+      removeImage = !!body.removeImage;
+    }
+
+    if (title !== undefined && (!title || !title.trim())) {
       return c.json({ error: "Judul diskusi harus diisi." }, 400);
     }
 
@@ -373,17 +513,27 @@ announcementsRoute.put("/:id", adminMiddleware, async (c: any) => {
 
     const now = new Date().toISOString();
 
+    const updatePayload: any = {
+      title: title !== undefined ? title.trim() : existing.title,
+      problem: problem !== undefined ? problem.trim() : existing.problem,
+      question: question !== undefined ? question.trim() : existing.question,
+      taskInfo: taskInfo !== undefined ? taskInfo.trim() : existing.taskInfo,
+      instruction:
+        instruction !== undefined ? instruction.trim() : existing.instruction,
+      updatedAt: now,
+    };
+
+    if (imageBuffer) {
+      updatePayload.imageBlob = imageBuffer;
+      updatePayload.imageType = imageType;
+    } else if (removeImage) {
+      updatePayload.imageBlob = null;
+      updatePayload.imageType = null;
+    }
+
     await db
       .update(announcements)
-      .set({
-        title: title.trim(),
-        problem: problem !== undefined ? problem.trim() : existing.problem,
-        question: question !== undefined ? question.trim() : existing.question,
-        taskInfo: taskInfo !== undefined ? taskInfo.trim() : existing.taskInfo,
-        instruction:
-          instruction !== undefined ? instruction.trim() : existing.instruction,
-        updatedAt: now,
-      })
+      .set(updatePayload)
       .where(eq(announcements.id, id));
 
     return c.json({
