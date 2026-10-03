@@ -118,13 +118,11 @@ app.route('/api/announcements', announcementsRoute)
 
 
 const port = Number(process.env.PORT) || 8787
+const hostname = process.env.HOST || '0.0.0.0'
 
 if (!process.env.VERCEL) {
-  import('@hono/node-server').then(({ serve }) => {
-    console.log(`API running on http://localhost:${port}`)
-    serve({ fetch: app.fetch, port })
-  }).catch(err => {
-    console.error('Failed to start local server:', err)
+  serve({ fetch: app.fetch, port, hostname }, ({ address }) => {
+    console.log(`API running on http://${address === '::' ? 'localhost' : address}:${port}`)
   })
 }
 
