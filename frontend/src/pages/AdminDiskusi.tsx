@@ -12,7 +12,7 @@ import {
   FiSearch,
   FiX,
   FiImage,
-  FiCalendar,
+  // FiCalendar,
   FiRefreshCw,
   FiCheckCircle,
   FiClock,
@@ -593,12 +593,12 @@ export default function AdminDiskusi() {
                             <h2 className="text-sm md:text-base font-black text-[#2C2B30] leading-snug line-clamp-2 group-hover:text-[#8C66FF] transition-colors break-words">
                               {ann.title}
                             </h2>
-                            <p className="text-[11px] text-[#9C98A6] font-semibold mt-1 flex items-center gap-1.5 min-w-0">
+                            {/* <p className="text-[11px] text-[#9C98A6] font-semibold mt-1 flex items-center gap-1.5 min-w-0">
                               <FiCalendar size={12} className="shrink-0" />
                               <span className="truncate">
                                 {formatDateIndo(ann.createdAt)}
                               </span>
-                            </p>
+                            </p> */}
                           </div>
 
                           {/* Edit / Delete Buttons */}

@@ -739,10 +739,10 @@ export default function RuangDiskusi() {
                         </h2>
 
                         {/* Author / Date Subtitle */}
-                        <p className="text-[10px] text-[#9C98A6] font-medium mt-0.5 truncate">
+                        {/* <p className="text-[10px] text-[#9C98A6] font-medium mt-0.5 truncate">
                           {ann.authorName || "Guru"} •{" "}
                           {formatDateIndo(ann.createdAt)}
-                        </p>
+                        </p> */}
                       </div>
 
                       {/* Right Chevron Arrow */}
