@@ -37,6 +37,7 @@ interface Submission {
   answers: Record<string, number[]>;
   score: number;
   duration?: number;
+  violationCount?: number;
   createdAt: string;
 }
 
@@ -67,7 +68,7 @@ export default function QuizAnalysis({
     "SUMMARY",
   );
   const [scoreSort, setScoreSort] = useState<
-    "NAME_ASC" | "SCORE_DESC" | "SCORE_ASC"
+    "NAME_ASC" | "SCORE_DESC" | "SCORE_ASC" | "VIOLATION_DESC"
   >("NAME_ASC");
   const [itemSort, setItemSort] = useState<
     | "ORDER_ASC"
@@ -162,6 +163,8 @@ export default function QuizAnalysis({
       return b.score - a.score;
     } else if (scoreSort === "SCORE_ASC") {
       return a.score - b.score;
+    } else if (scoreSort === "VIOLATION_DESC") {
+      return (b.violationCount ?? 0) - (a.violationCount ?? 0);
     } else {
       return a.studentName.localeCompare(b.studentName);
     }
@@ -433,12 +436,13 @@ export default function QuizAnalysis({
                         <option value="NAME_ASC">Abjad</option>
                         <option value="SCORE_DESC">Skor Terbaik</option>
                         <option value="SCORE_ASC">Skor Terendah</option>
+                        <option value="VIOLATION_DESC">Pelanggaran Terbanyak</option>
                       </select>
                     </div>
                   </div>
 
                   <div className="flex-1 overflow-auto border border-[#F0EDFF] rounded-[24px] shadow-[0_4px_12px_rgba(0,0,0,0.02)] bg-white no-scrollbar">
-                    <table className="w-full min-w-[500px] border-collapse text-left text-xs md:text-sm">
+                    <table className="w-full min-w-[580px] border-collapse text-left text-xs md:text-sm">
                       <thead className="sticky top-0 bg-[#FAF9FF] z-10">
                         <tr className="bg-[#FAF9FF] text-[#2C2B30] border-b border-[#F0EDFF] uppercase font-black text-[9px] md:text-[10px] tracking-wider">
                           <th className="p-3.5 md:p-4 border-r border-[#F0EDFF]/50 whitespace-nowrap">
@@ -452,6 +456,9 @@ export default function QuizAnalysis({
                           </th>
                           <th className="p-3.5 md:p-4 border-r border-[#F0EDFF]/50 text-center whitespace-nowrap">
                             Terisi / Kosong
+                          </th>
+                          <th className="p-3.5 md:p-4 border-r border-[#F0EDFF]/50 text-center whitespace-nowrap">
+                            Keluar App
                           </th>
                           <th className="p-3.5 md:p-4 text-center whitespace-nowrap">Skor Akhir</th>
                         </tr>
@@ -493,6 +500,15 @@ export default function QuizAnalysis({
                                 <span className="text-[#FF5E8C] font-bold">
                                    {subEmptyCount}
                                 </span>
+                              </td>
+                              <td className="p-3.5 md:p-4 border-r border-[#F0EDFF]/50 text-center font-mono font-bold whitespace-nowrap">
+                                {(sub.violationCount ?? 0) > 0 ? (
+                                  <span className="text-[#FF5E8C]">
+                                    {sub.violationCount}x
+                                  </span>
+                                ) : (
+                                  <span className="text-[#9C98A6]">0</span>
+                                )}
                               </td>
                               <td className="p-3.5 md:p-4 text-center font-mono font-black text-sm md:text-base text-[#8C66FF] whitespace-nowrap">
                                 <div className="flex flex-col items-center gap-1">
@@ -673,7 +689,7 @@ export default function QuizAnalysis({
             </div>
 
             {/* Score & Summary Metrics */}
-            <div className="p-2.5 sm:p-3.5 md:p-4 grid grid-cols-3 gap-2 sm:gap-2.5 md:gap-4 bg-white/70 border-b border-[#F0EDFF] shrink-0">
+            <div className="p-2.5 sm:p-3.5 md:p-4 grid grid-cols-4 gap-2 sm:gap-2.5 md:gap-4 bg-white/70 border-b border-[#F0EDFF] shrink-0">
               <div className="bg-white rounded-xl sm:rounded-2xl p-2 sm:p-3 border border-[#F0EDFF] text-center flex flex-col shadow-xs min-w-0">
                 <span className="text-[7.5px] sm:text-[9px] uppercase tracking-wider font-extrabold text-[#9C98A6] truncate">
                   Skor Siswa
@@ -709,6 +725,20 @@ export default function QuizAnalysis({
                 </span>
                 <span className="text-sm sm:text-base md:text-xl font-black text-[#2C2B30] mt-0.5 font-mono truncate">
                   {formatDurationFriendly(selectedSubmission.duration)}
+                </span>
+              </div>
+              <div className="bg-white rounded-xl sm:rounded-2xl p-2 sm:p-3 border border-[#F0EDFF] text-center flex flex-col shadow-xs min-w-0">
+                <span className="text-[7.5px] sm:text-[9px] uppercase tracking-wider font-extrabold text-[#9C98A6] truncate">
+                  Keluar App
+                </span>
+                <span
+                  className={`text-sm sm:text-base md:text-xl font-black mt-0.5 truncate ${
+                    (selectedSubmission.violationCount ?? 0) > 0
+                      ? "text-[#FF5E8C]"
+                      : "text-[#2C2B30]"
+                  }`}
+                >
+                  {selectedSubmission.violationCount ?? 0}x
                 </span>
               </div>
             </div>

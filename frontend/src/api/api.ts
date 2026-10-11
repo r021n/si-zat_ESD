@@ -180,7 +180,7 @@ export async function deleteQuizApi(token: string, id: string) {
 export async function submitQuizAnswersApi(
   token: string,
   id: string,
-  answersData: { answers: any; score: number; createdAt?: string; duration?: number }
+  answersData: { answers: any; score: number; createdAt?: string; duration?: number; violationCount?: number }
 ) {
   clearQuizzesCache();
   const response = await fetch(`${API_URL}/api/quiz/${id}/submit`, {

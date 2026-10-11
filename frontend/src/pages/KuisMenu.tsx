@@ -106,11 +106,8 @@ export default function KuisMenu() {
 
     const handleAppLeft = () => {
       wasBackground = true;
-      setViolationCount((prev) => {
-        const next = prev + 1;
-        violationCountRef.current = next;
-        return next;
-      });
+      violationCountRef.current += 1;
+      setViolationCount(violationCountRef.current);
     };
 
     const handleAppReturned = async () => {
@@ -235,6 +232,8 @@ export default function KuisMenu() {
     setSubmitted(true);
     setShowReview(true);
     setHistoricDuration(sub.duration !== undefined ? sub.duration : null);
+    setViolationCount(sub.violationCount || 0);
+    violationCountRef.current = sub.violationCount || 0;
   };
 
   // Fetch quizzes on load
@@ -343,6 +342,7 @@ export default function KuisMenu() {
         answers,
         score,
         duration: elapsedTime,
+        violationCount: violationCountRef.current,
         createdAt: submittedAt,
       });
 
@@ -359,6 +359,7 @@ export default function KuisMenu() {
           answers,
           score,
           duration: elapsedTime,
+          violationCount: violationCountRef.current,
           createdAt: submittedAt,
         },
         ...prev,

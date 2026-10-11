@@ -39,6 +39,7 @@ export const submissions = sqliteTable('submissions', {
   answers: text('answers').notNull(), // JSON record mapping questionId -> number[]
   score: integer('score').notNull(),
   duration: integer('duration'),
+  violationCount: integer('violation_count').default(0),
   createdAt: text('created_at').notNull(),
 })
 

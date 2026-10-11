@@ -41,6 +41,7 @@ interface Submission {
   answers: Record<string, number[]>;
   score: number;
   duration?: number;
+  violationCount?: number;
   createdAt: string;
 }
 
