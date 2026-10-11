@@ -30,6 +30,7 @@ interface Quiz {
   createdAt: string;
   questions: Question[];
   submissionsCount?: number;
+  kkm?: number | null;
 }
 
 interface Submission {
@@ -604,6 +605,16 @@ export default function AdminKuis() {
               <QuizAnalysis
                 selectedQuiz={selectedQuiz}
                 submissions={submissions}
+                onKkmChange={(kkm) => {
+                  setSelectedQuiz((prev) =>
+                    prev ? { ...prev, kkm } : prev,
+                  );
+                  setQuizzes((prev) =>
+                    prev.map((q) =>
+                      q.id === selectedQuiz.id ? { ...q, kkm } : q,
+                    ),
+                  );
+                }}
                 onClose={() => {
                   setMode("LIST");
                   setSelectedQuiz(null);

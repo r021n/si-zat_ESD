@@ -82,7 +82,8 @@ quiz.get('/', async (c: any) => {
         createdAt: q.createdAt,
         questions: parsedQuestions,
         submissionsCount: quizSubmissions.length,
-        hasSubmitted: submittedQuizIds.has(q.id)
+        hasSubmitted: submittedQuizIds.has(q.id),
+        kkm: q.kkm ?? null
       })
     }
 
@@ -219,6 +220,35 @@ quiz.put('/:id', adminMiddleware, async (c: any) => {
   } catch (error: any) {
     console.error('Error updating quiz:', error)
     return c.json({ error: 'Gagal memperbarui data kuis.' }, 500)
+  }
+})
+
+// PATCH /api/quiz/:id/kkm - Set or clear the KKM (minimum mastery score) of a quiz (Admin only)
+quiz.patch('/:id/kkm', adminMiddleware, async (c: any) => {
+  try {
+    const id = c.req.param('id')
+    const { kkm } = await c.req.json()
+
+    if (kkm !== null) {
+      const kkmNum = Number(kkm)
+      if (!Number.isInteger(kkmNum) || kkmNum < 0 || kkmNum > 100) {
+        return c.json({ error: 'KKM harus berupa angka bulat antara 0 dan 100.' }, 400)
+      }
+    }
+
+    const [updated] = await db.update(quizzes)
+      .set({ kkm: kkm === null ? null : Number(kkm) })
+      .where(eq(quizzes.id, id))
+      .returning({ id: quizzes.id })
+
+    if (!updated) {
+      return c.json({ error: 'Kuis tidak ditemukan.' }, 404)
+    }
+
+    return c.json({ success: true, message: kkm === null ? 'KKM berhasil dihapus.' : 'KKM berhasil disimpan.', kkm: kkm === null ? null : Number(kkm) })
+  } catch (error: any) {
+    console.error('Error updating quiz KKM:', error)
+    return c.json({ error: 'Gagal memperbarui KKM kuis.' }, 500)
   }
 })
 

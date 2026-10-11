@@ -1,10 +1,15 @@
 import { useState } from "react";
+import { useAuthStore } from "../../store/authStore";
+import { updateQuizKkmApi } from "../../api/api";
 import {
   FiArrowLeft,
   FiX,
   FiCheckCircle,
   FiXCircle,
   FiMinusCircle,
+  FiAlertTriangle,
+  FiSave,
+  FiTrash2,
 } from "react-icons/fi";
 
 interface Question {
@@ -21,6 +26,7 @@ interface Quiz {
   title: string;
   createdAt: string;
   questions: Question[];
+  kkm?: number | null;
 }
 
 interface Submission {
@@ -38,6 +44,7 @@ interface QuizAnalysisProps {
   selectedQuiz: Quiz;
   submissions: Submission[];
   onClose: () => void;
+  onKkmChange?: (kkm: number | null) => void;
 }
 
 const formatDurationFriendly = (seconds?: number) => {
@@ -53,7 +60,9 @@ export default function QuizAnalysis({
   selectedQuiz,
   submissions,
   onClose,
+  onKkmChange,
 }: QuizAnalysisProps) {
+  const { token } = useAuthStore();
   const [analysisTab, setAnalysisTab] = useState<"SUMMARY" | "ITEMS">(
     "SUMMARY",
   );
@@ -69,6 +78,60 @@ export default function QuizAnalysis({
   >("ORDER_ASC");
   const [selectedSubmission, setSelectedSubmission] =
     useState<Submission | null>(null);
+
+  // KKM (Ketuntasan Minimal) states — bound to this quiz only
+  const [kkmValue, setKkmValue] = useState<number | null>(
+    selectedQuiz.kkm ?? null,
+  );
+  const [kkmInput, setKkmInput] = useState<string>(
+    selectedQuiz.kkm !== null && selectedQuiz.kkm !== undefined
+      ? String(selectedQuiz.kkm)
+      : "",
+  );
+  const [savingKkm, setSavingKkm] = useState(false);
+  const [kkmError, setKkmError] = useState<string | null>(null);
+  const [kkmSavedFlash, setKkmSavedFlash] = useState(false);
+
+  const kkmActive = kkmValue !== null;
+
+  const handleSaveKkm = async () => {
+    if (!token || savingKkm) return;
+    const raw = kkmInput.trim();
+    const kkmNum = Number(raw);
+    if (raw === "" || !Number.isInteger(kkmNum) || kkmNum < 0 || kkmNum > 100) {
+      setKkmError("KKM harus berupa angka bulat antara 0 dan 100.");
+      return;
+    }
+    setKkmError(null);
+    setSavingKkm(true);
+    try {
+      await updateQuizKkmApi(token, selectedQuiz.id, kkmNum);
+      setKkmValue(kkmNum);
+      onKkmChange?.(kkmNum);
+      setKkmSavedFlash(true);
+      setTimeout(() => setKkmSavedFlash(false), 2000);
+    } catch (err: any) {
+      setKkmError(err.message || "Gagal menyimpan KKM.");
+    } finally {
+      setSavingKkm(false);
+    }
+  };
+
+  const handleClearKkm = async () => {
+    if (!token || savingKkm) return;
+    setKkmError(null);
+    setSavingKkm(true);
+    try {
+      await updateQuizKkmApi(token, selectedQuiz.id, null);
+      setKkmValue(null);
+      setKkmInput("");
+      onKkmChange?.(null);
+    } catch (err: any) {
+      setKkmError(err.message || "Gagal menghapus KKM.");
+    } finally {
+      setSavingKkm(false);
+    }
+  };
 
   const quizSubmissions = submissions.filter(
     (s) => s.quizId === selectedQuiz.id,
@@ -88,6 +151,10 @@ export default function QuizAnalysis({
     quizSubmissions.length > 0
       ? Math.min(...quizSubmissions.map((s) => s.score))
       : 0;
+
+  const belowKkmCount = kkmActive
+    ? quizSubmissions.filter((s) => s.score < (kkmValue as number)).length
+    : 0;
 
   // Sorting logic for student submissions
   const sortedSubmissions = [...quizSubmissions].sort((a, b) => {
@@ -231,6 +298,78 @@ export default function QuizAnalysis({
             </div>
           </div>
 
+          {/* KKM Setting Card */}
+          <div className="bg-white rounded-[20px] md:rounded-[24px] p-4 md:p-5 shadow-[0_4px_12px_rgba(0,0,0,0.02)] md:shadow-[0_4px_16px_rgba(0,0,0,0.03)] border border-[#F0EDFF] flex flex-col md:flex-row md:items-center gap-3 md:gap-5 shrink-0">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-[#9C98A6]">
+                  KKM (Ketuntasan Minimal)
+                </span>
+                {kkmActive && (
+                  <span className="px-2.5 py-0.5 bg-[#F0ECFF] text-[#8C66FF] rounded-full text-[9px] md:text-[10px] font-black">
+                    KKM: {kkmValue}
+                  </span>
+                )}
+                {kkmSavedFlash && (
+                  <span className="px-2.5 py-0.5 bg-[#E6F8F6] text-[#2C8578] rounded-full text-[9px] md:text-[10px] font-black flex items-center gap-1">
+                    <FiCheckCircle size={11} /> Tersimpan
+                  </span>
+                )}
+              </div>
+              <p className="text-[10px] md:text-xs text-[#9C98A6] font-semibold mt-1 leading-relaxed">
+                Siswa dengan skor di bawah KKM akan diberi label "Di Bawah KKM"
+                pada daftar nilai.
+                {kkmActive && belowKkmCount > 0 && (
+                  <>
+                    {" "}
+                    <strong className="text-[#FF5E8C] font-extrabold">
+                      {belowKkmCount} siswa
+                    </strong>{" "}
+                    saat ini di bawah KKM.
+                  </>
+                )}
+              </p>
+              {kkmError && (
+                <p className="text-[10px] font-bold text-[#FF5E8C] mt-1.5">
+                  {kkmError}
+                </p>
+              )}
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <input
+                type="number"
+                min={0}
+                max={100}
+                value={kkmInput}
+                onChange={(e) => {
+                  setKkmInput(e.target.value);
+                  setKkmError(null);
+                }}
+                placeholder="70"
+                className="w-20 md:w-24 border border-[#F0EDFF] bg-[#FAF9FF] text-[#2C2B30] px-3 py-2.5 text-sm md:text-base font-black rounded-xl outline-none text-center focus:border-[#8C66FF]"
+              />
+              <button
+                onClick={handleSaveKkm}
+                disabled={savingKkm}
+                className="px-4 py-2.5 bg-[#8C66FF] text-white font-extrabold uppercase tracking-wider text-[10px] rounded-full shadow-md shadow-purple-100 cursor-pointer flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <FiSave size={13} />
+                {savingKkm ? "Menyimpan..." : "Simpan"}
+              </button>
+              {kkmActive && (
+                <button
+                  onClick={handleClearKkm}
+                  disabled={savingKkm}
+                  title="Hapus KKM"
+                  className="px-3 py-2.5 bg-white border border-[#FFEAEA] text-[#FF5E8C] font-extrabold uppercase tracking-wider text-[10px] rounded-full shadow-sm cursor-pointer flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <FiTrash2 size={13} />
+                  Hapus
+                </button>
+              )}
+            </div>
+          </div>
+
           {/* Tab Navigation */}
           <div className="grid grid-cols-2 md:max-w-md bg-[#F0ECFF]/50 p-1.5 rounded-2xl border border-[#F0EDFF] shrink-0">
             <button
@@ -268,7 +407,22 @@ export default function QuizAnalysis({
               {analysisTab === "SUMMARY" && (
                 <div className="flex flex-col gap-2 flex-1 overflow-hidden">
                   <div className="flex justify-between items-center text-[9px] md:text-[10px] font-bold text-[#9C98A6] uppercase px-1 shrink-0">
-                    <span>Daftar Nilai Siswa</span>
+                    <span className="flex items-center gap-1.5 flex-wrap">
+                      Daftar Nilai Siswa
+                      {kkmActive && (
+                        <span
+                          className={`px-2 py-0.5 rounded-full text-[9px] font-black normal-case ${
+                            belowKkmCount > 0
+                              ? "bg-[#FFEBF0] text-[#FF5E8C]"
+                              : "bg-[#E6F8F6] text-[#2C8578]"
+                          }`}
+                        >
+                          {belowKkmCount > 0
+                            ? `${belowKkmCount} di bawah KKM ${kkmValue}`
+                            : `Semua tuntas (KKM ${kkmValue})`}
+                        </span>
+                      )}
+                    </span>
                     <div className="flex items-center gap-1.5">
                       <span>Urutan:</span>
                       <select
@@ -341,7 +495,16 @@ export default function QuizAnalysis({
                                 </span>
                               </td>
                               <td className="p-3.5 md:p-4 text-center font-mono font-black text-sm md:text-base text-[#8C66FF] whitespace-nowrap">
-                                {sub.score}
+                                <div className="flex flex-col items-center gap-1">
+                                  <span>{sub.score}</span>
+                                  {kkmActive &&
+                                    sub.score < (kkmValue as number) && (
+                                      <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-[#FFEBF0] text-[#FF5E8C] rounded-full text-[8px] md:text-[9px] font-black uppercase tracking-wider">
+                                        <FiAlertTriangle size={9} />
+                                        Di Bawah KKM
+                                      </span>
+                                    )}
+                                </div>
                               </td>
                             </tr>
                           );
@@ -521,6 +684,13 @@ export default function QuizAnalysis({
                     /100
                   </span>
                 </span>
+                {kkmActive &&
+                  selectedSubmission.score < (kkmValue as number) && (
+                    <span className="mt-1 inline-flex items-center justify-center gap-1 px-2 py-0.5 bg-[#FFEBF0] text-[#FF5E8C] rounded-full text-[8px] sm:text-[9px] font-black uppercase tracking-wider shrink-0">
+                      <FiAlertTriangle size={9} />
+                      Di Bawah KKM
+                    </span>
+                  )}
               </div>
               <div className="bg-white rounded-xl sm:rounded-2xl p-2 sm:p-3 border border-[#F0EDFF] text-center flex flex-col shadow-xs min-w-0">
                 <span className="text-[7.5px] sm:text-[9px] uppercase tracking-wider font-extrabold text-[#9C98A6] truncate">

@@ -200,6 +200,26 @@ export async function submitQuizAnswersApi(
   return data;
 }
 
+export async function updateQuizKkmApi(
+  token: string,
+  id: string,
+  kkm: number | null,
+) {
+  const response = await fetch(`${API_URL}/api/quiz/${id}/kkm`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`,
+    },
+    body: JSON.stringify({ kkm }),
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || "Gagal memperbarui KKM kuis");
+  }
+  return data;
+}
+
 export async function getQuizSubmissionsApi(token: string, id: string) {
   const response = await fetch(`${API_URL}/api/quiz/${id}/submissions`, {
     method: "GET",
