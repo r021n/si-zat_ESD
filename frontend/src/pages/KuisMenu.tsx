@@ -1,13 +1,17 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { App as CapApp } from "@capacitor/app";
+import { Capacitor } from "@capacitor/core";
 import { useAuthStore } from "../store/authStore";
 import { useCustomDialog } from "../components/CustomDialog";
 import { useAppBack } from "../hooks/useAppBack";
+import { useKioskMode } from "../hooks/useKioskMode";
+import { useImmersiveMode } from "../hooks/useImmersiveMode";
 import {
   getQuizzesApi,
   submitQuizAnswersApi,
   getMySubmissionsApi,
 } from "../api/api";
-import { FiArrowLeft, FiClock } from "react-icons/fi";
+import { FiArrowLeft, FiClock, FiShield, FiAlertTriangle } from "react-icons/fi";
 import { LuPenTool, LuChartBar } from "react-icons/lu";
 
 interface Question {
@@ -46,6 +50,8 @@ export default function KuisMenu() {
   const goBack = useAppBack();
   const { token, user } = useAuthStore();
   const { showAlert, showConfirm } = useCustomDialog();
+  const { startLock, stopLock } = useKioskMode();
+  const { enterImmersive, exitImmersive } = useImmersiveMode();
 
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [activeQuiz, setActiveQuiz] = useState<Quiz | null>(null);
@@ -58,6 +64,20 @@ export default function KuisMenu() {
   const [showReview, setShowReview] = useState<boolean>(false);
   const [submittingRes, setSubmittingRes] = useState<boolean>(false);
 
+  // Violation / Lock States
+  const [violationCount, setViolationCount] = useState<number>(0);
+  const violationCountRef = useRef<number>(0);
+  const activeQuizRef = useRef<Quiz | null>(null);
+  const submittedRef = useRef<boolean>(false);
+
+  useEffect(() => {
+    activeQuizRef.current = activeQuiz;
+  }, [activeQuiz]);
+
+  useEffect(() => {
+    submittedRef.current = submitted;
+  }, [submitted]);
+
   // Timer States
   const [elapsedTime, setElapsedTime] = useState<number>(0);
   const [historicDuration, setHistoricDuration] = useState<number | null>(null);
@@ -66,6 +86,105 @@ export default function KuisMenu() {
   const [viewingHistory, setViewingHistory] = useState<boolean>(false);
   const [historySubmissions, setHistorySubmissions] = useState<any[]>([]);
   const [loadingHistory, setLoadingHistory] = useState<boolean>(false);
+
+  // Lock Task Mode & Exit Detection Effect
+  useEffect(() => {
+    if (!activeQuiz || submitted) return;
+
+    // Start Screen Pinning / LockTask and Immersive Fullscreen
+    startLock();
+    enterImmersive();
+
+    let wasBackground = false;
+
+    const handleAppLeft = () => {
+      wasBackground = true;
+      setViolationCount((prev) => {
+        const next = prev + 1;
+        violationCountRef.current = next;
+        return next;
+      });
+    };
+
+    const handleAppReturned = async () => {
+      if (wasBackground) {
+        wasBackground = false;
+        // Re-enforce lock and immersive display
+        await startLock();
+        await enterImmersive();
+
+        // Warning dialog
+        await showAlert(
+          `PERINGATAN!\n\nAnda terdeteksi meninggalkan aplikasi kuis (Pelanggaran ke-${violationCountRef.current}).\n\nHarap tetap berada di dalam aplikasi selama pengerjaan tes!`,
+          "Peringatan Ujian"
+        );
+      }
+    };
+
+    let capAppListener: any = null;
+    if (Capacitor.isNativePlatform()) {
+      capAppListener = CapApp.addListener("appStateChange", (state) => {
+        if (!state.isActive) {
+          handleAppLeft();
+        } else {
+          handleAppReturned();
+        }
+      });
+    }
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        handleAppLeft();
+      } else {
+        handleAppReturned();
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      if (capAppListener) {
+        capAppListener.then((l: any) => l.remove());
+      }
+      stopLock();
+      exitImmersive();
+    };
+  }, [
+    activeQuiz,
+    submitted,
+    startLock,
+    stopLock,
+    enterImmersive,
+    exitImmersive,
+    showAlert,
+  ]);
+
+  // Handle hardware / global back button during quiz
+  useEffect(() => {
+    const onKuisBack = async () => {
+      if (activeQuizRef.current && !submittedRef.current) {
+        const confirmExit = await showConfirm(
+          "Batal mengerjakan dan kembali ke daftar tes? Progres Anda saat ini akan hilang.",
+          "Konfirmasi Keluar Tes"
+        );
+        if (confirmExit) {
+          await stopLock();
+          await exitImmersive();
+          setActiveQuiz(null);
+        }
+      } else if (viewingHistory) {
+        setViewingHistory(false);
+      } else {
+        goBack("/menu");
+      }
+    };
+
+    window.addEventListener("kuisBackButton", onKuisBack);
+    return () => {
+      window.removeEventListener("kuisBackButton", onKuisBack);
+    };
+  }, [viewingHistory, goBack, showConfirm, stopLock, exitImmersive]);
 
   // Timer Effect
   useEffect(() => {
@@ -129,6 +248,8 @@ export default function KuisMenu() {
     setShowReview(false);
     setElapsedTime(0);
     setHistoricDuration(null);
+    setViolationCount(0);
+    violationCountRef.current = 0;
   };
 
   const handleSelectOption = (
@@ -202,6 +323,8 @@ export default function KuisMenu() {
       });
 
       setSubmitted(true);
+      await stopLock();
+      await exitImmersive();
     } catch (err: any) {
       await showAlert(
         err.message ||
@@ -268,12 +391,22 @@ export default function KuisMenu() {
                 </button>
               )}
               <div className="min-w-0 flex-1">
-                <p className="text-[10px] uppercase tracking-widest text-[#9C98A6] font-bold">
-                  {activeQuiz
-                    ? submitted
-                      ? "Hasil Tes"
-                      : "Pengerjaan Tes"
-                    : "Evaluasi Pembelajaran"}
+                <p className="text-[10px] uppercase tracking-widest text-[#9C98A6] font-bold flex items-center gap-1.5">
+                  {activeQuiz ? (
+                    submitted ? (
+                      "Hasil Tes"
+                    ) : (
+                      <>
+                        <span>Pengerjaan Tes</span>
+                        <span className="text-[#8C66FF] font-black">•</span>
+                        <span className="text-[#8C66FF] flex items-center gap-1 font-black">
+                          <FiShield size={11} /> Mode Terkunci
+                        </span>
+                      </>
+                    )
+                  ) : (
+                    "Evaluasi Pembelajaran"
+                  )}
                 </p>
                 <h1 className="text-xl font-extrabold text-[#2C2B30] leading-tight mt-0.5 truncate">
                   {activeQuiz
@@ -302,8 +435,11 @@ export default function KuisMenu() {
                     if (
                       await showConfirm(
                         "Batal mengerjakan dan kembali ke daftar tes? Progres Anda saat ini akan hilang.",
+                        "Konfirmasi Keluar Tes"
                       )
                     ) {
+                      await stopLock();
+                      await exitImmersive();
                       setActiveQuiz(null);
                     }
                   }}
@@ -467,6 +603,19 @@ export default function KuisMenu() {
                           }
                         </span>
                       </div>
+
+                      {/* Violation Alert Badge */}
+                      {violationCount > 0 && (
+                        <div className="w-full bg-[#FFF0F3] border border-[#FFD6E0] rounded-2xl px-4 py-2.5 flex items-center justify-between text-[#FF5E8C] text-[11px] font-bold">
+                          <span className="flex items-center gap-1.5">
+                            <FiAlertTriangle size={14} className="shrink-0" />
+                            <span>Peringatan: Terdeteksi keluar aplikasi</span>
+                          </span>
+                          <span className="bg-[#FF5E8C] text-white px-2 py-0.5 rounded-full text-[10px] font-black shrink-0">
+                            {violationCount}x
+                          </span>
+                        </div>
+                      )}
 
                       {/* Question Text */}
                       <div className="w-full bg-white rounded-3xl p-5 shadow-[0_4px_12px_rgba(0,0,0,0.02)] border border-[#F0EDFF] flex flex-col gap-3">

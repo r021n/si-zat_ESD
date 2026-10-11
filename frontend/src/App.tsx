@@ -116,6 +116,8 @@ function BackButtonHandler() {
           if (confirmExit) {
             CapApp.exitApp();
           }
+        } else if (currentPath === "/kuis") {
+          window.dispatchEvent(new CustomEvent("kuisBackButton"));
         } else {
           if (data.canGoBack) {
             window.history.back();
