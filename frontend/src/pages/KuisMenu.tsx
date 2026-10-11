@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { App as CapApp } from "@capacitor/app";
 import { Capacitor } from "@capacitor/core";
 import { useAuthStore } from "../store/authStore";
@@ -11,7 +11,13 @@ import {
   submitQuizAnswersApi,
   getMySubmissionsApi,
 } from "../api/api";
-import { FiArrowLeft, FiClock, FiShield, FiAlertTriangle } from "react-icons/fi";
+import {
+  FiArrowLeft,
+  FiClock,
+  FiShield,
+  FiAlertTriangle,
+  FiCheckCircle,
+} from "react-icons/fi";
 import { LuPenTool, LuChartBar } from "react-icons/lu";
 
 interface Question {
@@ -27,6 +33,7 @@ interface Quiz {
   title: string;
   createdAt: string;
   questions: Question[];
+  hasSubmitted?: boolean;
 }
 
 const formatDurationMMSS = (seconds: number) => {
@@ -195,22 +202,31 @@ export default function KuisMenu() {
     return () => clearInterval(interval);
   }, [activeQuiz, submitted, submittingRes]);
 
-  // Fetch history submissions when viewing history
+  // Fetch history submissions on load and when viewing history
   useEffect(() => {
-    if (!token || !viewingHistory) return;
+    if (!token) return;
     const fetchHistory = async () => {
-      setLoadingHistory(true);
+      if (viewingHistory) setLoadingHistory(true);
       try {
         const data = await getMySubmissionsApi(token);
         setHistorySubmissions(data);
       } catch (err: any) {
         console.error(err);
       } finally {
-        setLoadingHistory(false);
+        if (viewingHistory) setLoadingHistory(false);
       }
     };
     fetchHistory();
   }, [token, viewingHistory]);
+
+  // Latest submission per quiz (used to mark quizzes as done)
+  const myLatestSubmissions = useMemo(() => {
+    const map: Record<string, any> = {};
+    for (const sub of historySubmissions) {
+      if (!map[sub.quizId]) map[sub.quizId] = sub;
+    }
+    return map;
+  }, [historySubmissions]);
 
   const handleSelectHistory = (sub: any, quiz: Quiz | undefined) => {
     if (!quiz) return;
@@ -241,6 +257,12 @@ export default function KuisMenu() {
   if (!user) return null;
 
   const handleSelectQuiz = (quiz: Quiz) => {
+    if (quiz.hasSubmitted || myLatestSubmissions[quiz.id]) {
+      showAlert(
+        "Anda sudah pernah mengerjakan tes ini. Kuis hanya dapat dikerjakan satu kali.",
+      );
+      return;
+    }
     setActiveQuiz(quiz);
     setCurrentIdx(0);
     setAnswers({});
@@ -314,13 +336,33 @@ export default function KuisMenu() {
         (correctCount / activeQuiz.questions.length) * 100,
       );
 
+      const submittedAt = new Date().toLocaleString("id-ID");
+
       // Save submission to database
       await submitQuizAnswersApi(token, activeQuiz.id, {
         answers,
         score,
         duration: elapsedTime,
-        createdAt: new Date().toLocaleString("id-ID"),
+        createdAt: submittedAt,
       });
+
+      // Mark quiz as done locally so it cannot be started again
+      setQuizzes((prev) =>
+        prev.map((q) =>
+          q.id === activeQuiz.id ? { ...q, hasSubmitted: true } : q,
+        ),
+      );
+      setHistorySubmissions((prev) => [
+        {
+          id: `local-${activeQuiz.id}-${Date.now()}`,
+          quizId: activeQuiz.id,
+          answers,
+          score,
+          duration: elapsedTime,
+          createdAt: submittedAt,
+        },
+        ...prev,
+      ]);
 
       setSubmitted(true);
       await stopLock();
@@ -330,6 +372,16 @@ export default function KuisMenu() {
         err.message ||
           "Gagal mengirimkan jawaban ke server. Silakan coba lagi.",
       );
+      if (err?.status === 409) {
+        // Already submitted on the server — return to the quiz list
+        setActiveQuiz(null);
+        try {
+          const data = await getQuizzesApi(token, true);
+          setQuizzes(data);
+        } catch (refreshErr) {
+          console.error(refreshErr);
+        }
+      }
     } finally {
       setSubmittingRes(false);
     }
@@ -469,39 +521,68 @@ export default function KuisMenu() {
                   Belum ada tes yang tersedia.
                 </div>
               ) : (
-                quizzes.map((quiz) => (
-                  <button
-                    key={quiz.id}
-                    onClick={() => handleSelectQuiz(quiz)}
-                    className="w-full bg-white rounded-3xl p-5 flex items-center justify-between shadow-[0_4px_12px_rgba(0,0,0,0.02)] border border-[#F0EDFF] cursor-pointer text-left transition-none"
-                  >
-                    <div className="flex items-center gap-4 flex-1 min-w-0">
-                      <div className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-inner bg-[#FFEBF0] text-[#D95276]">
-                        <LuPenTool className="text-xl" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-sm font-extrabold text-[#2C2B30] tracking-wide truncate">
-                          {quiz.title}
-                        </h3>
-                        <p className="text-[10px] text-[#9C98A6] font-semibold mt-0.5">
-                          {quiz.questions.length} Soal &bull; Pilihan Ganda
-                        </p>
-                      </div>
-                    </div>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                      className="w-5 h-5 text-[#8C66FF] opacity-50 shrink-0 ml-2"
+                quizzes.map((quiz) => {
+                  const mySub = myLatestSubmissions[quiz.id];
+                  const isDone = quiz.hasSubmitted || !!mySub;
+
+                  return (
+                    <button
+                      key={quiz.id}
+                      onClick={() => {
+                        if (isDone && mySub) {
+                          handleSelectHistory(mySub, quiz);
+                        } else {
+                          handleSelectQuiz(quiz);
+                        }
+                      }}
+                      className="w-full bg-white rounded-3xl p-5 flex items-center justify-between shadow-[0_4px_12px_rgba(0,0,0,0.02)] border border-[#F0EDFF] cursor-pointer text-left transition-none"
                     >
-                      <path
-                        fillRule="evenodd"
-                        d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  </button>
-                ))
+                      <div className="flex items-center gap-4 flex-1 min-w-0">
+                        <div
+                          className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-inner ${
+                            isDone
+                              ? "bg-[#E6F8F6] text-[#2C8578]"
+                              : "bg-[#FFEBF0] text-[#D95276]"
+                          }`}
+                        >
+                          <LuPenTool className="text-xl" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-sm font-extrabold text-[#2C2B30] tracking-wide truncate">
+                            {quiz.title}
+                          </h3>
+                          <p className="text-[10px] text-[#9C98A6] font-semibold mt-0.5">
+                            {quiz.questions.length} Soal &bull; Pilihan Ganda
+                          </p>
+                        </div>
+                      </div>
+                      {isDone ? (
+                        <span className="flex items-center gap-1.5 shrink-0 ml-2 px-3 py-1.5 bg-[#E6F8F6] text-[#2C8578] rounded-full text-[10px] font-extrabold uppercase tracking-wider">
+                          <FiCheckCircle size={12} />
+                          Selesai
+                          {mySub ? (
+                            <span className="bg-[#2C8578] text-white px-1.5 py-0.5 rounded-full text-[9px] font-black">
+                              {mySub.score}
+                            </span>
+                          ) : null}
+                        </span>
+                      ) : (
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                          className="w-5 h-5 text-[#8C66FF] opacity-50 shrink-0 ml-2"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      )}
+                    </button>
+                  );
+                })
               )}
             </div>
           )}

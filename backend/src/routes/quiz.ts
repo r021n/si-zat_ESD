@@ -2,7 +2,7 @@ import { Hono } from 'hono'
 import { verify } from 'hono/jwt'
 import { db } from '../db/index.js'
 import { users, quizzes, questions, submissions } from '../db/schema.js'
-import { eq } from 'drizzle-orm'
+import { eq, and } from 'drizzle-orm'
 
 const quiz = new Hono()
 
@@ -51,7 +51,14 @@ quiz.use('*', authMiddleware)
 // GET /api/quiz - List all quizzes with their questions (accessible to both students and admins)
 quiz.get('/', async (c: any) => {
   try {
+    const user = c.get('user')
     const allQuizzes = await db.select().from(quizzes)
+
+    const mySubmissions = await db.select({ quizId: submissions.quizId })
+      .from(submissions)
+      .where(eq(submissions.userId, user.id))
+    const submittedQuizIds = new Set(mySubmissions.map(s => s.quizId))
+
     const result = []
 
     for (const q of allQuizzes) {
@@ -74,7 +81,8 @@ quiz.get('/', async (c: any) => {
         title: q.title,
         createdAt: q.createdAt,
         questions: parsedQuestions,
-        submissionsCount: quizSubmissions.length
+        submissionsCount: quizSubmissions.length,
+        hasSubmitted: submittedQuizIds.has(q.id)
       })
     }
 
@@ -235,6 +243,18 @@ quiz.post('/:id/submit', async (c: any) => {
 
     if (!answers || score === undefined) {
       return c.json({ error: 'Data pengerjaan kuis tidak lengkap.' }, 400)
+    }
+
+    const [existingSubmission] = await db.select({ id: submissions.id })
+      .from(submissions)
+      .where(and(
+        eq(submissions.quizId, quizId),
+        eq(submissions.userId, user.id)
+      ))
+      .limit(1)
+
+    if (existingSubmission) {
+      return c.json({ error: 'Anda sudah pernah mengerjakan kuis ini. Kuis hanya dapat dikerjakan satu kali.' }, 409)
     }
 
     const submissionId = `sub-${quizId}-${Date.now()}-${Math.floor(Math.random() * 1000)}`

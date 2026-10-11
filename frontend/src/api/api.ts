@@ -89,7 +89,7 @@ interface CacheItem<T> {
   timestamp: number;
 }
 
-let quizzesCache: CacheItem<any> | null = null;
+let quizzesCache: (CacheItem<any> & { token: string }) | null = null;
 let accessStatusCache: CacheItem<any> | null = null;
 
 const DEFAULT_TTL_MS = 60 * 1000; // 60 seconds for quizzes
@@ -105,7 +105,12 @@ export function clearAccessStatusCache() {
 
 export async function getQuizzesApi(token: string, forceRefresh = false) {
   const now = Date.now();
-  if (!forceRefresh && quizzesCache && (now - quizzesCache.timestamp < DEFAULT_TTL_MS)) {
+  if (
+    !forceRefresh &&
+    quizzesCache &&
+    quizzesCache.token === token &&
+    (now - quizzesCache.timestamp < DEFAULT_TTL_MS)
+  ) {
     return quizzesCache.data;
   }
 
@@ -119,7 +124,7 @@ export async function getQuizzesApi(token: string, forceRefresh = false) {
   if (!response.ok) {
     throw new Error(data.error || "Gagal mengambil kuis");
   }
-  quizzesCache = { data, timestamp: now };
+  quizzesCache = { data, timestamp: now, token };
   return data;
 }
 
@@ -177,6 +182,7 @@ export async function submitQuizAnswersApi(
   id: string,
   answersData: { answers: any; score: number; createdAt?: string; duration?: number }
 ) {
+  clearQuizzesCache();
   const response = await fetch(`${API_URL}/api/quiz/${id}/submit`, {
     method: "POST",
     headers: {
@@ -187,7 +193,9 @@ export async function submitQuizAnswersApi(
   });
   const data = await response.json();
   if (!response.ok) {
-    throw new Error(data.error || "Gagal mengirimkan jawaban kuis");
+    const error: any = new Error(data.error || "Gagal mengirimkan jawaban kuis");
+    error.status = response.status;
+    throw error;
   }
   return data;
 }
