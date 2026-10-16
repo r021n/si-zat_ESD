@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useAuthStore } from "../store/authStore";
 import { getAccessStatusApi } from "../api/api";
 import { LuLock, LuRefreshCw, LuLogOut } from "react-icons/lu";
+import { isAdmin } from "../utils/auth";
 
 export default function Locked() {
   const navigate = useNavigate();
@@ -18,10 +19,7 @@ export default function Locked() {
     }
 
     // Admins should not be on this page, redirect to menu
-    const isAdmin =
-      user.status.toLowerCase() === "admin" ||
-      user.email.toLowerCase().includes("admin");
-    if (isAdmin) {
+    if (isAdmin(user)) {
       navigate("/menu");
     }
   }, [user, navigate]);

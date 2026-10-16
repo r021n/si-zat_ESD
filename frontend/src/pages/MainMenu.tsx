@@ -15,6 +15,8 @@ import {
   LuMessageSquare,
 } from "react-icons/lu";
 import unsLogo from "../assets/uns_logo.webp";
+import { isAdmin } from "../utils/auth";
+import { formatAbbreviatedTime } from "../utils/time";
 
 interface MainMenuProps {
   onNavigate?: (menu: string) => void;
@@ -85,20 +87,6 @@ export default function MainMenu({ onNavigate }: MainMenuProps) {
     }
   };
 
-  const formatAbbreviatedTime = (seconds?: number) => {
-    if (!seconds || seconds <= 0) return "0 detik";
-    if (seconds < 60) return `${seconds} detik`;
-    if (seconds < 3600) {
-      const minutes = seconds / 60;
-      const formatted = minutes.toFixed(1).replace(".", ",");
-      return `${
-        formatted.endsWith(",0") ? Math.round(minutes) : formatted
-      } menit`;
-    }
-    const hours = seconds / 3600;
-    const formatted = hours.toFixed(1).replace(".", ",");
-    return `${formatted.endsWith(",0") ? Math.round(hours) : formatted} jam`;
-  };
 
   const formatFullUsageTime = (seconds?: number) => {
     if (!seconds) return "0 detik";
@@ -140,12 +128,10 @@ export default function MainMenu({ onNavigate }: MainMenuProps) {
   const displayName = user.nama || user.email.split("@")[0];
   const displayStatus = user.status.toUpperCase();
 
-  const isAdmin =
-    user.status.toLowerCase() === "admin" ||
-    user.email.toLowerCase().includes("admin");
+  const userIsAdmin = isAdmin(user);
 
   const menus = [
-    ...(isEnrolled || isAdmin
+    ...(isEnrolled || userIsAdmin
       ? [
           {
             id: "materi",
@@ -207,7 +193,7 @@ export default function MainMenu({ onNavigate }: MainMenuProps) {
     },
   ];
 
-  if (isAdmin) {
+  if (userIsAdmin) {
     menus.push({
       id: "admin",
       label: "Admin Panel",

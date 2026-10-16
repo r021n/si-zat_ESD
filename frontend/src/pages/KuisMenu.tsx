@@ -19,39 +19,8 @@ import {
   FiCheckCircle,
 } from "react-icons/fi";
 import { LuPenTool, LuChartBar } from "react-icons/lu";
-
-interface Question {
-  id: string;
-  text: string;
-  options: string[];
-  correctAnswers: number[];
-  images: string[];
-}
-
-interface Quiz {
-  id: string;
-  title: string;
-  createdAt: string;
-  questions: Question[];
-  hasSubmitted?: boolean;
-}
-
-const formatDurationMMSS = (seconds: number) => {
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  return `${mins.toString().padStart(2, "0")}:${secs
-    .toString()
-    .padStart(2, "0")}`;
-};
-
-const formatDurationFriendly = (seconds: number | undefined | null) => {
-  if (seconds === undefined || seconds === null) return "-";
-  if (seconds < 60) return `${seconds} detik`;
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  if (secs === 0) return `${mins} menit`;
-  return `${mins} menit ${secs} detik`;
-};
+import type { Quiz } from "../types/quiz";
+import { formatDurationFriendly, formatDurationMMSS } from "../utils/time";
 
 export default function KuisMenu() {
   const goBack = useAppBack();

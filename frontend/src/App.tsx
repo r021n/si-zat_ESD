@@ -1,16 +1,26 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import {
   HashRouter as Router,
   Routes,
   Route,
   Navigate,
-  useLocation,
-  useNavigate,
-  Outlet,
 } from "react-router-dom";
-import { App as CapApp } from "@capacitor/app";
-import { Capacitor } from "@capacitor/core";
-import { useCustomDialog } from "./components/CustomDialog";
+import { CustomDialogProvider } from "./components/CustomDialog";
+import { useAuthStore } from "./store/authStore";
+
+// Hooks
+import { useRouteTracker } from "./hooks/useRouteTracker";
+import { useAppBackButton } from "./hooks/useAppBackButton";
+import { useHeartbeatTracker } from "./hooks/useHeartbeatTracker";
+
+// Guards & Common UI
+import ProtectedRoute from "./components/guards/ProtectedRoute";
+import AdminRoute from "./components/guards/AdminRoute";
+import AccessGuard from "./components/guards/AccessGuard";
+import EnrollGuard from "./components/guards/EnrollGuard";
+import LoadingScreen from "./components/common/LoadingScreen";
+
+// Pages
 import Auth from "./pages/Auth";
 import MainMenu from "./pages/MainMenu";
 import Onboarding from "./pages/Onboarding";
@@ -20,13 +30,6 @@ import SimulasiPencemaranAir from "./components/simulations/water_pollution";
 import SimulasiEutrofikasi from "./components/simulations/eutrophication";
 import SimulasiPencemaranTanah from "./components/simulations/land_pollution";
 import SimulasiPencemaranUdara from "./components/simulations/air_pollution";
-import { useAuthStore } from "./store/authStore";
-import {
-  recordOpenApi,
-  recordUsageApi,
-  recordMenuClickApi,
-  getAccessStatusApi,
-} from "./api/api";
 import KuisMenu from "./pages/KuisMenu";
 import PenilaianBerpikirSistem from "./pages/PenilaianBerpikirSistem";
 import AdminMenu from "./pages/AdminMenu";
@@ -41,317 +44,66 @@ import AdminEnroll from "./pages/AdminEnroll";
 import RuangDiskusi from "./pages/RuangDiskusi";
 import AdminDiskusi from "./pages/AdminDiskusi";
 
-function RouteTracker() {
-  const location = useLocation();
-  const { token, user } = useAuthStore();
-
-  useEffect(() => {
-    if (!token || !user) return;
-
-    const pathname = location.pathname;
-    let menuKey = "";
-
-    if (pathname === "/materi") {
-      menuKey = "menu materi";
-    } else if (pathname === "/simulasi") {
-      menuKey = "menu simulasi";
-    } else if (pathname === "/simulasi/air") {
-      menuKey = "menu pencemaran air";
-    } else if (pathname === "/simulasi/eutrofikasi") {
-      menuKey = "menu eutrofikasi";
-    } else if (pathname === "/simulasi/tanah") {
-      menuKey = "menu pencemaran tanah";
-    } else if (pathname === "/simulasi/udara") {
-      menuKey = "menu pencemaran udara";
-    } else if (pathname === "/kuis") {
-      menuKey = "menu kuis";
-    } else if (pathname === "/kuis/berpikir-sistem") {
-      menuKey = "menu berpikir sistem";
-    } else if (pathname === "/profil-pengembang") {
-      menuKey = "menu profil pengembang";
-    } else if (pathname === "/profile-report") {
-      menuKey = "menu profil & report";
-    } else if (pathname.startsWith("/ruang-diskusi")) {
-      menuKey = "menu ruang diskusi";
-    }
-
-    if (menuKey) {
-      recordMenuClickApi(token, menuKey).catch((err) => {
-        console.error("Gagal mencatat kunjungan menu:", err);
-      });
-    }
-  }, [location.pathname, token, user]);
-
+function AppListeners() {
+  useRouteTracker();
+  useAppBackButton();
+  useHeartbeatTracker();
   return null;
-}
-
-function BackButtonHandler() {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const { showConfirm } = useCustomDialog();
-
-  useEffect(() => {
-    if (!Capacitor.isNativePlatform()) return;
-
-    let isDialogActive = false;
-
-    const backButtonHandler = CapApp.addListener(
-      "backButton",
-      async (data: any) => {
-        const currentPath = location.pathname;
-
-        if (
-          currentPath === "/menu" ||
-          currentPath === "/" ||
-          currentPath === "/auth"
-        ) {
-          if (isDialogActive) return;
-          isDialogActive = true;
-
-          const confirmExit = await showConfirm(
-            "Apakah Anda yakin ingin keluar dari aplikasi?",
-          );
-          isDialogActive = false;
-
-          if (confirmExit) {
-            CapApp.exitApp();
-          }
-        } else if (currentPath === "/kuis") {
-          window.dispatchEvent(new CustomEvent("kuisBackButton"));
-        } else {
-          if (data.canGoBack) {
-            window.history.back();
-          } else {
-            navigate("/menu");
-          }
-        }
-      },
-    );
-
-    return () => {
-      backButtonHandler.then((listener: any) => listener.remove());
-    };
-  }, [location.pathname, navigate, showConfirm]);
-
-  return null;
-}
-
-function LoadingScreen() {
-  return (
-    <div className="w-full min-h-screen bg-white flex justify-center items-center text-black font-sans select-none">
-      <div className="w-full max-w-107.5 min-h-screen flex flex-col justify-center items-center px-6 py-8 gap-4 text-center">
-        {/* Retro minimalist spinner */}
-        <div className="w-8 h-8 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
-        <p className="text-[10px] uppercase font-bold tracking-widest text-neutral-500 animate-pulse">
-          Memuat Sesi...
-        </p>
-      </div>
-    </div>
-  );
-}
-
-function AccessGuard({ children }: { children: React.ReactNode }) {
-  const { user } = useAuthStore();
-  const navigate = useNavigate();
-  const location = useLocation();
-  const [checking, setChecking] = useState(true);
-
-  useEffect(() => {
-    const checkAccess = async () => {
-      // Admins bypass access control locks
-      if (user) {
-        const isAdmin =
-          user.status.toLowerCase() === "admin" ||
-          user.email.toLowerCase().includes("admin");
-        if (isAdmin) {
-          setChecking(false);
-          return;
-        }
-      }
-
-      try {
-        const res = await getAccessStatusApi();
-        if (res.isLocked) {
-          navigate("/locked", { replace: true });
-        } else {
-          setChecking(false);
-        }
-      } catch (err) {
-        console.error("Gagal memeriksa status akses:", err);
-        // Fail open on network/server error to avoid lockouts
-        setChecking(false);
-      }
-    };
-
-    const path = location.pathname;
-    if (path === "/" || path === "/auth" || path === "/locked") {
-      setChecking(false);
-      return;
-    }
-
-    checkAccess();
-  }, [location.pathname, user, navigate]);
-
-  if (checking) {
-    return <LoadingScreen />;
-  }
-
-  return <>{children}</>;
-}
-
-function AccessLayout() {
-  return (
-    <AccessGuard>
-      <Outlet />
-    </AccessGuard>
-  );
-}
-
-function EnrollGuard({ children }: { children: React.ReactNode }) {
-  const { user } = useAuthStore();
-
-  if (!user) return null;
-
-  return <>{children}</>;
-}
-
-function EnrollLayout() {
-  return (
-    <EnrollGuard>
-      <Outlet />
-    </EnrollGuard>
-  );
 }
 
 function AppContent() {
-  const { checkAuth, initialized, user, token } = useAuthStore();
+  const { checkAuth, initialized } = useAuthStore();
 
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);
 
-  useEffect(() => {
-    if (!user || !token) return;
-
-    // 1. Record App Open
-    const hasRecordedOpen = sessionStorage.getItem("tracked_open_session");
-    if (!hasRecordedOpen) {
-      sessionStorage.setItem("tracked_open_session", "true");
-      recordOpenApi(token).catch((err) => {
-        console.error("Gagal mencatat pembukaan aplikasi:", err);
-        sessionStorage.removeItem("tracked_open_session");
-      });
-    }
-
-    // 2. Track usage time
-    let elapsedSeconds = 0;
-    const intervalTime = 10; // Heartbeat interval in seconds
-    const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8787";
-
-    const timer = setInterval(() => {
-      if (document.visibilityState === "visible") {
-        elapsedSeconds += 1;
-        if (elapsedSeconds >= intervalTime) {
-          const secondsToSend = elapsedSeconds;
-          elapsedSeconds = 0;
-          recordUsageApi(token, secondsToSend).catch((err) => {
-            console.error("Gagal mencatat durasi penggunaan:", err);
-            // Put it back to send next time
-            elapsedSeconds += secondsToSend;
-          });
-        }
-      }
-    }, 1000);
-
-    // Clean up on unmount or user change
-    return () => {
-      clearInterval(timer);
-      if (elapsedSeconds > 0) {
-        // Send remainder using fetch with keepalive: true
-        fetch(`${API_URL}/api/auth/record-usage`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ seconds: elapsedSeconds }),
-          keepalive: true,
-        }).catch(() => {});
-      }
-    };
-  }, [user, token]);
-
   if (!initialized) {
-    return <LoadingScreen />;
+    return <LoadingScreen message="Memuat Sesi..." />;
   }
 
   return (
     <Router>
-      <RouteTracker />
-      <BackButtonHandler />
+      <AppListeners />
       <Routes>
-        {/* Default route renders Onboarding page */}
+        {/* Public Routes */}
         <Route path="/" element={<Onboarding />} />
-
-        {/* Auth Route (Login & Register switcher) */}
         <Route path="/auth" element={<Auth />} />
-
-        {/* Locked Route */}
         <Route path="/locked" element={<Locked />} />
 
-        {/* Protected Routes (checked by AccessGuard) */}
-        <Route element={<AccessLayout />}>
-          {/* Main Menu Route */}
-          <Route path="/menu" element={<MainMenu />} />
+        {/* Protected Routes (Require Authentication & Access Status Check) */}
+        <Route element={<ProtectedRoute />}>
+          <Route element={<AccessGuard />}>
+            {/* Student & Shared Pages */}
+            <Route path="/menu" element={<MainMenu />} />
+            <Route path="/profile-report" element={<ProfileReport />} />
+            <Route path="/profil-pengembang" element={<ProfilPengembang />} />
+            <Route path="/enroll" element={<EnrollPage />} />
 
-          {/* Subpages routes */}
-          <Route path="/profile-report" element={<ProfileReport />} />
-          <Route path="/profil-pengembang" element={<ProfilPengembang />} />
+            {/* Routes requiring enrollment */}
+            <Route element={<EnrollGuard />}>
+              <Route path="/materi" element={<Materi />} />
+              <Route path="/simulasi" element={<Simulasi />} />
+              <Route path="/simulasi/air" element={<SimulasiPencemaranAir />} />
+              <Route path="/simulasi/eutrofikasi" element={<SimulasiEutrofikasi />} />
+              <Route path="/simulasi/tanah" element={<SimulasiPencemaranTanah />} />
+              <Route path="/simulasi/udara" element={<SimulasiPencemaranUdara />} />
+              <Route path="/kuis" element={<KuisMenu />} />
+              <Route path="/kuis/berpikir-sistem" element={<PenilaianBerpikirSistem />} />
+              <Route path="/ruang-diskusi" element={<RuangDiskusi />} />
+              <Route path="/ruang-diskusi/:id" element={<RuangDiskusi />} />
+            </Route>
 
-          {/* Enrollment Route */}
-          <Route path="/enroll" element={<EnrollPage />} />
-
-          {/* Routes that require enrollment */}
-          <Route element={<EnrollLayout />}>
-            <Route path="/materi" element={<Materi />} />
-
-            {/* Simulasi routes */}
-            <Route path="/simulasi" element={<Simulasi />} />
-            <Route path="/simulasi/air" element={<SimulasiPencemaranAir />} />
-            <Route
-              path="/simulasi/eutrofikasi"
-              element={<SimulasiEutrofikasi />}
-            />
-            <Route path="/simulasi/tanah" element={<SimulasiPencemaranTanah />} />
-            <Route path="/simulasi/udara" element={<SimulasiPencemaranUdara />} />
-
-            <Route path="/kuis" element={<KuisMenu />} />
-            <Route
-              path="/kuis/berpikir-sistem"
-              element={<PenilaianBerpikirSistem />}
-            />
-            <Route path="/ruang-diskusi" element={<RuangDiskusi />} />
-            <Route path="/ruang-diskusi/:id" element={<RuangDiskusi />} />
+            {/* Admin Only Routes */}
+            <Route element={<AdminRoute />}>
+              <Route path="/admin" element={<AdminMenu />} />
+              <Route path="/admin/kuis" element={<AdminKuis />} />
+              <Route path="/admin/change-password" element={<AdminChangePassword />} />
+              <Route path="/admin/access-control" element={<AdminAccessControl />} />
+              <Route path="/admin/enrollment" element={<AdminEnroll />} />
+              <Route path="/admin/diskusi" element={<AdminDiskusi />} />
+            </Route>
           </Route>
-
-          <Route path="/admin" element={<AdminMenu />} />
-          <Route path="/admin/kuis" element={<AdminKuis />} />
-          <Route
-            path="/admin/change-password"
-            element={<AdminChangePassword />}
-          />
-          <Route
-            path="/admin/access-control"
-            element={<AdminAccessControl />}
-          />
-          <Route
-            path="/admin/enrollment"
-            element={<AdminEnroll />}
-          />
-          <Route
-            path="/admin/diskusi"
-            element={<AdminDiskusi />}
-          />
         </Route>
 
         {/* Fallback route */}
@@ -360,8 +112,6 @@ function AppContent() {
     </Router>
   );
 }
-
-import { CustomDialogProvider } from "./components/CustomDialog";
 
 export default function App() {
   return (

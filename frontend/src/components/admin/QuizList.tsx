@@ -6,33 +6,7 @@ import {
   FiArrowLeft,
 } from "react-icons/fi";
 
-interface Question {
-  id: string;
-  text: string;
-  options: string[];
-  correctAnswers: number[];
-  images: string[];
-}
-
-interface Quiz {
-  id: string;
-  title: string;
-  createdAt: string;
-  questions: Question[];
-  submissionsCount?: number;
-}
-
-interface Submission {
-  id: string;
-  quizId: string;
-  studentName: string;
-  studentClass: string;
-  answers: Record<string, number[]>;
-  score: number;
-  duration?: number;
-  violationCount?: number;
-  createdAt: string;
-}
+import type { Quiz, Submission } from "../../types/quiz";
 
 interface QuizListProps {
   quizzes: Quiz[];

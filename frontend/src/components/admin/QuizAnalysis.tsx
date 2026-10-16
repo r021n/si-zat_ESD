@@ -12,34 +12,8 @@ import {
   FiTrash2,
 } from "react-icons/fi";
 
-interface Question {
-  id: string;
-  text: string;
-  options: string[];
-  correctAnswers: number[];
-  images: string[];
-  questionType?: string;
-}
-
-interface Quiz {
-  id: string;
-  title: string;
-  createdAt: string;
-  questions: Question[];
-  kkm?: number | null;
-}
-
-interface Submission {
-  id: string;
-  quizId: string;
-  studentName: string;
-  studentClass: string;
-  answers: Record<string, number[]>;
-  score: number;
-  duration?: number;
-  violationCount?: number;
-  createdAt: string;
-}
+import type { Quiz, Submission } from "../../types/quiz";
+import { formatDurationFriendly } from "../../utils/time";
 
 interface QuizAnalysisProps {
   selectedQuiz: Quiz;
@@ -47,15 +21,6 @@ interface QuizAnalysisProps {
   onClose: () => void;
   onKkmChange?: (kkm: number | null) => void;
 }
-
-const formatDurationFriendly = (seconds?: number) => {
-  if (seconds === undefined || seconds === null) return "-";
-  if (seconds < 60) return `${seconds}s`;
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  if (secs === 0) return `${mins}m`;
-  return `${mins}m ${secs}s`;
-};
 
 export default function QuizAnalysis({
   selectedQuiz,

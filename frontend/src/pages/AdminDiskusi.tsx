@@ -37,60 +37,15 @@ import {
   getAnnouncementDiscussionsApi,
   gradeAnnouncementSubmissionApi,
 } from "../api/api";
-
-interface AnnouncementItem {
-  id: string;
-  title: string;
-  problem: string;
-  question: string;
-  taskInfo: string;
-  instruction: string;
-  authorName: string;
-  createdAt: string;
-  updatedAt?: string;
-  hasImage?: boolean;
-  discussionsCount?: number;
-  submissionsCount?: number;
-}
-
-interface SubmissionItem {
-  id: string;
-  announcementId: string;
-  userId: number;
-  studentName: string;
-  studentClass: string;
-  answer: string;
-  fileName: string;
-  submittedAt: string;
-  grade?: number;
-  feedback?: string;
-  gradedAt?: string;
-  gradedBy?: string;
-  hasImage?: boolean;
-}
-
-interface DiscussionMessage {
-  id: string;
-  announcementId: string;
-  userId: number;
-  senderName: string;
-  senderRole: string;
-  content: string;
-  createdAt: string;
-  studentClass?: string;
-}
-
-interface RankedStudent {
-  userId: number;
-  name: string;
-  studentClass: string;
-  validCommentsCount: number;
-  totalCommentsCount: number;
-}
-
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8787";
-const PLACEHOLDER_IMAGE_URL =
-  "https://placehold.co/800x400/e8e8e8/9C98A6?text=Tidak%20Ada%20Gambar";
+import type {
+  AnnouncementItem,
+  SubmissionItem,
+  DiscussionMessage,
+  RankedStudent,
+} from "../types/discussion";
+import { API_URL, PLACEHOLDER_IMAGE_URL } from "../utils/constants";
+import { isAdmin } from "../utils/auth";
+import { formatDateIndo } from "../utils/date";
 
 export default function AdminDiskusi() {
   const navigate = useNavigate();
@@ -146,15 +101,8 @@ export default function AdminDiskusi() {
   const [zoomImageUrl, setZoomImageUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!user) {
-      navigate("/auth");
-      return;
-    }
-    const isAdmin =
-      user.status?.toLowerCase() === "admin" ||
-      user.email?.toLowerCase().includes("admin");
-    if (!isAdmin) {
-      navigate("/menu");
+    if (!user || !isAdmin(user)) {
+      navigate(!user ? "/auth" : "/menu");
     }
   }, [user, navigate]);
 
@@ -384,22 +332,6 @@ export default function AdminDiskusi() {
 
   const rankedStudents = calculateAdminRanking();
 
-  const formatDateIndo = (dateStr: string) => {
-    if (!dateStr) return "";
-    try {
-      const d = new Date(dateStr);
-      if (isNaN(d.getTime())) return dateStr;
-      return d.toLocaleDateString("id-ID", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-    } catch {
-      return dateStr;
-    }
-  };
 
   const filteredAnnouncements = announcements.filter((item) => {
     if (!searchQuery.trim()) return true;

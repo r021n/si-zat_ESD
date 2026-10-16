@@ -3,6 +3,8 @@ import { useState, useEffect } from "react";
 import { useAuthStore } from "../store/authStore";
 import { verifyEnrollCodeApi } from "../api/api";
 import { LuKeyRound, LuLogOut, LuCircleCheck } from "react-icons/lu";
+import { isAdmin } from "../utils/auth";
+import { formatDateIndo } from "../utils/date";
 
 export default function EnrollPage() {
   const navigate = useNavigate();
@@ -18,10 +20,7 @@ export default function EnrollPage() {
       return;
     }
 
-    const isAdmin =
-      user.status.toLowerCase() === "admin" ||
-      user.email.toLowerCase().includes("admin");
-    if (isAdmin) {
+    if (isAdmin(user)) {
       navigate("/menu");
       return;
     }
@@ -29,16 +28,7 @@ export default function EnrollPage() {
 
   const isExpired = enrollDeadline ? new Date() > new Date(enrollDeadline) : false;
 
-  const formatDeadline = (deadline: string) => {
-    const d = new Date(deadline);
-    return d.toLocaleDateString("id-ID", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
+  const formatDeadline = (deadline: string) => formatDateIndo(deadline, true);
 
   const handleSubmit = async () => {
     if (!code.trim()) {

@@ -7,14 +7,7 @@ import {
   FiArrowLeft,
 } from "react-icons/fi";
 
-interface Question {
-  id: string;
-  text: string;
-  options: string[];
-  correctAnswers: number[];
-  images: string[];
-  questionType?: string;
-}
+import type { Question } from "../../types/quiz";
 
 interface QuizFormProps {
   editingQuizId: string | null;

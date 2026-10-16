@@ -13,24 +13,9 @@ import {
   LuShieldAlert,
 } from "react-icons/lu";
 import { useCustomDialog } from "../components/CustomDialog";
-
-interface ScheduleItem {
-  id: string;
-  days: number[]; // 0 = Minggu, 1 = Senin, ... 6 = Sabtu
-  startTime: string; // "HH:MM"
-  endTime: string; // "HH:MM"
-  type: "allow" | "block";
-}
-
-const DAYS_OF_WEEK = [
-  { value: 1, label: "S", fullName: "Senin" },
-  { value: 2, label: "S", fullName: "Selasa" },
-  { value: 3, label: "R", fullName: "Rabu" },
-  { value: 4, label: "K", fullName: "Kamis" },
-  { value: 5, label: "J", fullName: "Jumat" },
-  { value: 6, label: "S", fullName: "Sabtu" },
-  { value: 0, label: "M", fullName: "Minggu" },
-];
+import type { ScheduleItem } from "../types/access";
+import { DAYS_OF_WEEK } from "../utils/constants";
+import { isAdmin } from "../utils/auth";
 
 export default function AdminAccessControl() {
   const navigate = useNavigate();
@@ -75,15 +60,8 @@ export default function AdminAccessControl() {
   }, [token]);
 
   useEffect(() => {
-    if (!user) {
-      navigate("/auth");
-      return;
-    }
-    const isAdmin =
-      user.status.toLowerCase() === "admin" ||
-      user.email.toLowerCase().includes("admin");
-    if (!isAdmin) {
-      navigate("/menu");
+    if (!user || !isAdmin(user)) {
+      navigate(!user ? "/auth" : "/menu");
       return;
     }
     fetchSettings();

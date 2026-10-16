@@ -9,16 +9,8 @@ import {
   FiUpload,
 } from "react-icons/fi";
 import { useCustomDialog } from "../CustomDialog";
-
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8787";
-
-export interface AnnouncementFormData {
-  title: string;
-  problem: string;
-  question: string;
-  taskInfo: string;
-  instruction: string;
-}
+import { API_URL } from "../../utils/constants";
+import { compressImage } from "../../utils/image";
 
 export interface AnnouncementItemLike {
   id: string;
@@ -35,90 +27,11 @@ export interface AnnouncementItemLike {
   submissionsCount?: number;
 }
 
-interface AnnouncementFormProps {
+export interface AnnouncementFormProps {
   initialData?: AnnouncementItemLike | null;
   onSave: (payload: FormData) => Promise<void>;
   onCancel: () => void;
   submitting?: boolean;
-}
-
-// Canvas-based image compression helper (strictly <= 400KB)
-function compressImage(
-  file: File,
-  maxSizeBytes: number = 400 * 1024,
-): Promise<Blob> {
-  return new Promise((resolve, reject) => {
-    if (!file.type.startsWith("image/")) {
-      resolve(file);
-      return;
-    }
-
-    if (file.size <= maxSizeBytes) {
-      resolve(file);
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement("canvas");
-        let { width, height } = img;
-
-        const MAX_DIM = 1600;
-        if (width > MAX_DIM || height > MAX_DIM) {
-          if (width > height) {
-            height = Math.round((height * MAX_DIM) / width);
-            width = MAX_DIM;
-          } else {
-            width = Math.round((width * MAX_DIM) / height);
-            height = MAX_DIM;
-          }
-        }
-
-        canvas.width = width;
-        canvas.height = height;
-
-        const ctx = canvas.getContext("2d");
-        if (!ctx) {
-          resolve(file);
-          return;
-        }
-
-        ctx.drawImage(img, 0, 0, width, height);
-
-        let quality = 0.88;
-        const attempt = () => {
-          canvas.toBlob(
-            (blob) => {
-              if (!blob) {
-                resolve(file);
-                return;
-              }
-              if (blob.size <= maxSizeBytes || quality <= 0.15) {
-                resolve(blob);
-              } else {
-                quality -= 0.1;
-                if (quality < 0.5) {
-                  canvas.width = Math.round(canvas.width * 0.85);
-                  canvas.height = Math.round(canvas.height * 0.85);
-                  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                }
-                attempt();
-              }
-            },
-            "image/jpeg",
-            quality,
-          );
-        };
-        attempt();
-      };
-      img.onerror = () => reject(new Error("Gagal memproses file gambar"));
-      img.src = e.target?.result as string;
-    };
-    reader.onerror = () => reject(new Error("Gagal membaca file gambar"));
-    reader.readAsDataURL(file);
-  });
 }
 
 export default function AnnouncementForm({

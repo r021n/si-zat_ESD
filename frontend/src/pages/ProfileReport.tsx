@@ -5,6 +5,8 @@ import { LuEye, LuClock, LuChartBar } from "react-icons/lu";
 import { FiArrowLeft } from "react-icons/fi";
 import { useAppBack } from "../hooks/useAppBack";
 import { getMenuAnalyticsApi } from "../api/api";
+import AnalyticsModal from "../components/common/AnalyticsModal";
+import { formatDateIndo } from "../utils/date";
 
 export default function ProfileReport() {
   const navigate = useNavigate();
@@ -81,22 +83,7 @@ export default function ProfileReport() {
 
   if (!user) return null;
 
-  const formatCreatedAt = (dateStr?: string) => {
-    if (!dateStr) return "-";
-    try {
-      const date = new Date(dateStr);
-      if (isNaN(date.getTime())) return dateStr;
-      return date.toLocaleDateString("id-ID", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-    } catch (_e) {
-      return dateStr;
-    }
-  };
+  const formatCreatedAt = (dateStr?: string) => formatDateIndo(dateStr, true);
 
   const formatUsageTime = (seconds?: number) => {
     if (!seconds) return "0 detik";
@@ -414,70 +401,13 @@ export default function ProfileReport() {
       </div>
 
       {/* Analytics Modal */}
-      {isAnalyticsModalOpen && (
-        <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50 p-6 backdrop-blur-xs">
-          <div className="w-full max-w-85 bg-white rounded-[28px] p-6 shadow-xl border border-[#F0EDFF] flex flex-col gap-4 animate-none select-none text-left">
-            <div>
-              <h3 className="text-sm font-extrabold text-[#2C2B30] tracking-wide uppercase flex items-center gap-2">
-                <LuChartBar className="text-[#8C66FF]" />
-                Analitik Aktivitas
-              </h3>
-              <p className="text-[10px] text-[#9C98A6] font-semibold mt-1">
-                Menu yang paling sering Anda kunjungi
-              </p>
-            </div>
-
-            <div className="max-h-55 overflow-y-auto pr-1 flex flex-col gap-2.5 my-1 no-scrollbar">
-              {loadingAnalytics ? (
-                <div className="py-8 flex flex-col items-center justify-center gap-2 text-center">
-                  <div className="w-6 h-6 border-2 border-[#8C66FF] border-t-transparent rounded-full animate-spin"></div>
-                  <p className="text-[10px] text-[#9C98A6] font-bold uppercase tracking-widest animate-pulse">
-                    Memuat Analitik...
-                  </p>
-                </div>
-              ) : analyticsError ? (
-                <p className="text-xs text-[#FF5E8C] font-semibold text-center py-4">
-                  {analyticsError}
-                </p>
-              ) : analyticsData.length === 0 ? (
-                <p className="text-xs text-[#9C98A6] font-semibold text-center py-6">
-                  Belum ada aktivitas menu yang tercatat.
-                </p>
-              ) : (
-                <div className="flex flex-col gap-2">
-                  {analyticsData.map((item, index) => (
-                    <div
-                      key={item.menuKey}
-                      className="w-full bg-[#FAF9FF] border border-[#F0EDFF]/70 rounded-xl px-4 py-3 flex items-center justify-between"
-                    >
-                      <div className="flex items-center gap-2 truncate">
-                        <span className="text-[10px] font-black text-[#9C98A6] w-4">
-                          {index + 1}.
-                        </span>
-                        <span className="text-xs font-bold text-[#2C2B30] truncate">
-                          {item.menuKey}
-                        </span>
-                      </div>
-                      <span className="text-xs font-black text-[#8C66FF] bg-[#F0ECFF] px-2.5 py-1 rounded-full shrink-0">
-                        {item.count}x
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div className="flex gap-2.5 mt-1">
-              <button
-                onClick={() => setIsAnalyticsModalOpen(false)}
-                className="w-full py-3.5 bg-[#8C66FF] text-white font-extrabold uppercase tracking-wider text-[10px] rounded-full shadow-md shadow-purple-100 cursor-pointer transition-none flex items-center justify-center"
-              >
-                Tutup
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <AnalyticsModal
+        isOpen={isAnalyticsModalOpen}
+        onClose={() => setIsAnalyticsModalOpen(false)}
+        loading={loadingAnalytics}
+        error={analyticsError}
+        analyticsData={analyticsData}
+      />
     </div>
   );
 }

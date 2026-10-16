@@ -3,6 +3,13 @@
 
 @theme {
   --font-sans: "Plus Jakarta Sans", "Inter", sans-serif;
+  --color-brand-primary: #8C66FF;
+  --color-brand-light: #F0EDFF;
+  --color-brand-bg: #FAF9FF;
+  --color-brand-dark: #2C2B30;
+  --color-brand-muted: #9C98A6;
+  --color-brand-teal: #2C8578;
+  --color-brand-teal-light: #E6F8F6;
 }
 
 html {

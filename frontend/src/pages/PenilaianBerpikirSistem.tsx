@@ -27,6 +27,10 @@ import {
   sendTaskDiscussionApi,
   getOverallContributorsApi,
 } from "../api/api";
+import { API_URL } from "../utils/constants";
+import { isAdmin as checkIsAdmin } from "../utils/auth";
+import { compressImage } from "../utils/image";
+import type { ContributorData } from "../types/discussion";
 
 interface Message {
   id: string;
@@ -47,96 +51,7 @@ interface TaskSubmission {
   submittedAt: string;
 }
 
-interface ContributorData {
-  name: string;
-  detail?: string;
-  count: number;
-}
 
-// Canvas-based image compression helper
-function compressImage(
-  file: File,
-  maxSizeBytes: number = 200 * 1024,
-): Promise<Blob> {
-  return new Promise((resolve, reject) => {
-    if (!file.type.startsWith("image/")) {
-      resolve(file); // Fallback to original if not an image
-      return;
-    }
-
-    if (file.size <= maxSizeBytes) {
-      resolve(file); // No compression needed
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement("canvas");
-        let { width, height } = img;
-
-        // Downscale image dimensions if too large to limit memory
-        const MAX_DIM = 1200;
-        if (width > MAX_DIM || height > MAX_DIM) {
-          if (width > height) {
-            height = Math.round((height * MAX_DIM) / width);
-            width = MAX_DIM;
-          } else {
-            width = Math.round((width * MAX_DIM) / height);
-            height = MAX_DIM;
-          }
-        }
-
-        canvas.width = width;
-        canvas.height = height;
-
-        const ctx = canvas.getContext("2d");
-        if (!ctx) {
-          resolve(file); // Fallback
-          return;
-        }
-
-        ctx.drawImage(img, 0, 0, width, height);
-
-        let quality = 0.9;
-        const attemptCompression = () => {
-          canvas.toBlob(
-            (blob) => {
-              if (!blob) {
-                resolve(file); // Fallback
-                return;
-              }
-
-              if (blob.size <= maxSizeBytes || quality <= 0.1) {
-                resolve(blob);
-              } else {
-                quality -= 0.1;
-                // If quality is low, also scale down resolution
-                if (quality < 0.5) {
-                  canvas.width = Math.round(canvas.width * 0.85);
-                  canvas.height = Math.round(canvas.height * 0.85);
-                  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                }
-                attemptCompression();
-              }
-            },
-            "image/jpeg",
-            quality,
-          );
-        };
-
-        attemptCompression();
-      };
-      img.onerror = () => reject(new Error("Gagal membaca gambar"));
-      img.src = e.target?.result as string;
-    };
-    reader.onerror = () => reject(new Error("Gagal membaca file"));
-    reader.readAsDataURL(file);
-  });
-}
-
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8787";
 
 export default function PenilaianBerpikirSistem() {
   const goBack = useAppBack();
@@ -197,10 +112,7 @@ export default function PenilaianBerpikirSistem() {
   );
 
   const displayName = user ? user.nama || user.email.split("@")[0] : "Pengguna";
-  const isAdmin = user
-    ? user.status.toLowerCase() === "admin" ||
-      user.email.toLowerCase().includes("admin")
-    : false;
+  const isAdmin = checkIsAdmin(user);
 
   const handleShowTaskContributors = (
     submissionId: string,

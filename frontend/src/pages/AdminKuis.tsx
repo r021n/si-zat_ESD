@@ -14,38 +14,10 @@ import {
   deleteQuizApi,
   getQuizSubmissionsApi,
 } from "../api/api";
+import type { Question, Quiz, Submission, QuizViewMode } from "../types/quiz";
+import { isAdmin } from "../utils/auth";
 
-interface Question {
-  id: string;
-  text: string;
-  options: string[];
-  correctAnswers: number[];
-  images: string[];
-  questionType?: string;
-}
-
-interface Quiz {
-  id: string;
-  title: string;
-  createdAt: string;
-  questions: Question[];
-  submissionsCount?: number;
-  kkm?: number | null;
-}
-
-interface Submission {
-  id: string;
-  quizId: string;
-  studentName: string;
-  studentClass: string;
-  answers: Record<string, number[]>;
-  score: number;
-  duration?: number;
-  violationCount?: number;
-  createdAt: string;
-}
-
-type ViewMode = "LIST" | "FORM" | "ANALYSIS";
+type ViewMode = QuizViewMode;
 
 export default function AdminKuis() {
   const navigate = useNavigate();
@@ -113,15 +85,8 @@ export default function AdminKuis() {
 
   // Authentication & Admin Check
   useEffect(() => {
-    if (!user) {
-      navigate("/auth");
-      return;
-    }
-    const isAdmin =
-      user.status.toLowerCase() === "admin" ||
-      user.email.toLowerCase().includes("admin");
-    if (!isAdmin) {
-      navigate("/menu");
+    if (!user || !isAdmin(user)) {
+      navigate(!user ? "/auth" : "/menu");
     }
   }, [user, navigate]);
 

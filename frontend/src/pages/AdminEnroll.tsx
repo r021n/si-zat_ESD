@@ -19,6 +19,8 @@ import {
   LuTrash2,
 } from "react-icons/lu";
 import { useCustomDialog } from "../components/CustomDialog";
+import { isAdmin } from "../utils/auth";
+import { formatDateIndo } from "../utils/date";
 
 export default function AdminEnroll() {
   const navigate = useNavigate();
@@ -75,15 +77,8 @@ export default function AdminEnroll() {
   }, [token]);
 
   useEffect(() => {
-    if (!user) {
-      navigate("/auth");
-      return;
-    }
-    const isAdmin =
-      user.status.toLowerCase() === "admin" ||
-      user.email.toLowerCase().includes("admin");
-    if (!isAdmin) {
-      navigate("/menu");
+    if (!user || !isAdmin(user)) {
+      navigate(!user ? "/auth" : "/menu");
       return;
     }
     fetchData();
@@ -159,16 +154,7 @@ export default function AdminEnroll() {
     setTimeout(() => setSuccessMsg(""), 2000);
   };
 
-  const formatDeadline = (deadline: string) => {
-    const d = new Date(deadline);
-    return d.toLocaleDateString("id-ID", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
+  const formatDeadline = (deadline: string) => formatDateIndo(deadline, true);
 
   const isExpired = currentDeadline
     ? new Date() > new Date(currentDeadline)

@@ -8,16 +8,9 @@ import {
   getEnrollStatusApi,
 } from "../api/api";
 
-export interface User {
-  id: number;
-  email: string;
-  kelas: string;
-  nama: string;
-  status: string;
-  createdAt?: string;
-  openCount?: number;
-  totalUsageTime?: number;
-}
+import { isAdmin } from "../utils/auth";
+import type { User } from "../types/auth";
+export type { User };
 
 interface AuthState {
   user: User | null;
@@ -182,10 +175,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       return;
     }
 
-    const isAdmin =
-      user.status.toLowerCase() === "admin" ||
-      user.email.toLowerCase().includes("admin");
-    if (isAdmin) {
+    if (isAdmin(user)) {
       set({ isEnrolled: true, enrollDeadline: null });
       return;
     }

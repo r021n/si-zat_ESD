@@ -5,6 +5,7 @@ import { FiArrowLeft } from "react-icons/fi";
 import { LuShieldAlert, LuUserCheck, LuLock } from "react-icons/lu";
 import { useAppBack } from "../hooks/useAppBack";
 import { getSiswaUsersApi, changeSiswaPasswordApi } from "../api/api";
+import { isAdmin } from "../utils/auth";
 
 interface SiswaUser {
   id: number;
@@ -30,15 +31,8 @@ export default function AdminChangePassword() {
 
   // Authentication & Admin Check
   useEffect(() => {
-    if (!user) {
-      navigate("/auth");
-      return;
-    }
-    const isAdmin =
-      user.status.toLowerCase() === "admin" ||
-      user.email.toLowerCase().includes("admin");
-    if (!isAdmin) {
-      navigate("/menu");
+    if (!user || !isAdmin(user)) {
+      navigate(!user ? "/auth" : "/menu");
     }
   }, [user, navigate]);
 
