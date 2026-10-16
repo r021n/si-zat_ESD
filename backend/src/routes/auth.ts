@@ -327,9 +327,45 @@ auth.get('/users', async (c) => {
       return !isUserAdmin
     })
 
+    const pageParam = c.req.query('page')
+    const limitParam = c.req.query('limit')
+    const searchParam = c.req.query('search')
+
+    let filtered = siswaUsers
+    if (searchParam) {
+      const q = searchParam.toLowerCase()
+      filtered = filtered.filter(u =>
+        (u.nama || '').toLowerCase().includes(q) ||
+        (u.email || '').toLowerCase().includes(q) ||
+        (u.kelas || '').toLowerCase().includes(q)
+      )
+    }
+
+    if (pageParam !== undefined || limitParam !== undefined) {
+      const page = Math.max(1, parseInt(pageParam || '1') || 1)
+      const limit = Math.max(1, Math.min(100, parseInt(limitParam || '10') || 10))
+      const totalItems = filtered.length
+      const totalPages = Math.ceil(totalItems / limit) || 1
+      const startIndex = (page - 1) * limit
+      const paginatedUsers = filtered.slice(startIndex, startIndex + limit)
+
+      return c.json({
+        status: 'success',
+        users: paginatedUsers,
+        pagination: {
+          page,
+          limit,
+          totalItems,
+          totalPages,
+          hasNextPage: page < totalPages,
+          hasPrevPage: page > 1,
+        }
+      })
+    }
+
     return c.json({
       status: 'success',
-      users: siswaUsers
+      users: filtered
     })
   } catch (error) {
     console.error('Error fetching users:', error)

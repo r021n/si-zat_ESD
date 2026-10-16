@@ -43,6 +43,8 @@ import type {
   DiscussionMessage,
   RankedStudent,
 } from "../types/discussion";
+import { useDebounce } from "../hooks/useDebounce";
+import Pagination from "../components/common/Pagination";
 import { API_URL, PLACEHOLDER_IMAGE_URL } from "../utils/constants";
 import { isAdmin } from "../utils/auth";
 import { formatDateIndo } from "../utils/date";
@@ -57,6 +59,7 @@ export default function AdminDiskusi() {
   const [announcements, setAnnouncements] = useState<AnnouncementItem[]>([]);
   const [loadingList, setLoadingList] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
   // Create / Edit Announcement Fullscreen Form
   const [isFormOpen, setIsFormOpen] = useState<boolean>(false);
@@ -70,13 +73,20 @@ export default function AdminDiskusi() {
   const [loadingSubmissions, setLoadingSubmissions] = useState<boolean>(false);
   const [searchSubmissionQuery, setSearchSubmissionQuery] =
     useState<string>("");
+  const debouncedSearchSubmissionQuery = useDebounce(searchSubmissionQuery, 300);
   const [submissionFilterStatus, setSubmissionFilterStatus] = useState<
     "all" | "graded" | "ungraded"
   >("all");
   const [submissionSort, setSubmissionSort] = useState<
     "newest" | "oldest" | "highest" | "lowest" | "name"
   >("newest");
+  const [submissionPage, setSubmissionPage] = useState<number>(1);
+  const SUBMISSION_PAGE_SIZE = 10;
   const [showTopicDetails, setShowTopicDetails] = useState<boolean>(false);
+
+  useEffect(() => {
+    setSubmissionPage(1);
+  }, [debouncedSearchSubmissionQuery, submissionFilterStatus, submissionSort, selectedForSubmissions]);
 
   // Single Submission Grading Modal
   const [gradingSubmission, setGradingSubmission] =
@@ -334,8 +344,8 @@ export default function AdminDiskusi() {
 
 
   const filteredAnnouncements = announcements.filter((item) => {
-    if (!searchQuery.trim()) return true;
-    const q = searchQuery.toLowerCase();
+    if (!debouncedSearchQuery.trim()) return true;
+    const q = debouncedSearchQuery.toLowerCase();
     return (
       item.title.toLowerCase().includes(q) ||
       item.problem.toLowerCase().includes(q)
@@ -362,8 +372,8 @@ export default function AdminDiskusi() {
     )
       return false;
 
-    if (!searchSubmissionQuery.trim()) return true;
-    const q = searchSubmissionQuery.toLowerCase();
+    if (!debouncedSearchSubmissionQuery.trim()) return true;
+    const q = debouncedSearchSubmissionQuery.toLowerCase();
     return (
       s.studentName.toLowerCase().includes(q) ||
       (s.studentClass || "").toLowerCase().includes(q)
@@ -393,6 +403,12 @@ export default function AdminDiskusi() {
       new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime()
     );
   });
+
+  const totalSubmissionPages = Math.ceil(sortedSubmissions.length / SUBMISSION_PAGE_SIZE) || 1;
+  const paginatedSubmissions = sortedSubmissions.slice(
+    (submissionPage - 1) * SUBMISSION_PAGE_SIZE,
+    submissionPage * SUBMISSION_PAGE_SIZE,
+  );
 
   return (
     <div className="w-full min-h-screen bg-[#FAF9FF] flex justify-center items-start text-[#2C2B30] font-sans select-none relative py-4 md:py-8 overflow-x-hidden">
@@ -856,7 +872,7 @@ export default function AdminDiskusi() {
                           </tr>
                         </thead>
                         <tbody>
-                          {sortedSubmissions.map((sub, sIdx) => {
+                          {paginatedSubmissions.map((sub, sIdx) => {
                             const isGraded =
                               sub.grade !== undefined && sub.grade !== null;
                             const initials = (sub.studentName || "S")
@@ -983,7 +999,7 @@ export default function AdminDiskusi() {
 
                   {/* ================= MOBILE DISPLAY: RESPONSIVE CARDS ================= */}
                   <div className="block md:hidden space-y-3.5">
-                    {sortedSubmissions.map((sub) => {
+                    {paginatedSubmissions.map((sub) => {
                       const isGraded =
                         sub.grade !== undefined && sub.grade !== null;
 
@@ -1055,6 +1071,16 @@ export default function AdminDiskusi() {
                       );
                     })}
                   </div>
+
+                  {/* Submissions Pagination */}
+                  <Pagination
+                    currentPage={submissionPage}
+                    totalPages={totalSubmissionPages}
+                    totalItems={sortedSubmissions.length}
+                    pageSize={SUBMISSION_PAGE_SIZE}
+                    onPageChange={setSubmissionPage}
+                    className="mt-4"
+                  />
                 </>
               )}
             </div>

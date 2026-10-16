@@ -40,6 +40,7 @@ import type {
 } from "../types/discussion";
 import { compressImage } from "../utils/image";
 import { API_URL, PLACEHOLDER_IMAGE_URL } from "../utils/constants";
+import { useDebounce } from "../hooks/useDebounce";
 
 export default function RuangDiskusi() {
   const { id: paramAnnouncementId } = useParams();
@@ -54,6 +55,7 @@ export default function RuangDiskusi() {
   >([]);
   const [loadingList, setLoadingList] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
   // Selected Announcement Detail
   const [selectedAnnouncement, setSelectedAnnouncement] =
@@ -441,9 +443,9 @@ export default function RuangDiskusi() {
   };
 
   const filteredAnnouncements = announcementsList.filter((item) => {
-    // Search query filter
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
+    // Search query filter (debounced)
+    if (debouncedSearchQuery.trim()) {
+      const q = debouncedSearchQuery.toLowerCase();
       return (
         item.title.toLowerCase().includes(q) ||
         item.problem.toLowerCase().includes(q)

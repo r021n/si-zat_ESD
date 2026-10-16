@@ -13,6 +13,18 @@ const announcementsRoute = new Hono();
 
 const getJwtSecret = () => process.env.JWT_SECRET || "sizatesdsecret";
 
+// In-memory server cache for announcements list to reduce Turso roundtrips
+let announcementsServerCache: {
+  data: any;
+  timestamp: number;
+} | null = null;
+
+const ANNOUNCEMENTS_SERVER_TTL_MS = 30 * 1000;
+
+export function invalidateAnnouncementsServerCache() {
+  announcementsServerCache = null;
+}
+
 // Safe auto-creation of tables if they don't exist yet
 let tablesInitialized = false;
 async function ensureTables() {
@@ -225,70 +237,117 @@ announcementsRoute.get("/submissions/:submissionId/image", async (c: any) => {
 announcementsRoute.get("/", authMiddleware, async (c: any) => {
   try {
     const user = c.get("user");
-    const allAnnouncements = await db
-      .select({
-        id: announcements.id,
-        title: announcements.title,
-        problem: announcements.problem,
-        question: announcements.question,
-        taskInfo: announcements.taskInfo,
-        instruction: announcements.instruction,
-        authorId: announcements.authorId,
-        authorName: announcements.authorName,
-        hasImage: sql<boolean>`${announcements.imageBlob} IS NOT NULL`,
-        createdAt: announcements.createdAt,
-        updatedAt: announcements.updatedAt,
-      })
-      .from(announcements);
+    const now = Date.now();
 
-    // Sort newest first
-    allAnnouncements.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    let cachedBase = announcementsServerCache && (now - announcementsServerCache.timestamp < ANNOUNCEMENTS_SERVER_TTL_MS)
+      ? announcementsServerCache.data
+      : null;
 
-    // Efficiently count discussions and submissions
-    const allDiscussions = await db
-      .select({
-        announcementId: announcementDiscussions.announcementId,
-      })
-      .from(announcementDiscussions);
+    if (!cachedBase) {
+      const allAnnouncements = await db
+        .select({
+          id: announcements.id,
+          title: announcements.title,
+          problem: announcements.problem,
+          question: announcements.question,
+          taskInfo: announcements.taskInfo,
+          instruction: announcements.instruction,
+          authorId: announcements.authorId,
+          authorName: announcements.authorName,
+          hasImage: sql<boolean>`${announcements.imageBlob} IS NOT NULL`,
+          createdAt: announcements.createdAt,
+          updatedAt: announcements.updatedAt,
+        })
+        .from(announcements);
 
-    const allSubmissions = await db
-      .select({
-        id: announcementSubmissions.id,
-        announcementId: announcementSubmissions.announcementId,
-        userId: announcementSubmissions.userId,
-        submittedAt: announcementSubmissions.submittedAt,
-        grade: announcementSubmissions.grade,
-        feedback: announcementSubmissions.feedback,
-      })
-      .from(announcementSubmissions);
+      // Sort newest first
+      allAnnouncements.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 
-    const discussionCounts: Record<string, number> = {};
-    for (const d of allDiscussions) {
-      discussionCounts[d.announcementId] =
-        (discussionCounts[d.announcementId] || 0) + 1;
-    }
+      // Efficiently count discussions and submissions
+      const allDiscussions = await db
+        .select({
+          announcementId: announcementDiscussions.announcementId,
+        })
+        .from(announcementDiscussions);
 
-    const submissionCounts: Record<string, number> = {};
-    const userSubmissionMap: Record<string, any> = {};
-    for (const s of allSubmissions) {
-      submissionCounts[s.announcementId] =
-        (submissionCounts[s.announcementId] || 0) + 1;
-      if (s.userId === user.id) {
-        userSubmissionMap[s.announcementId] = {
+      const allSubmissionsMeta = await db
+        .select({
+          id: announcementSubmissions.id,
+          announcementId: announcementSubmissions.announcementId,
+          userId: announcementSubmissions.userId,
+          submittedAt: announcementSubmissions.submittedAt,
+          grade: announcementSubmissions.grade,
+          feedback: announcementSubmissions.feedback,
+        })
+        .from(announcementSubmissions);
+
+      const discussionCounts: Record<string, number> = {};
+      for (const d of allDiscussions) {
+        discussionCounts[d.announcementId] =
+          (discussionCounts[d.announcementId] || 0) + 1;
+      }
+
+      const submissionCounts: Record<string, number> = {};
+      const submissionsByUserAndAnn: Record<string, any> = {};
+      for (const s of allSubmissionsMeta) {
+        submissionCounts[s.announcementId] =
+          (submissionCounts[s.announcementId] || 0) + 1;
+        submissionsByUserAndAnn[`${s.announcementId}_${s.userId}`] = {
           id: s.id,
           submittedAt: s.submittedAt,
           grade: s.grade,
           feedback: s.feedback,
         };
       }
+
+      cachedBase = {
+        allAnnouncements,
+        discussionCounts,
+        submissionCounts,
+        submissionsByUserAndAnn,
+      };
+
+      announcementsServerCache = { data: cachedBase, timestamp: now };
     }
 
-    const result = allAnnouncements.map((item) => ({
+    const {
+      allAnnouncements,
+      discussionCounts,
+      submissionCounts,
+      submissionsByUserAndAnn,
+    } = cachedBase;
+
+    const result = allAnnouncements.map((item: any) => ({
       ...item,
       discussionsCount: discussionCounts[item.id] || 0,
       submissionsCount: submissionCounts[item.id] || 0,
-      mySubmission: userSubmissionMap[item.id] || null,
+      mySubmission: submissionsByUserAndAnn[`${item.id}_${user.id}`] || null,
     }));
+
+    const pageParam = c.req.query("page");
+    const limitParam = c.req.query("limit");
+
+    if (pageParam !== undefined || limitParam !== undefined) {
+      const page = Math.max(1, parseInt(pageParam || "1") || 1);
+      const limit = Math.max(1, Math.min(100, parseInt(limitParam || "10") || 10));
+      const totalItems = result.length;
+      const totalPages = Math.ceil(totalItems / limit) || 1;
+      const startIndex = (page - 1) * limit;
+      const paginatedData = result.slice(startIndex, startIndex + limit);
+
+      return c.json({
+        status: "success",
+        data: paginatedData,
+        pagination: {
+          page,
+          limit,
+          totalItems,
+          totalPages,
+          hasNextPage: page < totalPages,
+          hasPrevPage: page > 1,
+        },
+      });
+    }
 
     return c.json({ status: "success", data: result });
   } catch (err: any) {
@@ -432,6 +491,7 @@ announcementsRoute.post("/", adminMiddleware, async (c: any) => {
       createdAt: now,
     });
 
+    invalidateAnnouncementsServerCache();
     return c.json({
       status: "success",
       message: "Diskusi berhasil dibuat.",
@@ -536,6 +596,7 @@ announcementsRoute.put("/:id", adminMiddleware, async (c: any) => {
       .set(updatePayload)
       .where(eq(announcements.id, id));
 
+    invalidateAnnouncementsServerCache();
     return c.json({
       status: "success",
       message: "Diskusi berhasil diperbarui.",
@@ -568,6 +629,7 @@ announcementsRoute.delete("/:id", adminMiddleware, async (c: any) => {
       .where(eq(announcementSubmissions.announcementId, id));
     await db.delete(announcements).where(eq(announcements.id, id));
 
+    invalidateAnnouncementsServerCache();
     return c.json({
       status: "success",
       message: "Diskusi berhasil dihapus.",
@@ -599,6 +661,31 @@ announcementsRoute.get("/:id/discussions", authMiddleware, async (c: any) => {
 
     // Sort chronologically (oldest first for chat timeline)
     comments.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+
+    const pageParam = c.req.query("page");
+    const limitParam = c.req.query("limit");
+
+    if (pageParam !== undefined || limitParam !== undefined) {
+      const page = Math.max(1, parseInt(pageParam || "1") || 1);
+      const limit = Math.max(1, Math.min(100, parseInt(limitParam || "20") || 20));
+      const totalItems = comments.length;
+      const totalPages = Math.ceil(totalItems / limit) || 1;
+      const startIndex = (page - 1) * limit;
+      const paginatedData = comments.slice(startIndex, startIndex + limit);
+
+      return c.json({
+        status: "success",
+        data: paginatedData,
+        pagination: {
+          page,
+          limit,
+          totalItems,
+          totalPages,
+          hasNextPage: page < totalPages,
+          hasPrevPage: page > 1,
+        },
+      });
+    }
 
     return c.json({ status: "success", data: comments });
   } catch (err: any) {
@@ -646,6 +733,7 @@ announcementsRoute.post("/:id/discussions", authMiddleware, async (c: any) => {
       createdAt: now,
     });
 
+    invalidateAnnouncementsServerCache();
     return c.json({
       status: "success",
       message: "Pesan berhasil dikirim.",
@@ -721,8 +809,51 @@ announcementsRoute.get("/:id/submissions", authMiddleware, async (c: any) => {
         );
     }
 
-    const subs = await subsQuery;
+    let subs = await subsQuery;
     subs.sort((a, b) => b.submittedAt.localeCompare(a.submittedAt));
+
+    const pageParam = c.req.query("page");
+    const limitParam = c.req.query("limit");
+    const searchParam = c.req.query("search");
+    const statusParam = c.req.query("status"); // "graded" | "ungraded"
+
+    if (searchParam) {
+      const q = searchParam.toLowerCase();
+      subs = subs.filter(
+        (s) =>
+          s.studentName.toLowerCase().includes(q) ||
+          s.studentClass.toLowerCase().includes(q) ||
+          s.answer.toLowerCase().includes(q),
+      );
+    }
+
+    if (statusParam === "graded") {
+      subs = subs.filter((s) => s.grade !== null && s.grade !== undefined);
+    } else if (statusParam === "ungraded") {
+      subs = subs.filter((s) => s.grade === null || s.grade === undefined);
+    }
+
+    if (pageParam !== undefined || limitParam !== undefined) {
+      const page = Math.max(1, parseInt(pageParam || "1") || 1);
+      const limit = Math.max(1, Math.min(100, parseInt(limitParam || "10") || 10));
+      const totalItems = subs.length;
+      const totalPages = Math.ceil(totalItems / limit) || 1;
+      const startIndex = (page - 1) * limit;
+      const paginatedData = subs.slice(startIndex, startIndex + limit);
+
+      return c.json({
+        status: "success",
+        data: paginatedData,
+        pagination: {
+          page,
+          limit,
+          totalItems,
+          totalPages,
+          hasNextPage: page < totalPages,
+          hasPrevPage: page > 1,
+        },
+      });
+    }
 
     return c.json({ status: "success", data: subs });
   } catch (err: any) {
@@ -814,6 +945,7 @@ announcementsRoute.post("/:id/submissions", authMiddleware, async (c: any) => {
       });
     }
 
+    invalidateAnnouncementsServerCache();
     return c.json({
       status: "success",
       message: "Tugas berhasil dikumpulkan.",
@@ -865,6 +997,7 @@ announcementsRoute.delete(
       await db
         .delete(announcementSubmissions)
         .where(eq(announcementSubmissions.id, submissionId));
+      invalidateAnnouncementsServerCache();
       return c.json({ status: "success", message: "Tugas berhasil dihapus." });
     } catch (err: any) {
       console.error("Error deleting submission:", err);
@@ -913,6 +1046,7 @@ announcementsRoute.post(
         })
         .where(eq(announcementSubmissions.id, submissionId));
 
+      invalidateAnnouncementsServerCache();
       return c.json({
         status: "success",
         message: "Nilai dan catatan berhasil disimpan.",

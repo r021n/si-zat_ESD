@@ -31,8 +31,46 @@ export async function updateProfileApi(
   return apiClient.put<{ token: string; user: User }>("/api/auth/me", profileData, { token });
 }
 
-export async function getSiswaUsersApi(token: string): Promise<{ status: string; users: User[] }> {
-  return apiClient.get<{ status: string; users: User[] }>("/api/auth/users", { token });
+let siswaUsersCache: { data: { status: string; users: User[] }; timestamp: number } | null = null;
+let siswaUsersInflight: Promise<{ status: string; users: User[] }> | null = null;
+const SISWA_USERS_TTL_MS = 60 * 1000;
+
+export function clearSiswaUsersCache() {
+  siswaUsersCache = null;
+}
+
+export async function getSiswaUsersApi(
+  token: string,
+  forceRefresh = false,
+  params?: { page?: number; limit?: number; search?: string }
+): Promise<{ status: string; users: User[]; pagination?: any }> {
+  // If params are passed (pagination/search), skip the base cache
+  if (params && (params.page !== undefined || params.limit !== undefined || params.search)) {
+    return apiClient.get<{ status: string; users: User[]; pagination?: any }>("/api/auth/users", { token, params });
+  }
+
+  const now = Date.now();
+  if (!forceRefresh) {
+    if (siswaUsersCache && now - siswaUsersCache.timestamp < SISWA_USERS_TTL_MS) {
+      return siswaUsersCache.data;
+    }
+    if (siswaUsersInflight) {
+      return siswaUsersInflight;
+    }
+  }
+
+  const promise = (async () => {
+    const res = await apiClient.get<{ status: string; users: User[] }>("/api/auth/users", { token });
+    siswaUsersCache = { data: res, timestamp: Date.now() };
+    return res;
+  })();
+
+  siswaUsersInflight = promise;
+  const cleanup = () => {
+    if (siswaUsersInflight === promise) siswaUsersInflight = null;
+  };
+  promise.then(cleanup, cleanup);
+  return promise;
 }
 
 export async function changeSiswaPasswordApi(
@@ -40,5 +78,6 @@ export async function changeSiswaPasswordApi(
   id: number,
   newPassword: string,
 ): Promise<{ message: string }> {
+  clearSiswaUsersCache();
   return apiClient.post<{ message: string }>(`/api/auth/users/${id}/change-password`, { password: newPassword }, { token });
 }

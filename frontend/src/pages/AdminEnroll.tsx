@@ -21,6 +21,8 @@ import {
 import { useCustomDialog } from "../components/CustomDialog";
 import { isAdmin } from "../utils/auth";
 import { formatDateIndo } from "../utils/date";
+import { useDebounce } from "../hooks/useDebounce";
+import Pagination from "../components/common/Pagination";
 
 export default function AdminEnroll() {
   const navigate = useNavigate();
@@ -52,6 +54,13 @@ export default function AdminEnroll() {
   const [revokingId, setRevokingId] = useState<number | null>(null);
 
   const [searchQuery, setSearchQuery] = useState("");
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 10;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearchQuery, filterStatus]);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -164,8 +173,8 @@ export default function AdminEnroll() {
   const filteredList = enrollList.filter((s) => {
     if (filterStatus === "enrolled" && !s.isEnrolled) return false;
     if (filterStatus === "not-enrolled" && s.isEnrolled) return false;
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
+    if (debouncedSearchQuery.trim()) {
+      const q = debouncedSearchQuery.toLowerCase();
       const nama = (s.nama || "").toLowerCase();
       const email = (s.email || "").toLowerCase();
       const kelas = (s.kelas || "").toLowerCase();
@@ -173,6 +182,12 @@ export default function AdminEnroll() {
     }
     return true;
   });
+
+  const totalPages = Math.ceil(filteredList.length / PAGE_SIZE) || 1;
+  const paginatedList = filteredList.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE,
+  );
 
   if (loading) {
     return (
@@ -425,7 +440,7 @@ export default function AdminEnroll() {
                       {searchQuery ? "Tidak ada siswa yang cocok dengan kata kunci." : "Tidak ada data siswa."}
                     </p>
                   ) : (
-                    filteredList.map((siswa) => (
+                    paginatedList.map((siswa) => (
                       <div
                         key={siswa.id}
                         className="w-full bg-[#FAF9FF] border border-[#F0EDFF] rounded-2xl p-3.5 flex justify-between items-center gap-2 hover:border-[#8C66FF]/30 transition-colors"
@@ -487,6 +502,16 @@ export default function AdminEnroll() {
                     ))
                   )}
                 </div>
+
+                {/* Pagination */}
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  totalItems={filteredList.length}
+                  pageSize={PAGE_SIZE}
+                  onPageChange={setCurrentPage}
+                  className="mt-3"
+                />
               </div>
             </div>
           </div>

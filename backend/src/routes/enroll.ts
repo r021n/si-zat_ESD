@@ -242,7 +242,50 @@ enroll.get('/list', adminMiddleware, async (c) => {
       enrolledAt: enrollmentMap.get(u.id) || null,
     }))
 
-    return c.json({ status: 'success', list })
+    const pageParam = c.req.query('page')
+    const limitParam = c.req.query('limit')
+    const searchParam = c.req.query('search')
+    const statusParam = c.req.query('status')
+
+    let filtered = list
+    if (searchParam) {
+      const q = searchParam.toLowerCase()
+      filtered = filtered.filter(u =>
+        (u.nama || '').toLowerCase().includes(q) ||
+        (u.email || '').toLowerCase().includes(q) ||
+        (u.kelas || '').toLowerCase().includes(q)
+      )
+    }
+
+    if (statusParam === 'enrolled') {
+      filtered = filtered.filter(u => u.isEnrolled)
+    } else if (statusParam === 'not-enrolled') {
+      filtered = filtered.filter(u => !u.isEnrolled)
+    }
+
+    if (pageParam !== undefined || limitParam !== undefined) {
+      const page = Math.max(1, parseInt(pageParam || '1') || 1)
+      const limit = Math.max(1, Math.min(100, parseInt(limitParam || '10') || 10))
+      const totalItems = filtered.length
+      const totalPages = Math.ceil(totalItems / limit) || 1
+      const startIndex = (page - 1) * limit
+      const paginatedList = filtered.slice(startIndex, startIndex + limit)
+
+      return c.json({
+        status: 'success',
+        list: paginatedList,
+        pagination: {
+          page,
+          limit,
+          totalItems,
+          totalPages,
+          hasNextPage: page < totalPages,
+          hasPrevPage: page > 1,
+        }
+      })
+    }
+
+    return c.json({ status: 'success', list: filtered })
   } catch (err: any) {
     return c.json({ error: err.message || 'Gagal mengambil daftar enroll' }, 500)
   }

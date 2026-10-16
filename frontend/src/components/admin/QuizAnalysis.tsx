@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuthStore } from "../../store/authStore";
 import { updateQuizKkmApi } from "../../api/api";
 import {
@@ -14,6 +14,7 @@ import {
 
 import type { Quiz, Submission } from "../../types/quiz";
 import { formatDurationFriendly } from "../../utils/time";
+import Pagination from "../common/Pagination";
 
 interface QuizAnalysisProps {
   selectedQuiz: Quiz;
@@ -44,6 +45,13 @@ export default function QuizAnalysis({
   >("ORDER_ASC");
   const [selectedSubmission, setSelectedSubmission] =
     useState<Submission | null>(null);
+
+  const [summaryPage, setSummaryPage] = useState(1);
+  const SUMMARY_PAGE_SIZE = 10;
+
+  useEffect(() => {
+    setSummaryPage(1);
+  }, [scoreSort]);
 
   // KKM (Ketuntasan Minimal) states — bound to this quiz only
   const [kkmValue, setKkmValue] = useState<number | null>(
@@ -134,6 +142,13 @@ export default function QuizAnalysis({
       return a.studentName.localeCompare(b.studentName);
     }
   });
+
+  const totalSummaryPages =
+    Math.ceil(sortedSubmissions.length / SUMMARY_PAGE_SIZE) || 1;
+  const paginatedSummarySubmissions = sortedSubmissions.slice(
+    (summaryPage - 1) * SUMMARY_PAGE_SIZE,
+    summaryPage * SUMMARY_PAGE_SIZE,
+  );
 
   // Calculate question stats and sort
   const processedQuestions = selectedQuiz.questions.map((q, qIdx) => {
@@ -429,7 +444,7 @@ export default function QuizAnalysis({
                         </tr>
                       </thead>
                       <tbody>
-                        {sortedSubmissions.map((sub, sIdx) => {
+                        {paginatedSummarySubmissions.map((sub, sIdx) => {
                           const subAnsweredCount = Object.keys(
                             sub.answers,
                           ).filter(
@@ -493,6 +508,16 @@ export default function QuizAnalysis({
                       </tbody>
                     </table>
                   </div>
+
+                  {/* Summary Submissions Pagination */}
+                  <Pagination
+                    currentPage={summaryPage}
+                    totalPages={totalSummaryPages}
+                    totalItems={sortedSubmissions.length}
+                    pageSize={SUMMARY_PAGE_SIZE}
+                    onPageChange={setSummaryPage}
+                    className="mt-2 shrink-0"
+                  />
                 </div>
               )}
 

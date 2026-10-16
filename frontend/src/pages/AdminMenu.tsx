@@ -17,6 +17,8 @@ import { FiArrowLeft } from "react-icons/fi";
 import { getSiswaUsersApi, getSiswaAnalyticsApi } from "../api/api";
 import { isAdmin } from "../utils/auth";
 import AnalyticsModal from "../components/common/AnalyticsModal";
+import { useDebounce } from "../hooks/useDebounce";
+import Pagination from "../components/common/Pagination";
 
 export default function AdminMenu() {
   const navigate = useNavigate();
@@ -37,6 +39,13 @@ export default function AdminMenu() {
   const [analyticsError, setAnalyticsError] = useState("");
 
   const [searchSiswa, setSearchSiswa] = useState("");
+  const debouncedSearchSiswa = useDebounce(searchSiswa, 300);
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 9;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearchSiswa]);
 
   useEffect(() => {
     if (!user || !isAdmin(user)) {
@@ -116,13 +125,19 @@ export default function AdminMenu() {
   };
 
   const filteredSiswaList = siswaList.filter((s) => {
-    if (!searchSiswa.trim()) return true;
-    const q = searchSiswa.toLowerCase();
+    if (!debouncedSearchSiswa.trim()) return true;
+    const q = debouncedSearchSiswa.toLowerCase();
     const nama = (s.nama || "").toLowerCase();
     const email = (s.email || "").toLowerCase();
     const kelas = (s.kelas || "").toLowerCase();
     return nama.includes(q) || email.includes(q) || kelas.includes(q);
   });
+
+  const totalPages = Math.ceil(filteredSiswaList.length / PAGE_SIZE) || 1;
+  const paginatedSiswaList = filteredSiswaList.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE,
+  );
 
   const adminMenus = [
     {
@@ -352,7 +367,7 @@ export default function AdminMenu() {
                   {searchSiswa ? "Tidak ada siswa yang cocok dengan pencarian." : "Belum ada data siswa terdaftar."}
                 </p>
               ) : (
-                filteredSiswaList.map((siswa) => (
+                paginatedSiswaList.map((siswa) => (
                   <div
                     key={siswa.id}
                     className="w-full bg-white rounded-[28px] p-5 shadow-[0_4px_12px_rgba(0,0,0,0.02)] md:shadow-[0_4px_16px_rgba(0,0,0,0.03)] border border-[#F0EDFF] flex flex-col gap-4 hover:border-[#8C66FF]/50 transition-colors duration-200"
@@ -404,6 +419,16 @@ export default function AdminMenu() {
                 ))
               )}
             </div>
+
+            {/* Pagination for Students List */}
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={filteredSiswaList.length}
+              pageSize={PAGE_SIZE}
+              onPageChange={setCurrentPage}
+              className="mt-4"
+            />
           </div>
         )}
       </div>

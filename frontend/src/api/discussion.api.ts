@@ -123,11 +123,27 @@ export async function deleteAnnouncementApi(token: string, id: string) {
   return apiClient.delete(`/api/announcements/${id}`, { token });
 }
 
+export function getAnnouncementDiscussionsApi(
+  token: string,
+  id: string,
+  forceRefresh?: boolean
+): Promise<DiscussionMessage[]>;
+export function getAnnouncementDiscussionsApi(
+  token: string,
+  id: string,
+  forceRefresh: boolean,
+  params: { page?: number; limit?: number }
+): Promise<{ status: string; data: DiscussionMessage[]; pagination: any }>;
 export async function getAnnouncementDiscussionsApi(
   token: string,
   id: string,
   forceRefresh = false,
-): Promise<DiscussionMessage[]> {
+  params?: { page?: number; limit?: number }
+): Promise<any> {
+  if (params && (params.page !== undefined || params.limit !== undefined)) {
+    return apiClient.get(`/api/announcements/${id}/discussions`, { token, params });
+  }
+
   const now = Date.now();
   if (!forceRefresh) {
     const cached = announcementDiscussionsCache.get(id);
@@ -169,7 +185,27 @@ export async function sendAnnouncementDiscussionApi(token: string, id: string, c
   return res.data;
 }
 
-export async function getAnnouncementSubmissionsApi(token: string, id: string, forceRefresh = false): Promise<SubmissionItem[]> {
+export function getAnnouncementSubmissionsApi(
+  token: string,
+  id: string,
+  forceRefresh?: boolean
+): Promise<SubmissionItem[]>;
+export function getAnnouncementSubmissionsApi(
+  token: string,
+  id: string,
+  forceRefresh: boolean,
+  params: { page?: number; limit?: number; search?: string; status?: string }
+): Promise<{ status: string; data: SubmissionItem[]; pagination: any }>;
+export async function getAnnouncementSubmissionsApi(
+  token: string,
+  id: string,
+  forceRefresh = false,
+  params?: { page?: number; limit?: number; search?: string; status?: string }
+): Promise<any> {
+  if (params && (params.page !== undefined || params.limit !== undefined || params.search || params.status)) {
+    return apiClient.get(`/api/announcements/${id}/submissions`, { token, params });
+  }
+
   const now = Date.now();
   if (!forceRefresh) {
     const cached = announcementSubmissionsCache.get(id);

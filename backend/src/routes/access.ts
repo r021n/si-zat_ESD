@@ -40,8 +40,23 @@ async function adminMiddleware(c: any, next: any) {
   }
 }
 
-// Get setting helper (ensures at least one row exists)
-export async function getSettings() {
+// In-memory cache for access settings to eliminate Turso network latency on every request
+let cachedSettings: any = null
+let settingsCacheTimestamp = 0
+const SETTINGS_CACHE_TTL_MS = 60 * 1000 // 60 seconds
+
+export function invalidateSettingsCache() {
+  cachedSettings = null
+  settingsCacheTimestamp = 0
+}
+
+// Get setting helper (ensures at least one row exists and uses in-memory cache)
+export async function getSettings(forceRefresh = false) {
+  const now = Date.now()
+  if (!forceRefresh && cachedSettings && (now - settingsCacheTimestamp < SETTINGS_CACHE_TTL_MS)) {
+    return cachedSettings
+  }
+
   let [settings] = await db.select().from(accessControls).limit(1)
   if (!settings) {
     [settings] = await db.insert(accessControls).values({
@@ -50,6 +65,9 @@ export async function getSettings() {
       schedules: '[]',
     }).returning()
   }
+
+  cachedSettings = settings
+  settingsCacheTimestamp = now
   return settings
 }
 
@@ -150,6 +168,8 @@ access.post('/settings', adminMiddleware, async (c) => {
       })
       .where(eq(accessControls.id, current.id))
       .returning()
+
+    invalidateSettingsCache()
 
     return c.json({
       status: 'success',

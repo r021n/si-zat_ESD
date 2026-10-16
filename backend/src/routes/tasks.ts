@@ -81,6 +81,31 @@ tasks.get('/submissions', async (c: any) => {
     // Sort submissions by submittedAt descending
     allSubmissions.sort((a, b) => b.submittedAt.localeCompare(a.submittedAt))
 
+    const pageParam = c.req.query('page')
+    const limitParam = c.req.query('limit')
+
+    if (pageParam !== undefined || limitParam !== undefined) {
+      const page = Math.max(1, parseInt(pageParam || '1') || 1)
+      const limit = Math.max(1, Math.min(100, parseInt(limitParam || '10') || 10))
+      const totalItems = allSubmissions.length
+      const totalPages = Math.ceil(totalItems / limit) || 1
+      const startIndex = (page - 1) * limit
+      const paginatedData = allSubmissions.slice(startIndex, startIndex + limit)
+
+      return c.json({
+        status: 'success',
+        data: paginatedData,
+        pagination: {
+          page,
+          limit,
+          totalItems,
+          totalPages,
+          hasNextPage: page < totalPages,
+          hasPrevPage: page > 1,
+        }
+      })
+    }
+
     return c.json(allSubmissions)
   } catch (error: any) {
     console.error('Error fetching task submissions:', error)

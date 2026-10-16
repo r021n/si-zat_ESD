@@ -6,6 +6,24 @@ import { eq, and } from 'drizzle-orm'
 
 const quiz = new Hono()
 
+// In-memory server cache for quiz structure to prevent N+1 Turso queries
+let baseQuizzesCache: {
+  data: Array<{
+    id: string
+    title: string
+    createdAt: string
+    kkm: number | null
+    questions: any[]
+  }>
+  timestamp: number
+} | null = null
+
+const QUIZZES_CACHE_TTL_MS = 60 * 1000
+
+export function invalidateQuizzesServerCache() {
+  baseQuizzesCache = null
+}
+
 // Middleware to authenticate user and extract claims
 async function authMiddleware(c: any, next: any) {
   const authHeader = c.req.header('Authorization')
@@ -52,40 +70,71 @@ quiz.use('*', authMiddleware)
 quiz.get('/', async (c: any) => {
   try {
     const user = c.get('user')
-    const allQuizzes = await db.select().from(quizzes)
+    const now = Date.now()
 
-    const mySubmissions = await db.select({ quizId: submissions.quizId })
-      .from(submissions)
-      .where(eq(submissions.userId, user.id))
-    const submittedQuizIds = new Set(mySubmissions.map(s => s.quizId))
+    let baseQuizzes = baseQuizzesCache && (now - baseQuizzesCache.timestamp < QUIZZES_CACHE_TTL_MS)
+      ? baseQuizzesCache.data
+      : null
 
-    const result = []
+    if (!baseQuizzes) {
+      const allQuizzes = await db.select().from(quizzes)
+      const allQuestions = await db.select().from(questions)
 
-    for (const q of allQuizzes) {
-      const quizQuestions = await db.select().from(questions).where(eq(questions.quizId, q.id))
-      quizQuestions.sort((a, b) => a.sortOrder - b.sortOrder)
+      // Group questions by quizId
+      const questionsByQuiz: Record<string, any[]> = {}
+      for (const q of allQuestions) {
+        if (!questionsByQuiz[q.quizId]) {
+          questionsByQuiz[q.quizId] = []
+        }
+        questionsByQuiz[q.quizId].push(q)
+      }
 
-      const quizSubmissions = await db.select().from(submissions).where(eq(submissions.quizId, q.id))
+      baseQuizzes = allQuizzes.map(q => {
+        const quizQuestions = questionsByQuiz[q.id] || []
+        quizQuestions.sort((a, b) => a.sortOrder - b.sortOrder)
 
-      const parsedQuestions = quizQuestions.map(ques => ({
-        id: ques.id,
-        text: ques.text,
-        options: JSON.parse(ques.options),
-        correctAnswers: JSON.parse(ques.correctAnswers),
-        images: JSON.parse(ques.images),
-        questionType: ques.questionType || ""
-      }))
+        const parsedQuestions = quizQuestions.map(ques => ({
+          id: ques.id,
+          text: ques.text,
+          options: JSON.parse(ques.options),
+          correctAnswers: JSON.parse(ques.correctAnswers),
+          images: JSON.parse(ques.images),
+          questionType: ques.questionType || ""
+        }))
 
-      result.push({
-        id: q.id,
-        title: q.title,
-        createdAt: q.createdAt,
-        questions: parsedQuestions,
-        submissionsCount: quizSubmissions.length,
-        hasSubmitted: submittedQuizIds.has(q.id),
-        kkm: q.kkm ?? null
+        return {
+          id: q.id,
+          title: q.title,
+          createdAt: q.createdAt,
+          questions: parsedQuestions,
+          kkm: q.kkm ?? null
+        }
       })
+
+      baseQuizzesCache = { data: baseQuizzes, timestamp: now }
     }
+
+    // Single query for submissions metadata
+    const allSubmissionsMeta = await db.select({
+      quizId: submissions.quizId,
+      userId: submissions.userId
+    }).from(submissions)
+
+    const submissionCounts: Record<string, number> = {}
+    const submittedQuizIds = new Set<string>()
+
+    for (const sub of allSubmissionsMeta) {
+      submissionCounts[sub.quizId] = (submissionCounts[sub.quizId] || 0) + 1
+      if (sub.userId === user.id) {
+        submittedQuizIds.add(sub.quizId)
+      }
+    }
+
+    const result = baseQuizzes.map(q => ({
+      ...q,
+      submissionsCount: submissionCounts[q.id] || 0,
+      hasSubmitted: submittedQuizIds.has(q.id),
+    }))
 
     return c.json(result)
   } catch (error: any) {
@@ -142,6 +191,34 @@ quiz.get('/:id/submissions', adminMiddleware, async (c: any) => {
       createdAt: sub.createdAt
     }))
 
+    // Sort newest first
+    parsedSubmissions.sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+
+    const pageParam = c.req.query('page')
+    const limitParam = c.req.query('limit')
+
+    if (pageParam !== undefined || limitParam !== undefined) {
+      const page = Math.max(1, parseInt(pageParam || '1') || 1)
+      const limit = Math.max(1, Math.min(100, parseInt(limitParam || '10') || 10))
+      const totalItems = parsedSubmissions.length
+      const totalPages = Math.ceil(totalItems / limit) || 1
+      const startIndex = (page - 1) * limit
+      const paginatedData = parsedSubmissions.slice(startIndex, startIndex + limit)
+
+      return c.json({
+        status: 'success',
+        data: paginatedData,
+        pagination: {
+          page,
+          limit,
+          totalItems,
+          totalPages,
+          hasNextPage: page < totalPages,
+          hasPrevPage: page > 1
+        }
+      })
+    }
+
     return c.json(parsedSubmissions)
   } catch (error: any) {
     console.error('Error fetching submissions:', error)
@@ -180,6 +257,7 @@ quiz.post('/', adminMiddleware, async (c: any) => {
       })
     }
 
+    invalidateQuizzesServerCache()
     return c.json({ success: true, message: 'Kuis berhasil dibuat.' })
   } catch (error: any) {
     console.error('Error creating quiz:', error)
@@ -218,6 +296,7 @@ quiz.put('/:id', adminMiddleware, async (c: any) => {
       })
     }
 
+    invalidateQuizzesServerCache()
     return c.json({ success: true, message: 'Kuis berhasil diperbarui.' })
   } catch (error: any) {
     console.error('Error updating quiz:', error)
@@ -247,6 +326,7 @@ quiz.patch('/:id/kkm', adminMiddleware, async (c: any) => {
       return c.json({ error: 'Kuis tidak ditemukan.' }, 404)
     }
 
+    invalidateQuizzesServerCache()
     return c.json({ success: true, message: kkm === null ? 'KKM berhasil dihapus.' : 'KKM berhasil disimpan.', kkm: kkm === null ? null : Number(kkm) })
   } catch (error: any) {
     console.error('Error updating quiz KKM:', error)
@@ -259,6 +339,7 @@ quiz.delete('/:id', adminMiddleware, async (c: any) => {
   try {
     const id = c.req.param('id')
     await db.delete(quizzes).where(eq(quizzes.id, id))
+    invalidateQuizzesServerCache()
     return c.json({ success: true, message: 'Kuis berhasil dihapus.' })
   } catch (error: any) {
     console.error('Error deleting quiz:', error)
@@ -304,6 +385,7 @@ quiz.post('/:id/submit', async (c: any) => {
       createdAt: createdAt || new Date().toLocaleString('id-ID')
     })
 
+    invalidateQuizzesServerCache()
     return c.json({ success: true, message: 'Jawaban berhasil dikirim.' })
   } catch (error: any) {
     console.error('Error submitting quiz answers:', error)
