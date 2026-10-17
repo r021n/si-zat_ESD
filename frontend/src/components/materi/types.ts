@@ -4,6 +4,8 @@ export interface SlideItem {
   src: string;
 }
 
+export type MateriSlide = SlideItem;
+
 export interface Page4InteractiveProps {
   selectedOption: string | null;
   setSelectedOption: (opt: string) => void;

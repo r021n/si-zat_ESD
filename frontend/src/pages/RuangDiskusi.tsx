@@ -1,789 +1,90 @@
-import { useState, useEffect, useRef, useCallback } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { useAuthStore } from "../store/authStore";
-import { useAppBack } from "../hooks/useAppBack";
-import { useCustomDialog } from "../components/CustomDialog";
-import {
-  FiArrowLeft,
-  FiSend,
-  FiImage,
-  FiX,
-  FiRefreshCw,
-  FiCheck,
-  FiCheckCircle,
-  FiSearch,
-  FiChevronRight,
-} from "react-icons/fi";
-import {
-  LuMessageSquare,
-  LuClock,
-  LuInfo,
-  LuUpload,
-  LuPin,
-  LuCircleHelp,
-  LuLightbulb,
-  LuClipboardList,
-  LuUsers,
-} from "react-icons/lu";
-import {
-  getAnnouncementsApi,
-  getAnnouncementDetailApi,
-  getAnnouncementDiscussionsApi,
-  sendAnnouncementDiscussionApi,
-  getAnnouncementSubmissionsApi,
-  submitAnnouncementTaskApi,
-  deleteAnnouncementSubmissionApi,
-  getPeerSubmissionsApi,
-  getPeerCommentsApi,
-  sendPeerCommentApi,
-  deletePeerCommentApi,
-} from "../api/api";
-import type {
-  AnnouncementItem,
-  DiscussionMessage,
-  SubmissionItem,
-  PeerSubmissionItem,
-  PeerSubmissionsResponse,
-  PeerCommentItem,
-} from "../types/discussion";
-import { compressImage } from "../utils/image";
-import { API_URL, PLACEHOLDER_IMAGE_URL } from "../utils/constants";
-import { useDebounce } from "../hooks/useDebounce";
+import { FiArrowLeft } from "react-icons/fi";
+import { LuMessageSquare, LuClock, LuInfo, LuUsers } from "react-icons/lu";
+import { useRuangDiskusi } from "../components/discussion/useRuangDiskusi";
+import AnnouncementListView from "../components/discussion/AnnouncementListView";
+import AnnouncementInfoTab from "../components/discussion/AnnouncementInfoTab";
+import DiscussionChatTab from "../components/discussion/DiscussionChatTab";
+import PeerReviewTab from "../components/discussion/PeerReviewTab";
+import SubmissionHistoryTab from "../components/discussion/SubmissionHistoryTab";
+import ZoomImageModal from "../components/discussion/ZoomImageModal";
 
 export default function RuangDiskusi() {
-  const { id: paramAnnouncementId } = useParams();
-  const navigate = useNavigate();
-  const goBack = useAppBack();
-  const { user, token } = useAuthStore();
-  const { showAlert, showConfirm } = useCustomDialog();
-
-  // Announcements List State
-  const [announcementsList, setAnnouncementsList] = useState<
-    AnnouncementItem[]
-  >([]);
-  const [loadingList, setLoadingList] = useState<boolean>(true);
-  const [searchQuery, setSearchQuery] = useState<string>("");
-  const debouncedSearchQuery = useDebounce(searchQuery, 300);
-
-  // Selected Announcement Detail
-  const [selectedAnnouncement, setSelectedAnnouncement] =
-    useState<AnnouncementItem | null>(null);
-
-  // Active Tab: Informasi, Diskusi, Teman, Riwayat
-  const [activeTab, setActiveTab] = useState<
-    "informasi" | "diskusi" | "teman" | "riwayat"
-  >("informasi");
-
-  // Discussion State
-  const [discussions, setDiscussions] = useState<DiscussionMessage[]>([]);
-  const [loadingDiscussions, setLoadingDiscussions] = useState<boolean>(false);
-  const [loadedDiscussionsFor, setLoadedDiscussionsFor] = useState<
-    string | null
-  >(null);
-  const [chatInput, setChatInput] = useState<string>("");
-  const [sendingChat, setSendingChat] = useState<boolean>(false);
-  const chatBottomRef = useRef<HTMLDivElement | null>(null);
-
-  // Peer Review State
-  const [peerData, setPeerData] = useState<PeerSubmissionsResponse | null>(null);
-  const [loadingPeer, setLoadingPeer] = useState<boolean>(false);
-  const [loadedPeerFor, setLoadedPeerFor] = useState<string | null>(null);
-  const [selectedPeerSub, setSelectedPeerSub] =
-    useState<PeerSubmissionItem | null>(null);
-  const [peerComments, setPeerComments] = useState<PeerCommentItem[]>([]);
-  const [loadingPeerComments, setLoadingPeerComments] =
-    useState<boolean>(false);
-  const [peerCommentInput, setPeerCommentInput] = useState<string>("");
-  const [sendingPeerComment, setSendingPeerComment] = useState<boolean>(false);
-  const peerCommentBottomRef = useRef<HTMLDivElement | null>(null);
-
-  // Submission State
-  const [mySubmission, setMySubmission] = useState<SubmissionItem | null>(null);
-  const [loadingSubmission, setLoadingSubmission] = useState<boolean>(false);
-  const [loadedSubmissionsFor, setLoadedSubmissionsFor] = useState<
-    string | null
-  >(null);
-
-  // Submission Form State
-  const [taskAnswer, setTaskAnswer] = useState<string>("");
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [imagePreviewUrl, setImagePreviewUrl] = useState<string>("");
-  const [compressingImage, setCompressingImage] = useState<boolean>(false);
-  const [submittingTask, setSubmittingTask] = useState<boolean>(false);
-  const [showSubmissionForm, setShowSubmissionForm] = useState<boolean>(false);
-
-  // Fullscreen Image Modal
-  const [zoomImageUrl, setZoomImageUrl] = useState<string | null>(null);
-
-  // Helper to parse multi-line text into clean array of list items
-  const parseListItems = (text: string) => {
-    if (!text) return [];
-    return text
-      .split("\n")
-      .map((line) =>
-        line
-          .trim()
-          .replace(/^(\d+[.)]\s*|[-*•]\s*)/, "")
-          .trim(),
-      )
-      .filter((line) => line.length > 0);
-  };
-
-  // Fetch Announcements List
-  const fetchAnnouncements = useCallback(
-    async (force = false) => {
-      if (!token) return;
-      setLoadingList(true);
-      try {
-        const data = await getAnnouncementsApi(token, force);
-        setAnnouncementsList(data || []);
-      } catch (err: any) {
-        console.error("Error fetching announcements:", err);
-      } finally {
-        setLoadingList(false);
-      }
-    },
-    [token],
-  );
-
-  useEffect(() => {
-    fetchAnnouncements();
-  }, [fetchAnnouncements]);
-
-  const fetchDiscussions = useCallback(
-    async (annId: string, force = false) => {
-      if (!token) return;
-      setLoadingDiscussions(true);
-      try {
-        const data = await getAnnouncementDiscussionsApi(token, annId, force);
-        setDiscussions(data || []);
-        setLoadedDiscussionsFor(annId);
-        setTimeout(() => {
-          chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
-        }, 200);
-      } catch (err) {
-        console.error("Error fetching discussions:", err);
-      } finally {
-        setLoadingDiscussions(false);
-      }
-    },
-    [token],
-  );
-
-  const fetchSubmissions = useCallback(
-    async (annId: string, force = false) => {
-      if (!token) return;
-      setLoadingSubmission(true);
-      try {
-        const subs: SubmissionItem[] = await getAnnouncementSubmissionsApi(
-          token,
-          annId,
-          force,
-        );
-        if (subs && subs.length > 0) {
-          setMySubmission(subs[0]);
-        } else {
-          setMySubmission(null);
-        }
-        setLoadedSubmissionsFor(annId);
-      } catch (err) {
-        console.error("Error fetching submissions:", err);
-      } finally {
-        setLoadingSubmission(false);
-      }
-    },
-    [token],
-  );
-
-  // Lazy-load discussions only when the Diskusi tab is opened
-  const ensureDiscussionsLoaded = useCallback(() => {
-    if (!selectedAnnouncement) return;
-    if (loadedDiscussionsFor === selectedAnnouncement.id) return;
-    fetchDiscussions(selectedAnnouncement.id);
-  }, [selectedAnnouncement, loadedDiscussionsFor, fetchDiscussions]);
-
-  // Lazy-load full submission only when needed (Riwayat tab / has existing sub)
-  const ensureSubmissionsLoaded = useCallback(() => {
-    if (!token || !selectedAnnouncement) return;
-    if (loadedSubmissionsFor === selectedAnnouncement.id) return;
-    // No submission known from list/detail — nothing to fetch for the form
-    if (!mySubmission && !selectedAnnouncement.mySubmission) {
-      setMySubmission(null);
-      setLoadedSubmissionsFor(selectedAnnouncement.id);
-      return;
-    }
-    fetchSubmissions(selectedAnnouncement.id);
-  }, [
-    token,
+  const {
+    paramAnnouncementId,
+    navigate,
+    goBack,
+    user,
+    loadingList,
+    searchQuery,
+    setSearchQuery,
+    filteredAnnouncements,
+    fetchAnnouncements,
     selectedAnnouncement,
-    loadedSubmissionsFor,
+    setSelectedAnnouncement,
+    handleSelectAnnouncement,
+    activeTab,
+    setActiveTab,
+    openDiskusiTab,
+    openTemanTab,
+    openRiwayatTab,
+    discussions,
+    loadingDiscussions,
+    chatInput,
+    setChatInput,
+    sendingChat,
+    chatBottomRef,
+    handleSendMessage,
+    peerData,
+    loadingPeer,
+    selectedPeerSub,
+    setSelectedPeerSub,
+    peerComments,
+    loadingPeerComments,
+    peerCommentInput,
+    setPeerCommentInput,
+    sendingPeerComment,
+    peerCommentBottomRef,
+    handleOpenPeerDetail,
+    handleSendPeerComment,
+    handleDeletePeerComment,
     mySubmission,
-    fetchSubmissions,
-  ]);
-
-  const handleSelectAnnouncement = useCallback(
-    async (annId: string, force = false) => {
-      if (!token) return;
-
-      // List payload already contains every detail field — skip the detail fetch
-      const fromList = announcementsList.find((a) => a.id === annId);
-      if (fromList && !force) {
-        setSelectedAnnouncement(fromList);
-        setActiveTab("informasi");
-        setShowSubmissionForm(false);
-        setDiscussions([]);
-        setLoadedDiscussionsFor(null);
-        setMySubmission(null);
-        setLoadedSubmissionsFor(null);
-        setPeerData(null);
-        setLoadedPeerFor(null);
-        setSelectedPeerSub(null);
-        setPeerComments([]);
-        return;
-      }
-
-      try {
-        const detail = await getAnnouncementDetailApi(token, annId, force);
-        setSelectedAnnouncement(detail);
-        setActiveTab("informasi");
-        setShowSubmissionForm(false);
-        setDiscussions([]);
-        setLoadedDiscussionsFor(null);
-        setMySubmission(detail.mySubmission ?? null);
-        // Detail payload already includes the full mySubmission (or null)
-        setLoadedSubmissionsFor(annId);
-        setPeerData(null);
-        setLoadedPeerFor(null);
-        setSelectedPeerSub(null);
-        setPeerComments([]);
-      } catch (err: any) {
-        showAlert(
-          err.message || "Gagal memuat detail diskusi.",
-          "Gagal Membuka",
-        );
-      }
-    },
-    [token, announcementsList, showAlert],
-  );
-
-  // Keep a ref so the deep-link effect only reacts to param/token changes
-  const selectAnnouncementRef = useRef(handleSelectAnnouncement);
-  useEffect(() => {
-    selectAnnouncementRef.current = handleSelectAnnouncement;
-  }, [handleSelectAnnouncement]);
-
-  // Load selected announcement if param is present.
-  // Wait for the list so we can reuse it and skip the detail fetch.
-  useEffect(() => {
-    if (paramAnnouncementId && token && !loadingList) {
-      selectAnnouncementRef.current(paramAnnouncementId);
-    }
-  }, [paramAnnouncementId, token, loadingList]);
-
-  // Send Discussion Message
-  const handleSendMessage = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    if (!chatInput.trim() || !selectedAnnouncement || !token || sendingChat)
-      return;
-
-    const content = chatInput.trim();
-    setChatInput("");
-    setSendingChat(true);
-
-    try {
-      const newMsg = await sendAnnouncementDiscussionApi(
-        token,
-        selectedAnnouncement.id,
-        content,
-      );
-      setDiscussions((prev) => [...prev, newMsg]);
-      setTimeout(() => {
-        chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
-      }, 100);
-    } catch (err: any) {
-      showAlert(
-        err.message || "Gagal mengirim pesan diskusi.",
-        "Gagal Mengirim",
-      );
-      setChatInput(content); // Restore content on fail
-    } finally {
-      setSendingChat(false);
-    }
-  };
-
-  // Handle Image Selection with Canvas Compression
-  const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (!file.type.startsWith("image/")) {
-      showAlert(
-        "Hanya file gambar (JPG, PNG, WebP) yang dapat dilampirkan.",
-        "Format Tidak Didukung",
-      );
-      return;
-    }
-
-    setCompressingImage(true);
-    try {
-      const compressedBlob = await compressImage(file, 250 * 1024);
-      const compressedFile = new File([compressedBlob], file.name, {
-        type: compressedBlob.type || "image/jpeg",
-      });
-      setSelectedFile(compressedFile);
-      setImagePreviewUrl(URL.createObjectURL(compressedFile));
-    } catch (err) {
-      console.error("Compression error:", err);
-      setSelectedFile(file);
-      setImagePreviewUrl(URL.createObjectURL(file));
-    } finally {
-      setCompressingImage(false);
-    }
-  };
-
-  const handleClearImage = () => {
-    setSelectedFile(null);
-    if (imagePreviewUrl) {
-      URL.revokeObjectURL(imagePreviewUrl);
-      setImagePreviewUrl("");
-    }
-  };
-
-  // Submit Task Answer
-  const handleSubmitTask = async () => {
-    if (!taskAnswer.trim()) {
-      showAlert(
-        "Silakan ketikkan jawaban tugas Anda terlebih dahulu.",
-        "Jawaban Kosong",
-      );
-      return;
-    }
-
-    if (!selectedAnnouncement || !token) return;
-
-    setSubmittingTask(true);
-    try {
-      const formData = new FormData();
-      formData.append("answer", taskAnswer.trim());
-      if (selectedFile) {
-        formData.append("file", selectedFile);
-        formData.append("fileName", selectedFile.name);
-      }
-
-      const res = await submitAnnouncementTaskApi(
-        token,
-        selectedAnnouncement.id,
-        formData,
-      );
-
-      showAlert(
-        "Tugas Anda telah berhasil disimpan dan dikirimkan.",
-        "Berhasil Mengumpulkan!",
-      );
-
-      setShowSubmissionForm(false);
-      setTaskAnswer("");
-      handleClearImage();
-
-      // Prefer the mutation response; keep prior grade fields on update
-      // (backend omits grade/feedback from the submit response)
-      const prev = mySubmission;
-      const raw = res?.data;
-      if (raw) {
-        setMySubmission({
-          ...raw,
-          announcementId: selectedAnnouncement.id,
-          grade: raw.grade ?? prev?.grade,
-          feedback: raw.feedback ?? prev?.feedback,
-          gradedAt: raw.gradedAt ?? prev?.gradedAt,
-          gradedBy: raw.gradedBy ?? prev?.gradedBy,
-        } as SubmissionItem);
-        setLoadedSubmissionsFor(selectedAnnouncement.id);
-      } else {
-        fetchSubmissions(selectedAnnouncement.id);
-      }
-      // List badges (mySubmission / submissionsCount) still need a refresh
-      fetchAnnouncements();
-      setLoadedPeerFor(null);
-    } catch (err: any) {
-      showAlert(
-        err.message || "Terjadi kendala saat mengirimkan tugas.",
-        "Gagal Mengumpulkan",
-      );
-    } finally {
-      setSubmittingTask(false);
-    }
-  };
-
-  // Delete own submission
-  const handleDeleteSubmission = async () => {
-    if (!mySubmission || !token) return;
-    const confirmed = await showConfirm(
-      "Apakah Anda yakin ingin menghapus tugas yang sudah dikumpulkan ini? Tindakan ini tidak dapat dibatalkan.",
-    );
-    if (!confirmed) return;
-
-    try {
-      await deleteAnnouncementSubmissionApi(token, mySubmission.id);
-      showAlert("Pengumpulan tugas berhasil dibatalkan.", "Tugas Dihapus");
-      // Local state already knows the answer — no submissions refetch needed
-      setMySubmission(null);
-      setLoadedSubmissionsFor(mySubmission.announcementId);
-      setSelectedAnnouncement((prev) =>
-        prev ? { ...prev, mySubmission: null } : prev,
-      );
-      fetchAnnouncements();
-      setLoadedPeerFor(null);
-    } catch (err: any) {
-      showAlert(
-        err.message || "Gagal menghapus pengumpulan tugas.",
-        "Gagal Menghapus",
-      );
-    }
-  };
-
-  const formatDateIndo = (dateStr: string) => {
-    if (!dateStr) return "";
-    try {
-      const d = new Date(dateStr);
-      if (isNaN(d.getTime())) return dateStr;
-      return d.toLocaleDateString("id-ID", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-    } catch {
-      return dateStr;
-    }
-  };
-
-  const formatChatTime = (dateStr: string) => {
-    if (!dateStr) return "";
-    try {
-      const d = new Date(dateStr);
-      if (isNaN(d.getTime())) return dateStr;
-      return d.toLocaleTimeString("id-ID", {
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-    } catch {
-      return "";
-    }
-  };
-
-  const filteredAnnouncements = announcementsList.filter((item) => {
-    // Search query filter (debounced)
-    if (debouncedSearchQuery.trim()) {
-      const q = debouncedSearchQuery.toLowerCase();
-      return (
-        item.title.toLowerCase().includes(q) ||
-        item.problem.toLowerCase().includes(q)
-      );
-    }
-    return true;
-  });
-
-  // Full submission (state) or partial from list/detail — drives CTA & badges
-  const hasSubmission = !!(
-    mySubmission ||
-    selectedAnnouncement?.mySubmission
-  );
-
-  // Prefer live count once discussions are loaded; fall back to list count
-  const discussionCount =
-    selectedAnnouncement &&
-    loadedDiscussionsFor === selectedAnnouncement.id
-      ? discussions.length
-      : (selectedAnnouncement?.discussionsCount ?? discussions.length);
-
-  const openDiskusiTab = () => {
-    setActiveTab("diskusi");
-    ensureDiscussionsLoaded();
-    setTimeout(() => {
-      chatBottomRef.current?.scrollIntoView({
-        behavior: "smooth",
-      });
-    }, 150);
-  };
-
-  const openRiwayatTab = (showForm = false) => {
-    setActiveTab("riwayat");
-    if (showForm) setShowSubmissionForm(true);
-    ensureSubmissionsLoaded();
-  };
-
-  const fetchPeerSubmissions = useCallback(
-    async (annId: string) => {
-      if (!token) return;
-      setLoadingPeer(true);
-      try {
-        const data = await getPeerSubmissionsApi(token, annId);
-        setPeerData(data);
-        setLoadedPeerFor(annId);
-      } catch (err: any) {
-        console.error("Error fetching peer submissions:", err);
-      } finally {
-        setLoadingPeer(false);
-      }
-    },
-    [token],
-  );
-
-  const openTemanTab = () => {
-    setActiveTab("teman");
-    setSelectedPeerSub(null);
-    if (!selectedAnnouncement) return;
-    if (loadedPeerFor !== selectedAnnouncement.id) {
-      fetchPeerSubmissions(selectedAnnouncement.id);
-    }
-  };
-
-  const handleOpenPeerDetail = async (sub: PeerSubmissionItem) => {
-    setSelectedPeerSub(sub);
-    setPeerComments([]);
-    setLoadingPeerComments(true);
-    try {
-      if (token) {
-        const comments = await getPeerCommentsApi(token, sub.id);
-        setPeerComments(comments || []);
-        setTimeout(() => {
-          peerCommentBottomRef.current?.scrollIntoView({ behavior: "smooth" });
-        }, 150);
-      }
-    } catch (err: any) {
-      console.error("Error fetching peer comments:", err);
-    } finally {
-      setLoadingPeerComments(false);
-    }
-  };
-
-  const handleSendPeerComment = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    if (
-      !peerCommentInput.trim() ||
-      !selectedPeerSub ||
-      !token ||
-      sendingPeerComment
-    )
-      return;
-
-    const content = peerCommentInput.trim();
-    setPeerCommentInput("");
-    setSendingPeerComment(true);
-
-    try {
-      const res = await sendPeerCommentApi(token, selectedPeerSub.id, content);
-      setPeerComments((prev) => [...prev, res.comment]);
-
-      setPeerData((prev) => {
-        if (!prev) return prev;
-        const updatedSubs = prev.submissions.map((s) =>
-          s.id === selectedPeerSub.id
-            ? { ...s, commentsCount: s.commentsCount + 1, hasReviewed: true }
-            : s,
-        );
-        return {
-          ...prev,
-          myReviewedCount: res.myReviewedCount,
-          isRequirementMet: res.isRequirementMet,
-          submissions: updatedSubs,
-        };
-      });
-
-      setSelectedPeerSub((prev) =>
-        prev
-          ? {
-              ...prev,
-              commentsCount: prev.commentsCount + 1,
-              hasReviewed: true,
-            }
-          : prev,
-      );
-
-      setTimeout(() => {
-        peerCommentBottomRef.current?.scrollIntoView({ behavior: "smooth" });
-      }, 100);
-    } catch (err: any) {
-      showAlert(err.message || "Gagal mengirim komentar.", "Gagal Mengirim");
-      setPeerCommentInput(content);
-    } finally {
-      setSendingPeerComment(false);
-    }
-  };
-
-  const handleDeletePeerComment = async (commentId: string) => {
-    if (!token || !selectedPeerSub) return;
-    const confirmed = await showConfirm(
-      "Apakah Anda yakin ingin menghapus komentar ini?",
-      "Hapus Komentar",
-    );
-    if (!confirmed) return;
-
-    try {
-      await deletePeerCommentApi(token, commentId);
-      setPeerComments((prev) => prev.filter((c) => c.id !== commentId));
-      if (selectedAnnouncement) {
-        fetchPeerSubmissions(selectedAnnouncement.id);
-      }
-    } catch (err: any) {
-      showAlert(err.message || "Gagal menghapus komentar.", "Gagal");
-    }
-  };
+    loadingSubmission,
+    taskAnswer,
+    setTaskAnswer,
+    imagePreviewUrl,
+    compressingImage,
+    submittingTask,
+    showSubmissionForm,
+    setShowSubmissionForm,
+    handleImageSelect,
+    handleClearImage,
+    handleSubmitTask,
+    handleDeleteSubmission,
+    handlePrepareEditSubmission,
+    zoomImageUrl,
+    setZoomImageUrl,
+    parseListItems,
+    formatChatTime,
+    hasSubmission,
+    discussionCount,
+  } = useRuangDiskusi();
 
   return (
     <div className="w-full min-h-screen bg-[#FAF9FF] flex justify-center items-center text-[#2C2B30] font-sans select-none overflow-hidden relative">
-      {/* Decorative Blur Bubble */}
       <div className="absolute top-[-10%] right-[-10%] w-50 h-50 bg-[#E9E4FF] rounded-full filter blur-2xl opacity-50"></div>
 
-      {/* Container Mobile Portrait */}
       <div className="w-full max-w-107.5 min-h-screen flex flex-col justify-between px-6 py-6 z-10">
-        {/* ==================== VIEW 1: LIST OF ANNOUNCEMENTS ==================== */}
         {!selectedAnnouncement ? (
-          <div className="w-full flex-1 flex flex-col">
-            {/* Header */}
-            <div className="w-full flex items-center justify-between pb-3 mb-3 border-b border-[#F0EDFF]">
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => goBack("/menu")}
-                  className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-xs border border-[#F0EDFF] text-[#8C66FF] active:scale-95 transition-transform shrink-0"
-                  title="Kembali ke Menu"
-                >
-                  <FiArrowLeft size={19} />
-                </button>
-                <div>
-                  <p className="text-[10px] uppercase tracking-widest text-[#9C98A6] font-bold">
-                    Forum Kolaborasi
-                  </p>
-                  <h1 className="text-xl font-extrabold text-[#2C2B30] leading-tight">
-                    Ruang Diskusi
-                  </h1>
-                </div>
-              </div>
-
-              <button
-                onClick={() => fetchAnnouncements(true)}
-                disabled={loadingList}
-                className="w-9 h-9 bg-white rounded-xl flex items-center justify-center border border-[#F0EDFF] text-[#8C66FF] shadow-xs active:scale-95 transition-transform cursor-pointer"
-                title="Refresh"
-              >
-                <FiRefreshCw
-                  size={15}
-                  className={loadingList ? "animate-spin" : ""}
-                />
-              </button>
-            </div>
-
-            {/* Search Bar */}
-            <div className="w-full relative mb-3">
-              <FiSearch
-                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#9C98A6]"
-                size={15}
-              />
-              <input
-                type="text"
-                placeholder="Cari tugas atau diskusi..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 bg-white border border-[#F0EDFF] rounded-2xl text-xs font-semibold text-[#2C2B30] placeholder:text-[#9C98A6] focus:outline-none focus:border-[#8C66FF] shadow-xs"
-              />
-            </div>
-
-            {/* Announcements List */}
-            <div className="flex-1 overflow-y-auto pr-0.5 space-y-3 no-scrollbar pb-6">
-              {loadingList ? (
-                <div className="py-20 flex flex-col items-center justify-center gap-2">
-                  <div className="w-8 h-8 border-3 border-[#8C66FF] border-t-transparent rounded-full animate-spin"></div>
-                  <p className="text-[11px] text-[#9C98A6] font-bold uppercase tracking-wider animate-pulse">
-                    Memuat Ruang Diskusi...
-                  </p>
-                </div>
-              ) : filteredAnnouncements.length === 0 ? (
-                <div className="py-16 text-center bg-white rounded-3xl p-6 border border-[#F0EDFF] shadow-xs">
-                  <div className="w-14 h-14 mx-auto mb-3 bg-[#F0ECFF] text-[#8C66FF] rounded-2xl flex items-center justify-center text-2xl">
-                    <LuMessageSquare />
-                  </div>
-                  <h3 className="text-sm font-extrabold text-[#2C2B30]">
-                    Belum Ada Topik Diskusi
-                  </h3>
-                  <p className="text-xs text-[#9C98A6] mt-1">
-                    Topik diskusi dan tugas dari guru akan tampil di sini.
-                  </p>
-                </div>
-              ) : (
-                filteredAnnouncements.map((ann) => {
-                  const isSubmitted = !!ann.mySubmission;
-                  const isGraded =
-                    ann.mySubmission?.grade !== undefined &&
-                    ann.mySubmission?.grade !== null;
-
-                  return (
-                    <div
-                      key={ann.id}
-                      onClick={() => handleSelectAnnouncement(ann.id)}
-                      className="w-full bg-white rounded-2xl p-3.5 border border-[#F0EDFF] shadow-xs active:scale-[0.99] transition-all cursor-pointer hover:border-[#8C66FF]/50 flex items-center gap-3.5"
-                    >
-                      {/* Left Square Thumbnail / Icon */}
-                      <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#8C66FF] to-[#6366F1] flex items-center justify-center text-white text-xl shrink-0 shadow-xs overflow-hidden">
-                        <img
-                          src={
-                            ann.hasImage
-                              ? `${API_URL}/api/announcements/${ann.id}/image`
-                              : PLACEHOLDER_IMAGE_URL
-                          }
-                          alt={ann.title}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-
-                      {/* Right Details */}
-                      <div className="flex-1 min-w-0 flex flex-col">
-                        {/* Badges Row */}
-                        <div className="flex items-center gap-1.5 mb-1 flex-wrap">
-                          <span className="text-[9px] font-black uppercase tracking-wider text-[#8C66FF] bg-[#F0ECFF] px-2 py-0.5 rounded-md">
-                            Tugas
-                          </span>
-                          {isGraded ? (
-                            <span className="text-[9px] font-black text-[#10B981] bg-[#ECFDF5] px-2 py-0.5 rounded-md flex items-center gap-1">
-                              <FiCheckCircle size={10} /> Nilai:{" "}
-                              {ann.mySubmission?.grade}
-                            </span>
-                          ) : isSubmitted ? (
-                            <span className="text-[9px] font-bold text-[#3B82F6] bg-[#EFF6FF] px-2 py-0.5 rounded-md flex items-center gap-1">
-                              <FiCheckCircle size={10} /> Terkumpul
-                            </span>
-                          ) : (
-                            <span className="text-[9px] font-bold text-[#F59E0B] bg-[#FFFBEB] px-2 py-0.5 rounded-md">
-                              Berlangsung
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Title */}
-                        <h2 className="text-xs font-extrabold text-[#2C2B30] leading-snug truncate">
-                          {ann.title}
-                        </h2>
-
-                        {/* Author / Date Subtitle */}
-                        {/* <p className="text-[10px] text-[#9C98A6] font-medium mt-0.5 truncate">
-                          {ann.authorName || "Guru"} •{" "}
-                          {formatDateIndo(ann.createdAt)}
-                        </p> */}
-                      </div>
-
-                      {/* Right Chevron Arrow */}
-                      <div className="w-6 h-6 rounded-full flex items-center justify-center text-[#9C98A6] shrink-0">
-                        <FiChevronRight size={16} />
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
-          </div>
+          <AnnouncementListView
+            onBack={() => goBack("/menu")}
+            onRefresh={() => fetchAnnouncements(true)}
+            loadingList={loadingList}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            filteredAnnouncements={filteredAnnouncements}
+            onSelectAnnouncement={(id) => handleSelectAnnouncement(id)}
+          />
         ) : (
-          /* ==================== VIEW 2: ANNOUNCEMENT DETAIL (3 TABS) ==================== */
           <div className="w-full flex-1 flex flex-col h-full">
             {/* Top Bar inside Detail */}
             <div className="w-full flex items-center justify-between pb-2.5 mb-2 border-b border-[#F0EDFF]">
@@ -793,14 +94,12 @@ export default function RuangDiskusi() {
                     setSelectedAnnouncement(null);
                     if (paramAnnouncementId) navigate("/ruang-diskusi");
                   }}
-                  className="w-9 h-9 bg-white rounded-xl flex items-center justify-center border border-[#F0EDFF] text-[#8C66FF] shadow-xs active:scale-95 transition-transform shrink-0"
+                  className="w-9 h-9 bg-white rounded-xl flex items-center justify-center border border-[#F0EDFF] text-[#8C66FF] shadow-xs active:scale-95 transition-transform shrink-0 cursor-pointer"
                   title="Kembali ke Daftar"
                 >
                   <FiArrowLeft size={18} />
                 </button>
-                <h2 className="text-base font-extrabold text-[#2C2B30]">
-                  Detail Tugas
-                </h2>
+                <h2 className="text-base font-extrabold text-[#2C2B30]">Detail Tugas</h2>
               </div>
             </div>
 
@@ -808,7 +107,7 @@ export default function RuangDiskusi() {
             <div className="w-full grid grid-cols-4 bg-white p-1 rounded-2xl border border-[#F0EDFF] shadow-xs mb-3">
               <button
                 onClick={() => setActiveTab("informasi")}
-                className={`py-2 text-[11px] font-black rounded-xl transition-all flex items-center justify-center gap-1 ${
+                className={`py-2 text-[11px] font-black rounded-xl transition-all flex items-center justify-center gap-1 cursor-pointer ${
                   activeTab === "informasi"
                     ? "bg-[#8C66FF] text-white shadow-xs"
                     : "text-[#9C98A6] hover:text-[#2C2B30]"
@@ -820,7 +119,7 @@ export default function RuangDiskusi() {
 
               <button
                 onClick={openDiskusiTab}
-                className={`py-2 text-[11px] font-black rounded-xl transition-all flex items-center justify-center gap-1 relative ${
+                className={`py-2 text-[11px] font-black rounded-xl transition-all flex items-center justify-center gap-1 relative cursor-pointer ${
                   activeTab === "diskusi"
                     ? "bg-[#8C66FF] text-white shadow-xs"
                     : "text-[#9C98A6] hover:text-[#2C2B30]"
@@ -831,9 +130,7 @@ export default function RuangDiskusi() {
                 {discussionCount > 0 && (
                   <span
                     className={`text-[8px] px-1 py-0.2 rounded-full font-black ${
-                      activeTab === "diskusi"
-                        ? "bg-white text-[#8C66FF]"
-                        : "bg-[#F0ECFF] text-[#8C66FF]"
+                      activeTab === "diskusi" ? "bg-white text-[#8C66FF]" : "bg-[#F0ECFF] text-[#8C66FF]"
                     }`}
                   >
                     {discussionCount}
@@ -843,7 +140,7 @@ export default function RuangDiskusi() {
 
               <button
                 onClick={openTemanTab}
-                className={`py-2 text-[11px] font-black rounded-xl transition-all flex items-center justify-center gap-1 relative ${
+                className={`py-2 text-[11px] font-black rounded-xl transition-all flex items-center justify-center gap-1 relative cursor-pointer ${
                   activeTab === "teman"
                     ? "bg-[#8C66FF] text-white shadow-xs"
                     : "text-[#9C98A6] hover:text-[#2C2B30]"
@@ -860,7 +157,7 @@ export default function RuangDiskusi() {
 
               <button
                 onClick={() => openRiwayatTab()}
-                className={`py-2 text-[11px] font-black rounded-xl transition-all flex items-center justify-center gap-1 ${
+                className={`py-2 text-[11px] font-black rounded-xl transition-all flex items-center justify-center gap-1 cursor-pointer ${
                   activeTab === "riwayat"
                     ? "bg-[#8C66FF] text-white shadow-xs"
                     : "text-[#9C98A6] hover:text-[#2C2B30]"
@@ -868,721 +165,82 @@ export default function RuangDiskusi() {
               >
                 <LuClock size={13} />
                 <span>Tugas</span>
-                {hasSubmission && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#10B981]"></span>
-                )}
+                {hasSubmission && <span className="w-1.5 h-1.5 rounded-full bg-[#10B981]"></span>}
               </button>
             </div>
 
-            {/* TAB CONTENT 1: INFORMASI (DEFAULT) */}
+            {/* TAB CONTENT 1: INFORMASI */}
             {activeTab === "informasi" && (
-              <div className="flex-1 overflow-y-auto pr-0.5 space-y-4 no-scrollbar pb-6">
-                {/* 1. Cover Illustration Banner */}
-                <div className="w-full h-36 rounded-2xl bg-gradient-to-tr from-[#6366F1] via-[#8C66FF] to-[#A78BFA] p-4 flex flex-col justify-end relative overflow-hidden shadow-xs">
-                  {selectedAnnouncement.hasImage ? (
-                    <>
-                      <img
-                        src={`${API_URL}/api/announcements/${selectedAnnouncement.id}/image`}
-                        alt={selectedAnnouncement.title}
-                        className="absolute inset-0 w-full h-full object-cover"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent pointer-events-none"></div>
-                    </>
-                  ) : (
-                    <>
-                      <img
-                        src={PLACEHOLDER_IMAGE_URL}
-                        alt={selectedAnnouncement.title}
-                        className="absolute inset-0 w-full h-full object-cover"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent pointer-events-none"></div>
-                    </>
-                  )}
-                </div>
-
-                {/* 2. Main Content Card (Unified Article Style) */}
-                <div className="w-full bg-white rounded-2xl p-5 border border-[#F0EDFF] shadow-xs space-y-5">
-                  {/* Title & Meta */}
-                  <div className="border-b border-[#F0EDFF] pb-3">
-                    <h1 className="text-base font-extrabold text-[#2C2B30] leading-snug">
-                      {selectedAnnouncement.title}
-                    </h1>
-                  </div>
-
-                  {/* A. Soal / Permasalahan */}
-                  {selectedAnnouncement.problem && (
-                    <div className="space-y-1.5">
-                      <div className="flex items-center gap-1.5 text-[#8C66FF]">
-                        <LuPin size={14} className="shrink-0" />
-                        <h3 className="text-xs font-black uppercase tracking-wider text-[#2C2B30]">
-                          Soal / Permasalahan
-                        </h3>
-                      </div>
-                      <p className="text-xs text-[#524F5D] font-medium leading-relaxed whitespace-pre-line pl-0.5">
-                        {selectedAnnouncement.problem}
-                      </p>
-                    </div>
-                  )}
-
-                  {/* B. Pertanyaan */}
-                  {selectedAnnouncement.question && (
-                    <div className="space-y-2 pt-2 border-t border-[#F8F7FC]">
-                      <div className="flex items-center gap-1.5 text-[#3B82F6]">
-                        <LuCircleHelp size={14} className="shrink-0" />
-                        <h3 className="text-xs font-black uppercase tracking-wider text-[#2C2B30]">
-                          Pertanyaan
-                        </h3>
-                      </div>
-                      <ol className="space-y-2 pl-0.5">
-                        {parseListItems(selectedAnnouncement.question).map(
-                          (qItem, idx) => (
-                            <li
-                              key={idx}
-                              className="flex items-start gap-2.5 text-xs text-[#2C2B30] leading-relaxed"
-                            >
-                              <span className="w-5 h-5 rounded-full bg-[#EDE9FE] text-[#8C66FF] font-black flex items-center justify-center text-[10px] shrink-0 mt-0.5 border border-[#DDD6FE]/60">
-                                {idx + 1}
-                              </span>
-                              <span className="flex-1 font-semibold">
-                                {qItem}
-                              </span>
-                            </li>
-                          ),
-                        )}
-                      </ol>
-                    </div>
-                  )}
-
-                  {/* C. Petunjuk Pengerjaan */}
-                  {selectedAnnouncement.instruction && (
-                    <div className="space-y-2 pt-2 border-t border-[#F8F7FC]">
-                      <div className="flex items-center gap-1.5 text-[#F59E0B]">
-                        <LuLightbulb size={14} className="shrink-0" />
-                        <h3 className="text-xs font-black uppercase tracking-wider text-[#2C2B30]">
-                          Petunjuk Pengerjaan
-                        </h3>
-                      </div>
-                      <ul className="space-y-1.5 pl-0.5">
-                        {parseListItems(selectedAnnouncement.instruction).map(
-                          (instItem, idx) => (
-                            <li
-                              key={idx}
-                              className="flex items-start gap-2 text-xs text-[#524F5D] leading-relaxed"
-                            >
-                              <span className="w-1.5 h-1.5 rounded-full bg-[#8C66FF] shrink-0 mt-2"></span>
-                              <span className="flex-1 font-medium">
-                                {instItem}
-                              </span>
-                            </li>
-                          ),
-                        )}
-                      </ul>
-                    </div>
-                  )}
-
-                  {/* D. Informasi Tambahan Tugas */}
-                  {selectedAnnouncement.taskInfo && (
-                    <div className="pt-2 border-t border-[#F8F7FC]">
-                      <div className="p-3 bg-[#FFF8F8] rounded-xl border border-[#FFE4E6] space-y-1">
-                        <div className="flex items-center gap-1.5 text-[#E11D48]">
-                          <LuClipboardList size={14} className="shrink-0" />
-                          <h4 className="text-[11px] font-black uppercase tracking-wider text-[#E11D48]">
-                            Catatan Tambahan
-                          </h4>
-                        </div>
-                        <p className="text-xs text-[#524F5D] font-medium leading-relaxed whitespace-pre-line pl-0.5">
-                          {selectedAnnouncement.taskInfo}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Action CTA Button on Tab Informasi */}
-                <div className="pt-2">
-                  {hasSubmission ? (
-                    <button
-                      onClick={() => openRiwayatTab()}
-                      className="w-full py-3.5 bg-[#ECFDF5] border border-[#10B981]/30 text-[#065F46] font-black text-xs rounded-2xl flex items-center justify-center gap-2 shadow-xs active:scale-[0.99] transition-all cursor-pointer"
-                    >
-                      <FiCheckCircle size={16} className="text-[#10B981]" />
-                      <span>Lihat Riwayat & Nilai Tugas Anda</span>
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => openRiwayatTab(true)}
-                      className="w-full py-3.5 bg-gradient-to-r from-[#8C66FF] to-[#6366F1] text-white font-black text-xs rounded-2xl flex items-center justify-center gap-2 shadow-md shadow-purple-200 active:scale-[0.99] transition-all cursor-pointer"
-                    >
-                      <LuUpload size={16} />
-                      <span>Kumpulkan Jawaban Tugas Sekarang</span>
-                    </button>
-                  )}
-                </div>
-              </div>
+              <AnnouncementInfoTab
+                announcement={selectedAnnouncement}
+                hasSubmission={hasSubmission}
+                onOpenRiwayatTab={openRiwayatTab}
+                parseListItems={parseListItems}
+              />
             )}
 
-            {/* TAB CONTENT 2: DISKUSI (WHATSAPP GROUP CHAT UI) */}
+            {/* TAB CONTENT 2: FORUM DISKUSI */}
             {activeTab === "diskusi" && (
-              <div className="flex-1 flex flex-col bg-[#F3F2F8] rounded-3xl border border-[#E9E6F5] overflow-hidden shadow-inner relative h-[calc(100vh-14rem)]">
-                {/* Chat Top Banner (Group info & active ranking badge) */}
-                <div className="w-full bg-[#EAE8F5] px-3.5 py-2 flex items-center justify-between border-b border-[#DFDCF0]">
-                  <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-full bg-[#8C66FF] text-white flex items-center justify-center text-xs font-black">
-                      💬
-                    </div>
-                    <div>
-                      <p className="text-[11px] font-black text-[#2C2B30]">
-                        Forum Diskusi Topik
-                      </p>
-                      <p className="text-[9px] text-[#7A768A]">
-                        {discussionCount} pesan terkirim
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* WhatsApp Messages Scroll Area */}
-                <div className="flex-1 overflow-y-auto p-3 space-y-2.5 no-scrollbar">
-                  {loadingDiscussions ? (
-                    <div className="py-12 flex flex-col items-center justify-center gap-2">
-                      <div className="w-6 h-6 border-2 border-[#8C66FF] border-t-transparent rounded-full animate-spin"></div>
-                      <p className="text-[10px] text-[#9C98A6] font-bold">
-                        Memuat pesan diskusi...
-                      </p>
-                    </div>
-                  ) : discussions.length === 0 ? (
-                    <div className="py-16 text-center px-4">
-                      <div className="w-12 h-12 mx-auto mb-2 bg-white rounded-2xl flex items-center justify-center text-[#8C66FF] text-xl shadow-xs">
-                        <LuMessageSquare />
-                      </div>
-                      <p className="text-xs font-extrabold text-[#2C2B30]">
-                        Belum ada pesan diskusi
-                      </p>
-                      <p className="text-[10px] text-[#9C98A6] mt-0.5">
-                        Jadilah yang pertama menyampaikan argumen atau
-                        pertanyaan!
-                      </p>
-                    </div>
-                  ) : (
-                    discussions.map((msg) => {
-                      const isMe = msg.userId === user?.id;
-                      const isGuru =
-                        (msg.senderRole || "").toUpperCase() === "ADMIN";
-
-                      return (
-                        <div
-                          key={msg.id}
-                          className={`w-full flex ${
-                            isMe ? "justify-end" : "justify-start"
-                          }`}
-                        >
-                          <div
-                            className={`max-w-[85%] rounded-2xl px-3.5 py-2 shadow-xs text-xs relative ${
-                              isMe
-                                ? "bg-[#EDE9FE] text-[#1E1B2E] rounded-tr-xs border border-[#DDD6FE]"
-                                : "bg-white text-[#2C2B30] rounded-tl-xs border border-[#F0EDFF]"
-                            }`}
-                          >
-                            {/* Sender Info (For others) */}
-                            {!isMe && (
-                              <div className="flex items-center gap-1.5 mb-1">
-                                <span
-                                  className={`text-[10px] font-black ${
-                                    isGuru ? "text-[#8C66FF]" : "text-[#059669]"
-                                  }`}
-                                >
-                                  {msg.senderName}
-                                </span>
-                                {isGuru ? (
-                                  <span className="text-[8px] uppercase font-black bg-[#F0ECFF] text-[#8C66FF] px-1.5 py-0.2 rounded-md">
-                                    Guru
-                                  </span>
-                                ) : msg.studentClass ? (
-                                  <span className="text-[8px] font-semibold text-[#9C98A6]">
-                                    • Kelas {msg.studentClass}
-                                  </span>
-                                ) : null}
-                              </div>
-                            )}
-
-                            {/* Message Content */}
-                            <p className="text-xs leading-relaxed whitespace-pre-wrap break-words">
-                              {msg.content}
-                            </p>
-
-                            {/* Timestamp & Read Indicator */}
-                            <div className="flex items-center justify-end gap-1 mt-1 text-[9px] text-[#9C98A6]">
-                              <span>{formatChatTime(msg.createdAt)}</span>
-                              {isMe && (
-                                <FiCheck size={12} className="text-[#8C66FF]" />
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })
-                  )}
-                  <div ref={chatBottomRef} />
-                </div>
-
-                {/* WhatsApp Style Sticky Bottom Input Bar */}
-                <form
-                  onSubmit={handleSendMessage}
-                  className="w-full bg-white px-3 py-2 border-t border-[#E9E6F5] flex items-center gap-2"
-                >
-                  <input
-                    type="text"
-                    placeholder="Tulis pendapat atau pertanyaan..."
-                    value={chatInput}
-                    onChange={(e) => setChatInput(e.target.value)}
-                    className="flex-1 bg-[#FAF9FF] border border-[#E9E6F5] rounded-full px-4 py-2 text-xs font-semibold text-[#2C2B30] placeholder:text-[#9C98A6] focus:outline-none focus:border-[#8C66FF]"
-                  />
-                  <button
-                    type="submit"
-                    disabled={!chatInput.trim() || sendingChat}
-                    className="w-9 h-9 rounded-full bg-[#8C66FF] text-white flex items-center justify-center shrink-0 shadow-xs active:scale-95 disabled:opacity-40 disabled:scale-100 transition-all cursor-pointer"
-                  >
-                    <FiSend size={15} />
-                  </button>
-                </form>
-              </div>
+              <DiscussionChatTab
+                user={user}
+                discussions={discussions}
+                loadingDiscussions={loadingDiscussions}
+                chatInput={chatInput}
+                onChatInputChange={setChatInput}
+                sendingChat={sendingChat}
+                onSendMessage={handleSendMessage}
+                chatBottomRef={chatBottomRef}
+                formatChatTime={formatChatTime}
+              />
             )}
 
-            {/* TAB CONTENT: TEMAN (PEER REVIEW) */}
+            {/* TAB CONTENT 3: TUGAS TEMAN & PEER REVIEW */}
             {activeTab === "teman" && (
-              selectedPeerSub ? (
-                <div className="flex-1 flex flex-col bg-[#FAF9FF] rounded-2xl border border-[#F0EDFF] overflow-hidden shadow-xs h-[calc(100vh-14rem)]">
-                  {/* Top Bar inside Peer Detail */}
-                  <div className="w-full bg-white px-3.5 py-2.5 flex items-center justify-between border-b border-[#F0EDFF]">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <button
-                        onClick={() => setSelectedPeerSub(null)}
-                        className="w-7 h-7 rounded-lg bg-[#FAF9FF] border border-[#F0EDFF] flex items-center justify-center text-[#8C66FF] hover:bg-[#F0ECFF] transition-colors shrink-0"
-                        title="Kembali"
-                      >
-                        <FiArrowLeft size={14} />
-                      </button>
-                      <div className="min-w-0">
-                        <p className="text-xs font-bold text-[#2C2B30] truncate">
-                          Tugas {selectedPeerSub.studentName}
-                        </p>
-                        <p className="text-[9px] text-[#9C98A6]">
-                          {selectedPeerSub.studentClass || "Siswa"} • {formatDateIndo(selectedPeerSub.submittedAt)}
-                        </p>
-                      </div>
-                    </div>
-                    {selectedPeerSub.hasReviewed && (
-                      <span className="text-[9px] font-bold text-[#10B981] bg-[#ECFDF5] px-2 py-0.5 rounded-md flex items-center gap-1 shrink-0">
-                        <FiCheckCircle size={10} /> Direview
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Scrollable Content: Friend's Task + Comments */}
-                  <div className="flex-1 overflow-y-auto p-3.5 space-y-3 no-scrollbar">
-                    {/* Friend's Answer Box */}
-                    <div className="bg-white rounded-xl p-3 border border-[#F0EDFF] shadow-xs space-y-2">
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-[#9C98A6]">
-                        Jawaban Tugas:
-                      </p>
-                      <p className="text-xs text-[#2C2B30] font-medium leading-relaxed whitespace-pre-wrap">
-                        {selectedPeerSub.answer}
-                      </p>
-                      {selectedPeerSub.hasImage && (
-                        <div
-                          onClick={() =>
-                            setZoomImageUrl(
-                              `${API_URL}/api/announcements/submissions/${selectedPeerSub.id}/image`,
-                            )
-                          }
-                          className="w-16 h-16 bg-[#F8FAFC] rounded-lg overflow-hidden border border-[#E2E8F0] cursor-pointer hover:opacity-80 transition-opacity"
-                        >
-                          <img
-                            src={`${API_URL}/api/announcements/submissions/${selectedPeerSub.id}/image`}
-                            alt="Lampiran Tugas"
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Comments Divider */}
-                    <div className="flex items-center justify-between pt-1">
-                      <p className="text-[11px] font-bold text-[#2C2B30] flex items-center gap-1.5">
-                        <LuMessageSquare size={12} className="text-[#8C66FF]" />
-                        <span>Komentar & Masukan</span>
-                        <span className="text-[10px] text-[#9C98A6]">({peerComments.length})</span>
-                      </p>
-                    </div>
-
-                    {/* Comments List */}
-                    {loadingPeerComments ? (
-                      <div className="py-6 flex flex-col items-center justify-center gap-1.5">
-                        <div className="w-5 h-5 border-2 border-[#8C66FF] border-t-transparent rounded-full animate-spin"></div>
-                        <p className="text-[10px] text-[#9C98A6] font-bold">Memuat tanggapan...</p>
-                      </div>
-                    ) : peerComments.length === 0 ? (
-                      <div className="py-6 text-center bg-white/60 rounded-xl p-3 border border-dashed border-[#DFDCF0]">
-                        <p className="text-xs font-bold text-[#2C2B30]">Belum ada tanggapan</p>
-                        <p className="text-[10px] text-[#9C98A6] mt-0.5">
-                          Jadilah yang pertama memberikan masukan atau apresiasi!
-                        </p>
-                      </div>
-                    ) : (
-                      <div className="space-y-2">
-                        {peerComments.map((comment) => {
-                          const isMyComment = comment.userId === user?.id;
-                          return (
-                            <div
-                              key={comment.id}
-                              className={`p-2.5 rounded-xl border text-xs space-y-1 ${
-                                isMyComment
-                                  ? "bg-[#EDE9FE]/50 border-[#DDD6FE]"
-                                  : "bg-white border-[#F0EDFF]"
-                              }`}
-                            >
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-1.5">
-                                  <span className="font-bold text-[11px] text-[#2C2B30]">
-                                    {comment.userName}
-                                  </span>
-                                  {comment.userRole === "ADMIN" ? (
-                                    <span className="text-[8px] font-black uppercase text-[#8C66FF] bg-[#F0ECFF] px-1.5 py-0.2 rounded">
-                                      Guru
-                                    </span>
-                                  ) : comment.userClass ? (
-                                    <span className="text-[9px] text-[#9C98A6]">
-                                      • Kelas {comment.userClass}
-                                    </span>
-                                  ) : null}
-                                </div>
-                                <div className="flex items-center gap-1.5">
-                                  <span className="text-[9px] text-[#9C98A6]">
-                                    {formatChatTime(comment.createdAt)}
-                                  </span>
-                                  {isMyComment && (
-                                    <button
-                                      onClick={() => handleDeletePeerComment(comment.id)}
-                                      className="text-[9px] text-[#E11D48] hover:underline"
-                                    >
-                                      Hapus
-                                    </button>
-                                  )}
-                                </div>
-                              </div>
-                              <p className="text-xs text-[#524F5D] leading-relaxed whitespace-pre-wrap">
-                                {comment.content}
-                              </p>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                    <div ref={peerCommentBottomRef} />
-                  </div>
-
-                  {/* Input Form at Bottom */}
-                  <form
-                    onSubmit={handleSendPeerComment}
-                    className="w-full bg-white px-3 py-2 border-t border-[#F0EDFF] flex items-center gap-2"
-                  >
-                    <input
-                      type="text"
-                      placeholder="Tulis masukan untuk tugas teman..."
-                      value={peerCommentInput}
-                      onChange={(e) => setPeerCommentInput(e.target.value)}
-                      className="flex-1 bg-[#FAF9FF] border border-[#E9E6F5] rounded-full px-3.5 py-2 text-xs font-medium text-[#2C2B30] placeholder:text-[#9C98A6] focus:outline-none focus:border-[#8C66FF]"
-                    />
-                    <button
-                      type="submit"
-                      disabled={!peerCommentInput.trim() || sendingPeerComment}
-                      className="w-8 h-8 rounded-full bg-[#8C66FF] text-white flex items-center justify-center shrink-0 shadow-xs active:scale-95 disabled:opacity-40 transition-all cursor-pointer"
-                    >
-                      <FiSend size={13} />
-                    </button>
-                  </form>
-                </div>
-              ) : (
-                /* List of Peer Submissions */
-                <div className="flex-1 overflow-y-auto pr-0.5 space-y-3 no-scrollbar pb-6">
-                  {/* Progress Header */}
-                  <div className="flex items-center justify-between pb-1">
-                    <p className="text-xs font-bold text-[#2C2B30]">
-                      Karya Teman ({peerData?.submissions.length || 0})
-                    </p>
-                    {peerData?.isRequirementMet ? (
-                      <span className="text-[10px] font-bold text-[#10B981] bg-[#ECFDF5] px-2 py-0.5 rounded-full flex items-center gap-1 border border-[#10B981]/20">
-                        <FiCheckCircle size={11} /> Review Selesai ({peerData.myReviewedCount}/2)
-                      </span>
-                    ) : (
-                      <span className="text-[10px] font-bold text-[#8C66FF] bg-[#F0ECFF] px-2 py-0.5 rounded-full border border-[#8C66FF]/20">
-                        Review: {peerData?.myReviewedCount || 0}/2 Selesai
-                      </span>
-                    )}
-                  </div>
-
-                  {loadingPeer ? (
-                    <div className="py-16 flex flex-col items-center justify-center gap-2">
-                      <div className="w-6 h-6 border-2 border-[#8C66FF] border-t-transparent rounded-full animate-spin"></div>
-                      <p className="text-xs text-[#9C98A6] font-bold">Memuat karya teman...</p>
-                    </div>
-                  ) : !peerData?.canView ? (
-                    <div className="py-14 text-center bg-white rounded-2xl p-5 border border-[#F0EDFF] shadow-xs space-y-2">
-                      <div className="w-12 h-12 mx-auto bg-[#F0ECFF] text-[#8C66FF] rounded-xl flex items-center justify-center text-xl">
-                        <LuClock />
-                      </div>
-                      <h4 className="text-xs font-bold text-[#2C2B30]">Kumpulkan Tugas Anda Dahulu</h4>
-                      <p className="text-[11px] text-[#9C98A6] leading-relaxed max-w-xs mx-auto">
-                        Setelah mengumpulkan tugas di tab Tugas, Anda dapat melihat dan mengulas hasil pekerjaan teman sekelas.
-                      </p>
-                      <button
-                        onClick={() => openRiwayatTab(true)}
-                        className="mt-2 px-4 py-2 bg-[#8C66FF] text-white text-xs font-bold rounded-xl shadow-xs active:scale-95 transition-all inline-flex items-center gap-1.5"
-                      >
-                        <LuUpload size={13} />
-                        <span>Kumpulkan Sekarang</span>
-                      </button>
-                    </div>
-                  ) : peerData.submissions.length === 0 ? (
-                    <div className="py-14 text-center bg-white rounded-2xl p-5 border border-[#F0EDFF] shadow-xs">
-                      <div className="w-12 h-12 mx-auto mb-2 bg-[#FAF9FF] text-[#9C98A6] rounded-xl flex items-center justify-center text-xl">
-                        <LuUsers />
-                      </div>
-                      <p className="text-xs font-bold text-[#2C2B30]">Belum ada teman yang mengumpulkan</p>
-                      <p className="text-[10px] text-[#9C98A6] mt-0.5">
-                        Tugas teman yang sudah dikumpulkan akan muncul di sini.
-                      </p>
-                    </div>
-                  ) : (
-                    peerData.submissions.map((sub) => (
-                      <div
-                        key={sub.id}
-                        onClick={() => handleOpenPeerDetail(sub)}
-                        className="w-full bg-white rounded-2xl p-3.5 border border-[#F0EDFF] shadow-xs active:scale-[0.99] transition-all cursor-pointer hover:border-[#8C66FF]/40 space-y-2"
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <div className="w-7 h-7 rounded-full bg-[#F0ECFF] text-[#8C66FF] font-black text-xs flex items-center justify-center">
-                              {sub.studentName.charAt(0).toUpperCase()}
-                            </div>
-                            <div>
-                              <p className="text-xs font-bold text-[#2C2B30]">{sub.studentName}</p>
-                              <p className="text-[10px] text-[#9C98A6]">{sub.studentClass || "Siswa"}</p>
-                            </div>
-                          </div>
-                          {sub.hasReviewed ? (
-                            <span className="text-[9px] font-bold text-[#10B981] bg-[#ECFDF5] px-2 py-0.5 rounded-md flex items-center gap-1">
-                              <FiCheckCircle size={10} /> Sudah Direview
-                            </span>
-                          ) : (
-                            <span className="text-[9px] font-bold text-[#8C66FF] bg-[#F0ECFF] px-2 py-0.5 rounded-md">
-                              Beri Masukan
-                            </span>
-                          )}
-                        </div>
-
-                        <p className="text-xs text-[#524F5D] font-medium line-clamp-2 leading-relaxed">
-                          {sub.answer}
-                        </p>
-
-                        <div className="flex items-center justify-between text-[10px] text-[#9C98A6] pt-1.5 border-t border-[#FAF9FF]">
-                          <span className="flex items-center gap-1 text-[#8C66FF] font-semibold">
-                            <LuMessageSquare size={11} /> {sub.commentsCount} Tanggapan
-                          </span>
-                          <span>{formatDateIndo(sub.submittedAt)}</span>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              )
+              <PeerReviewTab
+                user={user}
+                peerData={peerData}
+                loadingPeer={loadingPeer}
+                selectedPeerSub={selectedPeerSub}
+                onSelectPeerSub={(sub) => (sub ? handleOpenPeerDetail(sub) : setSelectedPeerSub(null))}
+                peerComments={peerComments}
+                loadingPeerComments={loadingPeerComments}
+                peerCommentInput={peerCommentInput}
+                onPeerCommentInputChange={setPeerCommentInput}
+                sendingPeerComment={sendingPeerComment}
+                onSendPeerComment={handleSendPeerComment}
+                onDeletePeerComment={handleDeletePeerComment}
+                onOpenRiwayatTab={openRiwayatTab}
+                onZoomImage={setZoomImageUrl}
+                peerCommentBottomRef={peerCommentBottomRef}
+              />
             )}
 
-            {/* TAB CONTENT 3: RIWAYAT PENGUMPULAN TUGAS */}
+            {/* TAB CONTENT 4: RIWAYAT / KUMPULKAN TUGAS */}
             {activeTab === "riwayat" && (
-              <div className="flex-1 overflow-y-auto pr-0.5 space-y-4 no-scrollbar pb-6">
-                {loadingSubmission ? (
-                  <div className="py-16 flex flex-col items-center justify-center gap-2">
-                    <div className="w-7 h-7 border-3 border-[#8C66FF] border-t-transparent rounded-full animate-spin"></div>
-                    <p className="text-xs text-[#9C98A6] font-bold">
-                      Memuat riwayat pengumpulan...
-                    </p>
-                  </div>
-                ) : mySubmission && !showSubmissionForm ? (
-                  <div className="w-full bg-white rounded-2xl p-4 border border-[#F0EDFF] shadow-xs space-y-3">
-                    <div className="flex items-center justify-between gap-2 pb-2 border-b border-[#F0EDFF]">
-                      <div className="flex items-center gap-1.5 min-w-0">
-                        <FiCheckCircle
-                          size={15}
-                          className={
-                            mySubmission.grade !== undefined &&
-                            mySubmission.grade !== null
-                              ? "text-[#10B981] shrink-0"
-                              : "text-[#F59E0B] shrink-0"
-                          }
-                        />
-                        <span className="text-[11px] font-bold text-[#2C2B30] truncate">
-                          {mySubmission.grade !== undefined &&
-                          mySubmission.grade !== null
-                            ? `Nilai: ${mySubmission.grade}/100`
-                            : "Menunggu Penilaian"}
-                        </span>
-                      </div>
-                      <span className="text-[10px] text-[#9C98A6] shrink-0">
-                        {formatDateIndo(mySubmission.submittedAt)}
-                      </span>
-                    </div>
-
-                    {mySubmission.feedback && (
-                      <div className="p-2.5 bg-[#F0FDF4] rounded-xl border border-[#BBF7D0]/80">
-                        <p className="text-xs text-[#1E293B] italic font-medium leading-relaxed">
-                          "{mySubmission.feedback}"
-                        </p>
-                      </div>
-                    )}
-
-                    <div className="text-xs text-[#2C2B30] font-medium leading-relaxed whitespace-pre-line bg-[#FAF9FF] p-3 rounded-xl border border-[#F0EDFF]">
-                      {mySubmission.answer}
-                    </div>
-
-                    {mySubmission.hasImage && (
-                      <div
-                        onClick={() =>
-                          setZoomImageUrl(
-                            `${API_URL}/api/announcements/submissions/${mySubmission.id}/image`,
-                          )
-                        }
-                        className="w-14 h-14 bg-white rounded-lg overflow-hidden border border-[#E2E8F0] cursor-pointer hover:opacity-80 transition-opacity"
-                      >
-                        <img
-                          src={`${API_URL}/api/announcements/submissions/${mySubmission.id}/image`}
-                          alt="Lampiran"
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    )}
-
-                    <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#F0EDFF]">
-                      <button
-                        onClick={handleDeleteSubmission}
-                        className="px-3 py-1.5 text-[#E11D48] hover:bg-[#FFF1F2] rounded-xl text-xs font-bold transition-colors active:scale-95"
-                      >
-                        Hapus
-                      </button>
-                      <button
-                        onClick={() => {
-                          setTaskAnswer(mySubmission.answer);
-                          setShowSubmissionForm(true);
-                        }}
-                        className="px-3.5 py-1.5 bg-[#FAF9FF] border border-[#8C66FF]/30 text-[#8C66FF] hover:bg-[#F0ECFF] rounded-xl text-xs font-bold transition-colors active:scale-95"
-                      >
-                        Perbarui
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="w-full bg-white rounded-2xl p-4 border border-[#F0EDFF] shadow-xs flex flex-col gap-3">
-                    <div className="flex justify-between items-center pb-2 border-b border-[#F0EDFF]">
-                      <h3 className="text-xs font-extrabold text-[#2C2B30]">
-                        {mySubmission ? "Perbarui Jawaban" : "Kumpulkan Tugas"}
-                      </h3>
-                      {showSubmissionForm && mySubmission && (
-                        <button
-                          onClick={() => setShowSubmissionForm(false)}
-                          className="text-xs text-[#9C98A6] font-bold hover:text-[#2C2B30] px-2 py-1"
-                        >
-                          Batal
-                        </button>
-                      )}
-                    </div>
-
-                    <textarea
-                      rows={4}
-                      placeholder="Ketikkan jawaban Anda di sini..."
-                      value={taskAnswer}
-                      onChange={(e) => setTaskAnswer(e.target.value)}
-                      className="w-full p-3 bg-[#FAF9FF] border border-[#E9E6F5] rounded-xl text-xs font-medium text-[#2C2B30] placeholder:text-[#9C98A6] focus:outline-none focus:border-[#8C66FF] leading-relaxed resize-none"
-                    />
-
-                    {imagePreviewUrl ? (
-                      <div className="relative w-full h-24 bg-[#F8FAFC] rounded-xl overflow-hidden border border-[#E2E8F0]">
-                        <img
-                          src={imagePreviewUrl}
-                          alt="Preview"
-                          className="w-full h-full object-cover"
-                        />
-                        <button
-                          type="button"
-                          onClick={handleClearImage}
-                          className="absolute top-1.5 right-1.5 w-6 h-6 bg-black/60 text-white rounded-full flex items-center justify-center hover:bg-black transition-colors"
-                        >
-                          <FiX size={12} />
-                        </button>
-                      </div>
-                    ) : (
-                      <label className="w-full py-2.5 px-3 border border-dashed border-[#DFDCF0] hover:border-[#8C66FF] rounded-xl flex items-center gap-2 cursor-pointer bg-[#FAF9FF] transition-colors">
-                        <FiImage className="text-[#8C66FF]" size={16} />
-                        <span className="text-xs font-bold text-[#524F5D]">
-                          {compressingImage ? "Memproses..." : "Lampirkan Foto"}
-                        </span>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={handleImageSelect}
-                          className="hidden"
-                        />
-                      </label>
-                    )}
-
-                    <button
-                      type="button"
-                      onClick={handleSubmitTask}
-                      disabled={submittingTask || compressingImage}
-                      className="w-full py-2.5 bg-gradient-to-r from-[#8C66FF] to-[#6366F1] text-white text-xs font-bold rounded-xl shadow-xs active:scale-[0.99] disabled:opacity-50 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-                    >
-                      {submittingTask ? (
-                        <>
-                          <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                          <span>Mengirim...</span>
-                        </>
-                      ) : (
-                        <>
-                          <LuUpload size={14} />
-                          <span>
-                            {mySubmission ? "Simpan Perubahan" : "Kirim Tugas"}
-                          </span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-                )}
-              </div>
+              <SubmissionHistoryTab
+                loadingSubmission={loadingSubmission}
+                mySubmission={mySubmission}
+                showSubmissionForm={showSubmissionForm}
+                onSetShowSubmissionForm={setShowSubmissionForm}
+                taskAnswer={taskAnswer}
+                onTaskAnswerChange={setTaskAnswer}
+                imagePreviewUrl={imagePreviewUrl}
+                onClearImage={handleClearImage}
+                compressingImage={compressingImage}
+                onImageSelect={handleImageSelect}
+                submittingTask={submittingTask}
+                onSubmitTask={handleSubmitTask}
+                onDeleteSubmission={handleDeleteSubmission}
+                onPrepareEditSubmission={handlePrepareEditSubmission}
+                onZoomImage={setZoomImageUrl}
+              />
             )}
           </div>
         )}
       </div>
 
-      {/* Fullscreen Zoom Image Modal */}
-      {zoomImageUrl && (
-        <div
-          onClick={() => setZoomImageUrl(null)}
-          className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-sm cursor-pointer"
-        >
-          <div className="relative max-w-full max-h-full">
-            <img
-              src={zoomImageUrl}
-              alt="Lampiran Full"
-              className="max-w-full max-h-[85vh] rounded-2xl object-contain shadow-2xl"
-            />
-            <button
-              onClick={() => setZoomImageUrl(null)}
-              className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/60 text-white flex items-center justify-center"
-            >
-              <FiX size={16} />
-            </button>
-          </div>
-        </div>
-      )}
+      {/* FULLSCREEN IMAGE MODAL */}
+      <ZoomImageModal zoomImageUrl={zoomImageUrl} onClose={() => setZoomImageUrl(null)} />
     </div>
   );
 }

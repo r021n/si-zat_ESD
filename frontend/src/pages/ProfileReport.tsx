@@ -1,103 +1,31 @@
-import { useState, useEffect, type FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
-import { useAuthStore } from "../store/authStore";
-import { LuEye, LuClock, LuChartBar } from "react-icons/lu";
 import { FiArrowLeft } from "react-icons/fi";
 import { useAppBack } from "../hooks/useAppBack";
-import { getMenuAnalyticsApi } from "../api/api";
 import AnalyticsModal from "../components/common/AnalyticsModal";
-import { formatDateIndo } from "../utils/date";
+import ProfileFormCard from "../components/profile/ProfileFormCard";
+import ProfileStatsCard from "../components/profile/ProfileStatsCard";
+import { useProfileReport } from "../components/profile/useProfileReport";
 
 export default function ProfileReport() {
-  const navigate = useNavigate();
   const goBack = useAppBack();
-  const { user, updateProfile, loading, token } = useAuthStore();
-
-  const [nama, setNama] = useState("");
-  const [kelas, setKelas] = useState("");
-  const [message, setMessage] = useState<{
-    type: "success" | "error";
-    text: string;
-  } | null>(null);
-
-  const [analyticsData, setAnalyticsData] = useState<
-    { menuKey: string; count: number }[]
-  >([]);
-  const [isAnalyticsModalOpen, setIsAnalyticsModalOpen] = useState(false);
-  const [loadingAnalytics, setLoadingAnalytics] = useState(false);
-  const [analyticsError, setAnalyticsError] = useState("");
-
-  const handleOpenAnalytics = async () => {
-    setIsAnalyticsModalOpen(true);
-    setLoadingAnalytics(true);
-    setAnalyticsError("");
-    try {
-      if (!token) return;
-      const res = await getMenuAnalyticsApi(token);
-      if (res && res.status === "success") {
-        const rawData = res.data || [];
-        const groupedMap = new Map<string, number>();
-        rawData.forEach((item: any) => {
-          const key = item.menuKey;
-          const count = Number(item.count) || 0;
-          groupedMap.set(key, (groupedMap.get(key) || 0) + count);
-        });
-        const aggregated = Array.from(groupedMap.entries()).map(
-          ([menuKey, count]) => ({
-            menuKey,
-            count,
-          }),
-        );
-        aggregated.sort((a, b) => b.count - a.count);
-        setAnalyticsData(aggregated);
-      }
-    } catch (err: any) {
-      setAnalyticsError(err.message || "Gagal mengambil data analitik");
-    } finally {
-      setLoadingAnalytics(false);
-    }
-  };
-
-  useEffect(() => {
-    if (!user) {
-      navigate("/auth");
-      return;
-    }
-    setNama(user.nama || "");
-    setKelas(user.kelas || "");
-  }, [user, navigate]);
-
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    setMessage(null);
-    try {
-      await updateProfile(kelas, nama);
-      setMessage({ type: "success", text: "Profil berhasil diperbarui!" });
-    } catch (err: any) {
-      setMessage({
-        type: "error",
-        text: err.message || "Gagal memperbarui profil.",
-      });
-    }
-  };
+  const {
+    user,
+    nama,
+    kelas,
+    loading,
+    message,
+    analyticsData,
+    isAnalyticsModalOpen,
+    loadingAnalytics,
+    analyticsError,
+    setNama,
+    setKelas,
+    clearMessage,
+    setIsAnalyticsModalOpen,
+    handleSubmit,
+    handleOpenAnalytics,
+  } = useProfileReport();
 
   if (!user) return null;
-
-  const formatCreatedAt = (dateStr?: string) => formatDateIndo(dateStr, true);
-
-  const formatUsageTime = (seconds?: number) => {
-    if (!seconds) return "0 detik";
-    const h = Math.floor(seconds / 3600);
-    const m = Math.floor((seconds % 3600) / 60);
-    const s = seconds % 60;
-
-    const parts = [];
-    if (h > 0) parts.push(`${h} jam`);
-    if (m > 0) parts.push(`${m} menit`);
-    if (s > 0 || parts.length === 0) parts.push(`${s} detik`);
-
-    return parts.join(" ");
-  };
 
   return (
     <div className="w-full min-h-screen bg-[#FAF9FF] flex justify-center items-center text-[#2C2B30] font-sans select-none overflow-hidden relative">
@@ -148,25 +76,10 @@ export default function ProfileReport() {
 
         {/* Scrollable Form & Info Area */}
         <div className="flex-1 overflow-y-auto pr-0.5 my-2 flex flex-col gap-4 no-scrollbar">
-          {/* Profile Card (matches MainMenu) */}
+          {/* Profile Card */}
           <div className="w-full bg-linear-to-br from-[#8C66FF] to-[#6039DF] text-white rounded-[28px] p-5 shadow-md relative overflow-hidden flex flex-col justify-between min-h-35">
-            {/* Card Background elements */}
             <div className="absolute right-[-10%] top-[-25%] w-32.5 h-32.5 bg-white/10 rounded-full blur-md"></div>
             <div className="absolute right-[15%] bottom-[-20%] w-22.5 h-22.5 bg-white/5 rounded-full blur-sm"></div>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.5}
-              stroke="currentColor"
-              className="w-16 h-16 opacity-10 absolute right-4 bottom-4 text-white"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z"
-              />
-            </svg>
 
             <div>
               <p className="text-[10px] text-purple-200 uppercase tracking-widest font-extrabold">
@@ -193,210 +106,25 @@ export default function ProfileReport() {
           </div>
 
           {/* Form Fields Card */}
-          <form
+          <ProfileFormCard
+            nama={nama}
+            kelas={kelas}
+            loading={loading}
+            message={message}
+            setNama={setNama}
+            setKelas={setKelas}
+            clearMessage={clearMessage}
             onSubmit={handleSubmit}
-            className="w-full bg-white rounded-[28px] p-6 shadow-[0_4px_12px_rgba(0,0,0,0.02)] border border-[#F0EDFF] flex flex-col gap-4"
-          >
-            <p className="text-[10px] font-black uppercase tracking-widest text-[#9C98A6] mb-1">
-              Perbarui Profil
-            </p>
-
-            {/* Custom Inline Alert Banner */}
-            {message && (
-              <div
-                className={`p-4 border text-xs font-bold rounded-[20px] transition-none flex items-center gap-2 ${
-                  message.type === "success"
-                    ? "border-[#E6F8F6] bg-[#E6F8F6] text-[#2C8578]"
-                    : "border-[#FFEAEA] bg-[#FFEAEA] text-[#FF5E8C]"
-                }`}
-              >
-                {message.type === "success" ? (
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth={2.5}
-                    stroke="currentColor"
-                    className="w-4 h-4 shrink-0"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                ) : (
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth={2.5}
-                    stroke="currentColor"
-                    className="w-4 h-4 shrink-0"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"
-                    />
-                  </svg>
-                )}
-                <span>{message.text}</span>
-              </div>
-            )}
-
-            {/* Nama Lengkap Input */}
-            <div className="flex flex-col gap-1.5">
-              <label className="text-[10px] font-black uppercase tracking-widest text-[#9C98A6]">
-                Nama Lengkap
-              </label>
-              <input
-                type="text"
-                value={nama}
-                onChange={(e) => {
-                  setNama(e.target.value);
-                  if (message) setMessage(null);
-                }}
-                required
-                className="w-full p-4 border border-[#F0EDFF] bg-[#FAF9FF] text-[#2C2B30] text-xs font-bold focus:outline-none focus:border-[#8C66FF] transition-none rounded-2xl"
-              />
-            </div>
-
-            {/* Kelas Input */}
-            <div className="flex flex-col gap-1.5">
-              <label className="text-[10px] font-black uppercase tracking-widest text-[#9C98A6]">
-                Kelas
-              </label>
-              <input
-                type="text"
-                value={kelas}
-                onChange={(e) => {
-                  setKelas(e.target.value);
-                  if (message) setMessage(null);
-                }}
-                required
-                className="w-full p-4 border border-[#F0EDFF] bg-[#FAF9FF] text-[#2C2B30] text-xs font-bold focus:outline-none focus:border-[#8C66FF] transition-none rounded-2xl"
-              />
-            </div>
-
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full mt-2 py-4 bg-linear-to-br from-[#8C66FF] to-[#6039DF] text-white font-extrabold uppercase tracking-wider text-xs rounded-full shadow-md shadow-purple-100 cursor-pointer transition-none flex items-center justify-center gap-2 disabled:opacity-50"
-            >
-              {loading ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  <span>Menyimpan...</span>
-                </>
-              ) : (
-                <>
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth={2.5}
-                    stroke="currentColor"
-                    className="w-4 h-4"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M4.5 12.75l6 6 9-13.5"
-                    />
-                  </svg>
-                  <span>Simpan Perubahan</span>
-                </>
-              )}
-            </button>
-          </form>
+          />
 
           {/* Details & Statistics Card */}
-          <div className="w-full bg-white rounded-[28px] p-6 shadow-[0_4px_12px_rgba(0,0,0,0.02)] border border-[#F0EDFF] flex flex-col gap-4">
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-[#9C98A6]">
-                Informasi Sistem & Statistik
-              </p>
-            </div>
-
-            <div className="flex flex-col gap-3">
-              {/* ID Pengguna */}
-              <div className="flex justify-between items-center py-2 border-b border-[#F0EDFF]/50">
-                <div>
-                  <h4 className="text-[10px] font-black uppercase tracking-widest text-[#9C98A6]">
-                    ID Pengguna
-                  </h4>
-                  <p className="text-[11px] font-mono text-[#2C2B30] mt-0.5 select-all">
-                    {user.id}
-                  </p>
-                </div>
-                <span className="text-[9px] font-bold px-2.5 py-1 bg-[#F5F5F7] text-[#555555] rounded-md">
-                  ReadOnly
-                </span>
-              </div>
-
-              {/* Terdaftar Sejak */}
-              <div className="flex justify-between items-center py-2 border-b border-[#F0EDFF]/50">
-                <div>
-                  <h4 className="text-[10px] font-black uppercase tracking-widest text-[#9C98A6]">
-                    Terdaftar Sejak
-                  </h4>
-                  <p className="text-xs font-bold text-[#2C2B30] mt-0.5">
-                    {formatCreatedAt(user.createdAt)}
-                  </p>
-                </div>
-              </div>
-
-              {/* Frekuensi Dibuka */}
-              <div className="flex justify-between items-center py-2 border-b border-[#F0EDFF]/50">
-                <div>
-                  <h4 className="text-[10px] font-black uppercase tracking-widest text-[#9C98A6]">
-                    Frekuensi Dibuka
-                  </h4>
-                  <p className="text-xs font-bold text-[#2C2B30] mt-0.5">
-                    {user.openCount ?? 0} Kali
-                  </p>
-                </div>
-                <div className="w-8 h-8 rounded-lg bg-[#E6F8F6] text-[#2C8578] flex items-center justify-center">
-                  <LuEye className="w-4 h-4" />
-                </div>
-              </div>
-
-              {/* Total Durasi Penggunaan */}
-              <div className="flex justify-between items-center py-2 border-b border-[#F0EDFF]/50">
-                <div>
-                  <h4 className="text-[10px] font-black uppercase tracking-widest text-[#9C98A6]">
-                    Durasi Penggunaan
-                  </h4>
-                  <p className="text-xs font-bold text-[#2C2B30] mt-0.5">
-                    {formatUsageTime(user.totalUsageTime)}
-                  </p>
-                </div>
-                <div className="w-8 h-8 rounded-lg bg-[#FFF4EB] text-[#FF9D42] flex items-center justify-center">
-                  <LuClock className="w-4 h-4" />
-                </div>
-              </div>
-
-              {/* Analitik Aktivitas */}
-              <div
-                className="flex justify-between items-center py-2 cursor-pointer"
-                onClick={handleOpenAnalytics}
-              >
-                <div>
-                  <h4 className="text-[10px] font-black uppercase tracking-widest text-[#8C66FF]">
-                    Analitik Aktivitas
-                  </h4>
-                  <p className="text-xs font-bold text-[#8C66FF] mt-0.5 underline">
-                    Lihat menu yang sering dibuka
-                  </p>
-                </div>
-                <div className="w-8 h-8 rounded-lg bg-[#EBF3FF] text-[#4285F4] flex items-center justify-center">
-                  <LuChartBar className="w-4 h-4" />
-                </div>
-              </div>
-            </div>
-          </div>
+          <ProfileStatsCard
+            userId={user.id}
+            createdAt={user.createdAt}
+            openCount={user.openCount}
+            totalUsageTime={user.totalUsageTime}
+            onOpenAnalytics={handleOpenAnalytics}
+          />
         </div>
       </div>
 

@@ -3,11 +3,10 @@ import type {
   AnnouncementItem,
   DiscussionMessage,
   SubmissionItem,
-  ContributorData,
-  PeerSubmissionItem,
-  PeerSubmissionsResponse,
-  PeerCommentItem,
 } from "../types/discussion";
+
+export * from "./peerReview.api";
+export * from "./taskSubmission.api";
 
 interface CacheItem<T> {
   data: T;
@@ -259,89 +258,6 @@ export async function gradeAnnouncementSubmissionApi(
   return apiClient.post(
     `/api/announcements/submissions/${submissionId}/grade`,
     { grade, feedback },
-    { token },
-  );
-}
-
-// --- Peer Review APIs ---
-
-export async function getPeerSubmissionsApi(
-  token: string,
-  announcementId: string,
-): Promise<PeerSubmissionsResponse> {
-  const res = await apiClient.get<{ status: string; data: PeerSubmissionsResponse }>(
-    `/api/announcements/${announcementId}/peer-submissions`,
-    { token },
-  );
-  return res.data;
-}
-
-export async function getPeerCommentsApi(
-  token: string,
-  submissionId: string,
-): Promise<PeerCommentItem[]> {
-  const res = await apiClient.get<{ status: string; data: PeerCommentItem[] }>(
-    `/api/announcements/submissions/${submissionId}/peer-comments`,
-    { token },
-  );
-  return res.data;
-}
-
-export async function sendPeerCommentApi(
-  token: string,
-  submissionId: string,
-  content: string,
-): Promise<{ comment: PeerCommentItem; myReviewedCount: number; isRequirementMet: boolean }> {
-  const res = await apiClient.post<{
-    status: string;
-    message: string;
-    data: {
-      comment: PeerCommentItem;
-      myReviewedCount: number;
-      isRequirementMet: boolean;
-    };
-  }>(
-    `/api/announcements/submissions/${submissionId}/peer-comments`,
-    { content },
-    { token },
-  );
-  return res.data;
-}
-
-export async function deletePeerCommentApi(token: string, commentId: string) {
-  return apiClient.delete(
-    `/api/announcements/submissions/peer-comments/${commentId}`,
-    { token },
-  );
-}
-
-
-// --- Systems Thinking / Task Submission APIs ---
-
-export async function getTaskSubmissionsApi(token: string) {
-  return apiClient.get("/api/tasks/submissions", { token });
-}
-
-export async function createTaskSubmissionApi(token: string, formData: FormData) {
-  return apiClient.post("/api/tasks/submissions", formData, { token });
-}
-
-export async function deleteTaskSubmissionApi(token: string, id: string) {
-  return apiClient.delete(`/api/tasks/submissions/${id}`, { token });
-}
-
-export async function getTaskDiscussionsApi(token: string, submissionId: string) {
-  return apiClient.get(`/api/tasks/submissions/${submissionId}/discussions`, { token });
-}
-
-export async function getOverallContributorsApi(token: string): Promise<ContributorData[]> {
-  return apiClient.get<ContributorData[]>("/api/tasks/discussions/overall-contributors", { token });
-}
-
-export async function sendTaskDiscussionApi(token: string, submissionId: string, content: string) {
-  return apiClient.post(
-    `/api/tasks/submissions/${submissionId}/discussions`,
-    { content },
     { token },
   );
 }
