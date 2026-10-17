@@ -2,7 +2,6 @@ import { useEffect } from "react";
 import { FiArrowLeft, FiClock, FiShield } from "react-icons/fi";
 import { useAppBack } from "../hooks/useAppBack";
 import { useCustomDialog } from "../components/CustomDialog";
-import { useQuizAntiCheat } from "../components/quiz/useQuizAntiCheat";
 import { useQuizSession } from "../components/quiz/useQuizSession";
 import QuizLobbyView from "../components/quiz/QuizLobbyView";
 import QuizActivePlayerView from "../components/quiz/QuizActivePlayerView";
@@ -11,18 +10,6 @@ import QuizScoreReviewView from "../components/quiz/QuizScoreReviewView";
 export default function KuisMenu() {
   const goBack = useAppBack();
   const { showConfirm } = useCustomDialog();
-
-  const {
-    violationCount,
-    resetViolations,
-    startLock,
-    stopLock,
-    enterImmersive,
-    exitImmersive,
-  } = useQuizAntiCheat({
-    activeQuiz: null, // Initial placeholder, synced below
-    submitted: false,
-  });
 
   const {
     user,
@@ -56,18 +43,10 @@ export default function KuisMenu() {
     score,
     answeredCount,
     emptyCount,
-  } = useQuizSession(violationCount, resetViolations, stopLock, exitImmersive);
-
-  // Sync anti-cheat with active session
-  useEffect(() => {
-    if (!activeQuiz || submitted) return;
-    startLock();
-    enterImmersive();
-    return () => {
-      stopLock();
-      exitImmersive();
-    };
-  }, [activeQuiz, submitted, startLock, stopLock, enterImmersive, exitImmersive]);
+    violationCount,
+    stopLock,
+    exitImmersive,
+  } = useQuizSession();
 
   // Handle hardware / global back button during quiz
   useEffect(() => {

@@ -28,9 +28,11 @@ export function useQuizAntiCheat({ activeQuiz, submitted }: UseQuizAntiCheatProp
     let wasBackground = false;
 
     const handleAppLeft = () => {
-      wasBackground = true;
-      violationCountRef.current += 1;
-      setViolationCount(violationCountRef.current);
+      if (!wasBackground) {
+        wasBackground = true;
+        violationCountRef.current += 1;
+        setViolationCount(violationCountRef.current);
+      }
     };
 
     const handleAppReturned = async () => {

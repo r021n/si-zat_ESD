@@ -7,13 +7,9 @@ import {
   getMySubmissionsApi,
 } from "../../api/api";
 import type { Quiz } from "../../types/quiz";
+import { useQuizAntiCheat } from "./useQuizAntiCheat";
 
-export function useQuizSession(
-  violationCount: number,
-  resetViolations: (count?: number) => void,
-  stopLock: () => Promise<void> | void,
-  exitImmersive: () => Promise<void> | void,
-) {
+export function useQuizSession() {
   const { token, user } = useAuthStore();
   const { showAlert, showConfirm } = useCustomDialog();
 
@@ -27,6 +23,17 @@ export function useQuizSession(
   const [submitted, setSubmitted] = useState<boolean>(false);
   const [showReview, setShowReview] = useState<boolean>(false);
   const [submittingRes, setSubmittingRes] = useState<boolean>(false);
+
+  // Anti-Cheat Integration
+  const {
+    violationCount,
+    violationCountRef,
+    resetViolations,
+    startLock,
+    stopLock,
+    enterImmersive,
+    exitImmersive,
+  } = useQuizAntiCheat({ activeQuiz, submitted });
 
   // Timer States
   const [elapsedTime, setElapsedTime] = useState<number>(0);
@@ -191,7 +198,7 @@ export function useQuizSession(
         answers,
         score,
         duration: elapsedTime,
-        violationCount,
+        violationCount: violationCountRef.current,
         createdAt: submittedAt,
       });
 
@@ -207,7 +214,7 @@ export function useQuizSession(
           answers,
           score,
           duration: elapsedTime,
-          violationCount,
+          violationCount: violationCountRef.current,
           createdAt: submittedAt,
         },
         ...prev,
@@ -291,5 +298,12 @@ export function useQuizSession(
     score,
     answeredCount,
     emptyCount,
+    violationCount,
+    violationCountRef,
+    resetViolations,
+    startLock,
+    stopLock,
+    enterImmersive,
+    exitImmersive,
   };
 }
