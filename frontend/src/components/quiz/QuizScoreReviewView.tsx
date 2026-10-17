@@ -1,6 +1,7 @@
 import { FiClock } from "react-icons/fi";
 import type { Quiz } from "../../types/quiz";
 import { formatDurationFriendly } from "../../utils/time";
+import { getQuizImageUrl } from "../../utils/quizImage";
 
 interface QuizScoreReviewViewProps {
   quiz: Quiz;
@@ -145,8 +146,9 @@ export default function QuizScoreReviewView({
                   {q.images.map((img, imgIdx) => (
                     <img
                       key={imgIdx}
-                      src={img}
+                      src={getQuizImageUrl(img)}
                       alt="Ilustrasi"
+                      loading="lazy"
                       className="max-h-20 object-contain rounded-lg border border-[#F0EDFF]"
                     />
                   ))}

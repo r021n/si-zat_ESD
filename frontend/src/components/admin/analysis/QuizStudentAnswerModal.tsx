@@ -2,6 +2,7 @@ import { FiX, FiCheckCircle, FiXCircle, FiMinusCircle, FiAlertTriangle } from "r
 import type { Submission } from "../../../types/quiz";
 import type { StudentResultItem } from "./quizAnalysisStats";
 import { formatDurationFriendly } from "../../../utils/time";
+import { getQuizImageUrl } from "../../../utils/quizImage";
 
 interface QuizStudentAnswerModalProps {
   submission: Submission | null;
@@ -136,8 +137,9 @@ export default function QuizStudentAnswerModal({
                   {q.images.map((img, i) => (
                     <img
                       key={i}
-                      src={img}
+                      src={getQuizImageUrl(img)}
                       alt={`Soal ${qIdx + 1}`}
+                      loading="lazy"
                       className="h-32 rounded-xl object-contain bg-neutral-50 border border-[#F0EDFF]"
                     />
                   ))}

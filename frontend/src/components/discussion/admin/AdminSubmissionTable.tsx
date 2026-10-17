@@ -1,9 +1,11 @@
+import { useState } from "react";
 import { FiClock, FiEye, FiImage } from "react-icons/fi";
 import { LuAward } from "react-icons/lu";
 import type { SubmissionItem } from "../../../types/discussion";
 import { API_URL } from "../../../utils/constants";
 import { formatDateIndo } from "../../../utils/date";
 import Pagination from "../../common/Pagination";
+import AdminCommentedUsersModal from "./AdminCommentedUsersModal";
 
 interface AdminSubmissionTableProps {
   submissions: SubmissionItem[];
@@ -28,6 +30,7 @@ export default function AdminSubmissionTable({
   onOpenAnswerPreview,
   onZoomImage,
 }: AdminSubmissionTableProps) {
+  const [selectedCommentedSub, setSelectedCommentedSub] = useState<SubmissionItem | null>(null);
   return (
     <>
       {/* DESKTOP TABLE */}
@@ -39,6 +42,7 @@ export default function AdminSubmissionTable({
                 <th className="p-4 border-r border-[#F0EDFF]/50 whitespace-nowrap">Siswa & Kelas</th>
                 <th className="p-4 border-r border-[#F0EDFF]/50 text-center whitespace-nowrap">Waktu Kirim</th>
                 <th className="p-4 border-r border-[#F0EDFF]/50 min-w-[280px]">Jawaban Siswa</th>
+                <th className="p-4 border-r border-[#F0EDFF]/50 whitespace-nowrap">User Dikomentari</th>
                 <th className="p-4 border-r border-[#F0EDFF]/50 text-center whitespace-nowrap">Lampiran</th>
                 <th className="p-4 border-r border-[#F0EDFF]/50 text-center whitespace-nowrap">Nilai</th>
                 <th className="p-4 text-center whitespace-nowrap">Aksi</th>
@@ -100,6 +104,35 @@ export default function AdminSubmissionTable({
                           <span>Buka Jawaban Lengkap</span>
                         </button>
                       </div>
+                    </td>
+
+                    {/* Commented Users */}
+                    <td className="p-4 border-r border-[#F0EDFF]/40 max-w-[220px]">
+                      {sub.commentedUsers && sub.commentedUsers.length > 0 ? (
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          {sub.commentedUsers.slice(0, 2).map((u) => (
+                            <span
+                              key={u.userId}
+                              className="inline-block px-2 py-0.5 text-xs font-semibold text-[#524F5D] bg-[#FAF9FF] border border-[#F0EDFF] rounded-lg max-w-[110px] truncate"
+                              title={`${u.studentName}${u.studentClass ? ` (${u.studentClass})` : ""}`}
+                            >
+                              {u.studentName}
+                            </span>
+                          ))}
+                          {sub.commentedUsers.length > 2 && (
+                            <button
+                              type="button"
+                              onClick={() => setSelectedCommentedSub(sub)}
+                              className="px-1.5 py-0.5 text-xs font-extrabold text-[#8C66FF] hover:bg-[#F0ECFF] rounded-md transition-colors cursor-pointer"
+                              title="Lihat semua user yang dikomentari"
+                            >
+                              ...
+                            </button>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-xs text-[#9C98A6] font-semibold">-</span>
+                      )}
                     </td>
 
                     {/* Attachment */}
@@ -194,6 +227,29 @@ export default function AdminSubmissionTable({
                 {sub.answer}
               </div>
 
+              {sub.commentedUsers && sub.commentedUsers.length > 0 && (
+                <div className="flex items-center gap-1.5 text-xs text-[#524F5D] flex-wrap">
+                  <span className="text-[11px] font-bold text-[#9C98A6]">Review:</span>
+                  {sub.commentedUsers.slice(0, 2).map((u) => (
+                    <span
+                      key={u.userId}
+                      className="px-2 py-0.5 text-[11px] font-semibold text-[#524F5D] bg-[#FAF9FF] border border-[#F0EDFF] rounded-lg max-w-[120px] truncate"
+                    >
+                      {u.studentName}
+                    </span>
+                  ))}
+                  {sub.commentedUsers.length > 2 && (
+                    <button
+                      type="button"
+                      onClick={() => setSelectedCommentedSub(sub)}
+                      className="px-1.5 py-0.5 text-[11px] font-extrabold text-[#8C66FF] hover:bg-[#F0ECFF] rounded-md transition-colors cursor-pointer"
+                    >
+                      ...
+                    </button>
+                  )}
+                </div>
+              )}
+
               {sub.hasImage && (
                 <div
                   onClick={() =>
@@ -231,6 +287,14 @@ export default function AdminSubmissionTable({
         onPageChange={onPageChange}
         className="mt-4"
       />
+
+      {/* Commented Users Modal */}
+      {selectedCommentedSub && (
+        <AdminCommentedUsersModal
+          submission={selectedCommentedSub}
+          onClose={() => setSelectedCommentedSub(null)}
+        />
+      )}
     </>
   );
 }

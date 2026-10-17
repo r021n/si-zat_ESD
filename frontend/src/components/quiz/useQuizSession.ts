@@ -88,7 +88,7 @@ export function useQuizSession(
     const fetchQuizzes = async () => {
       setLoading(true);
       try {
-        const data = await getQuizzesApi(token);
+        const data = await getQuizzesApi(token, true);
         setQuizzes(data);
       } catch (err: any) {
         console.error(err);

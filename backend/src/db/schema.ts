@@ -30,6 +30,16 @@ export const questions = sqliteTable('questions', {
   sortOrder: integer('sort_order').notNull(),
 })
 
+export const questionImages = sqliteTable('question_images', {
+  id: text('id').primaryKey(),
+  questionId: text('question_id').notNull().references(() => questions.id, { onDelete: 'cascade' }),
+  imageBlob: blob('image_blob', { mode: 'buffer' }).notNull(),
+  imageType: text('image_type').notNull().default('image/jpeg'),
+  sortOrder: integer('sort_order').notNull().default(0),
+  createdAt: text('created_at').notNull(),
+})
+
+
 export const submissions = sqliteTable('submissions', {
   id: text('id').primaryKey(),
   quizId: text('quiz_id').notNull().references(() => quizzes.id, { onDelete: 'cascade' }),

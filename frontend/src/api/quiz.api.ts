@@ -71,6 +71,17 @@ export async function updateQuizKkmApi(
   return apiClient.patch(`/api/quiz/${id}/kkm`, { kkm }, { token });
 }
 
+export async function deleteQuizSubmissionApi(
+  token: string,
+  submissionId: string,
+): Promise<{ success: boolean; message?: string }> {
+  clearQuizzesCache();
+  return apiClient.delete<{ success: boolean; message?: string }>(
+    `/api/quiz/submissions/${submissionId}`,
+    { token },
+  );
+}
+
 export function getQuizSubmissionsApi(
   token: string,
   id: string,

@@ -8,6 +8,7 @@ import {
 } from "react-icons/fi";
 
 import type { Question } from "../../types/quiz";
+import { getQuizImageUrl } from "../../utils/quizImage";
 
 interface QuizFormProps {
   editingQuizId: string | null;
@@ -187,7 +188,7 @@ export default function QuizForm({
                             className="relative w-16 h-16 rounded-xl border border-[#F0EDFF] bg-white flex items-center justify-center overflow-hidden shadow-xs"
                           >
                             <img
-                              src={img}
+                              src={getQuizImageUrl(img)}
                               alt="Preview"
                               className="w-full h-full object-cover"
                             />

@@ -26,6 +26,7 @@ export default function AdminKuis() {
     handleCreateNewQuiz,
     handleEditQuiz,
     handleDeleteQuiz,
+    handleDeleteSubmission,
     handleOpenAnalysis,
     handleAddQuestion,
     handleRemoveQuestion,
@@ -104,6 +105,7 @@ export default function AdminKuis() {
               <QuizAnalysis
                 selectedQuiz={selectedQuiz}
                 submissions={submissions}
+                onDeleteSubmission={handleDeleteSubmission}
                 onKkmChange={(kkm) => {
                   setSelectedQuiz((prev) => (prev ? { ...prev, kkm } : prev));
                   setQuizzes((prev) =>

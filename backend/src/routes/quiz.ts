@@ -1,8 +1,8 @@
 import { Hono } from 'hono'
 import { verify } from 'hono/jwt'
 import { db } from '../db/index.js'
-import { users, quizzes, questions, submissions } from '../db/schema.js'
-import { eq, and } from 'drizzle-orm'
+import { users, quizzes, questions, submissions, questionImages } from '../db/schema.js'
+import { eq, and, sql } from 'drizzle-orm'
 
 const quiz = new Hono()
 
@@ -23,6 +23,110 @@ const QUIZZES_CACHE_TTL_MS = 60 * 1000
 export function invalidateQuizzesServerCache() {
   baseQuizzesCache = null
 }
+
+export async function processQuestionImages(questionId: string, rawImages: string[]): Promise<string[]> {
+  if (!rawImages || !Array.isArray(rawImages)) return []
+  const result: string[] = []
+
+  for (let idx = 0; idx < rawImages.length; idx++) {
+    const imgStr = rawImages[idx]
+    if (imgStr && typeof imgStr === 'string' && imgStr.startsWith('data:image/')) {
+      const match = imgStr.match(/^data:([^;]+);base64,(.+)$/)
+      if (match) {
+        const mimeType = match[1] || 'image/jpeg'
+        const imageBuffer = Buffer.from(match[2], 'base64')
+        const imgId = `qi-${questionId}-${idx}-${Date.now().toString(36)}`
+
+        await db.insert(questionImages).values({
+          id: imgId,
+          questionId,
+          imageBlob: imageBuffer,
+          imageType: mimeType,
+          sortOrder: idx,
+          createdAt: new Date().toISOString()
+        })
+
+        result.push(`/api/quiz/images/${imgId}`)
+        continue
+      }
+    }
+    result.push(imgStr)
+  }
+
+  return result
+}
+
+let questionImagesTableInitialized = false
+export async function ensureQuestionImagesTable() {
+  if (questionImagesTableInitialized) return
+  try {
+    await db.run(sql`
+      CREATE TABLE IF NOT EXISTS question_images (
+        id TEXT PRIMARY KEY,
+        question_id TEXT NOT NULL REFERENCES questions(id) ON DELETE CASCADE,
+        image_blob BLOB NOT NULL,
+        image_type TEXT NOT NULL DEFAULT 'image/jpeg',
+        sort_order INTEGER NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL
+      )
+    `)
+
+    // Check if any existing questions still store base64 in images
+    const questionsWithBase64 = await db.select({
+      id: questions.id,
+      images: questions.images
+    }).from(questions).where(sql`instr(${questions.images}, 'data:image/') > 0`)
+
+    if (questionsWithBase64 && questionsWithBase64.length > 0) {
+      console.log(`[QUIZ] Found ${questionsWithBase64.length} questions with base64 images. Migrating to question_images table...`)
+      for (const q of questionsWithBase64) {
+        try {
+          const parsed = JSON.parse(q.images)
+          if (Array.isArray(parsed)) {
+            const updated = await processQuestionImages(q.id, parsed)
+            await db.update(questions)
+              .set({ images: JSON.stringify(updated) })
+              .where(eq(questions.id, q.id))
+          }
+        } catch (mErr) {
+          console.error(`[QUIZ] Failed migrating question ${q.id}:`, mErr)
+        }
+      }
+      console.log(`[QUIZ] Image migration completed successfully!`)
+    }
+
+    questionImagesTableInitialized = true
+  } catch (err) {
+    console.error('[QUIZ] Error in ensureQuestionImagesTable:', err)
+  }
+}
+
+// GET /api/quiz/images/:id - Public image streaming for quiz questions (cached by browser)
+quiz.get('/images/:id', async (c: any) => {
+  await ensureQuestionImagesTable()
+  try {
+    const id = c.req.param('id')
+    const [img] = await db.select({
+      imageBlob: questionImages.imageBlob,
+      imageType: questionImages.imageType,
+    }).from(questionImages).where(eq(questionImages.id, id)).limit(1)
+
+    if (!img || !img.imageBlob) {
+      return c.json({ error: 'Gambar tidak ditemukan.' }, 404)
+    }
+
+    const mimeType = img.imageType || 'image/jpeg'
+    return new Response(img.imageBlob as any, {
+      headers: {
+        'Content-Type': mimeType,
+        'Cache-Control': 'public, max-age=31536000, immutable',
+      }
+    })
+  } catch (err: any) {
+    console.error('Error streaming quiz question image:', err)
+    return c.json({ error: 'Gagal memuat gambar.' }, 500)
+  }
+})
 
 // Middleware to authenticate user and extract claims
 async function authMiddleware(c: any, next: any) {
@@ -63,11 +167,12 @@ async function adminMiddleware(c: any, next: any) {
   await next()
 }
 
-// Apply authentication to all quiz endpoints
+// Apply authentication to all subsequent quiz endpoints
 quiz.use('*', authMiddleware)
 
 // GET /api/quiz - List all quizzes with their questions (accessible to both students and admins)
 quiz.get('/', async (c: any) => {
+  await ensureQuestionImagesTable()
   try {
     const user = c.get('user')
     const now = Date.now()
@@ -245,13 +350,14 @@ quiz.post('/', adminMiddleware, async (c: any) => {
     // Insert Questions
     for (let i = 0; i < quizQuestions.length; i++) {
       const q = quizQuestions[i]
+      const processedImages = await processQuestionImages(q.id, q.images || [])
       await db.insert(questions).values({
         id: q.id,
         quizId: id,
         text: q.text,
         options: JSON.stringify(q.options),
         correctAnswers: JSON.stringify(q.correctAnswers),
-        images: JSON.stringify(q.images || []),
+        images: JSON.stringify(processedImages),
         questionType: q.questionType || "",
         sortOrder: i
       })
@@ -278,19 +384,46 @@ quiz.put('/:id', adminMiddleware, async (c: any) => {
     // Update Quiz Title
     await db.update(quizzes).set({ title }).where(eq(quizzes.id, id))
 
+    // Collect all preserved image IDs from updated questions
+    const keptImageIds = new Set<string>()
+    for (const q of quizQuestions) {
+      if (Array.isArray(q.images)) {
+        for (const imgUrl of q.images) {
+          if (typeof imgUrl === 'string') {
+            const match = imgUrl.match(/\/api\/quiz\/images\/([^/?#]+)/)
+            if (match) {
+              keptImageIds.add(match[1])
+            }
+          }
+        }
+      }
+    }
+
+    // Find previous questions for this quiz and delete orphaned images
+    const oldQuestions = await db.select({ id: questions.id }).from(questions).where(eq(questions.quizId, id))
+    for (const oldQ of oldQuestions) {
+      const oldImgs = await db.select({ id: questionImages.id }).from(questionImages).where(eq(questionImages.questionId, oldQ.id))
+      for (const oldImg of oldImgs) {
+        if (!keptImageIds.has(oldImg.id)) {
+          await db.delete(questionImages).where(eq(questionImages.id, oldImg.id))
+        }
+      }
+    }
+
     // Delete old questions
     await db.delete(questions).where(eq(questions.quizId, id))
 
-    // Re-insert new questions
+    // Re-insert new questions with processed images
     for (let i = 0; i < quizQuestions.length; i++) {
       const q = quizQuestions[i]
+      const processedImages = await processQuestionImages(q.id, q.images || [])
       await db.insert(questions).values({
         id: q.id,
         quizId: id,
         text: q.text,
         options: JSON.stringify(q.options),
         correctAnswers: JSON.stringify(q.correctAnswers),
-        images: JSON.stringify(q.images || []),
+        images: JSON.stringify(processedImages),
         questionType: q.questionType || "",
         sortOrder: i
       })
@@ -334,10 +467,33 @@ quiz.patch('/:id/kkm', adminMiddleware, async (c: any) => {
   }
 })
 
+// DELETE /api/quiz/submissions/:submissionId - Delete a quiz submission (Admin only)
+quiz.delete('/submissions/:submissionId', adminMiddleware, async (c: any) => {
+  try {
+    const submissionId = c.req.param('submissionId')
+    const [sub] = await db.select().from(submissions).where(eq(submissions.id, submissionId)).limit(1)
+
+    if (!sub) {
+      return c.json({ error: 'Data pengerjaan kuis tidak ditemukan.' }, 404)
+    }
+
+    await db.delete(submissions).where(eq(submissions.id, submissionId))
+    invalidateQuizzesServerCache()
+    return c.json({ success: true, message: 'Data pengerjaan siswa berhasil dihapus.' })
+  } catch (error: any) {
+    console.error('Error deleting quiz submission:', error)
+    return c.json({ error: 'Gagal menghapus data pengerjaan kuis.' }, 500)
+  }
+})
+
 // DELETE /api/quiz/:id - Delete a quiz (Admin only)
 quiz.delete('/:id', adminMiddleware, async (c: any) => {
   try {
     const id = c.req.param('id')
+    const oldQuestions = await db.select({ id: questions.id }).from(questions).where(eq(questions.quizId, id))
+    for (const oldQ of oldQuestions) {
+      await db.delete(questionImages).where(eq(questionImages.questionId, oldQ.id))
+    }
     await db.delete(quizzes).where(eq(quizzes.id, id))
     invalidateQuizzesServerCache()
     return c.json({ success: true, message: 'Kuis berhasil dihapus.' })

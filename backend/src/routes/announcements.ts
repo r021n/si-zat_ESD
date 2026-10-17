@@ -826,6 +826,50 @@ announcementsRoute.get("/:id/submissions", authMiddleware, async (c: any) => {
     let subs = await subsQuery;
     subs.sort((a, b) => b.submittedAt.localeCompare(a.submittedAt));
 
+    // Fetch peer reviews / commented users for submissions in this announcement
+    const commentedMap = new Map<number, { userId: number; studentName: string; studentClass: string }[]>();
+    try {
+      const peerComments = await db
+        .select({
+          commenterUserId: announcementSubmissionComments.userId,
+          targetUserId: announcementSubmissions.userId,
+          targetStudentName: announcementSubmissions.studentName,
+          targetStudentClass: announcementSubmissions.studentClass,
+        })
+        .from(announcementSubmissionComments)
+        .innerJoin(
+          announcementSubmissions,
+          eq(announcementSubmissionComments.submissionId, announcementSubmissions.id),
+        )
+        .where(eq(announcementSubmissionComments.announcementId, announcementId));
+
+      const tempMap = new Map<number, Map<number, { userId: number; studentName: string; studentClass: string }>>();
+      for (const row of peerComments) {
+        if (!tempMap.has(row.commenterUserId)) {
+          tempMap.set(row.commenterUserId, new Map());
+        }
+        const userMap = tempMap.get(row.commenterUserId)!;
+        if (!userMap.has(row.targetUserId)) {
+          userMap.set(row.targetUserId, {
+            userId: row.targetUserId,
+            studentName: row.targetStudentName,
+            studentClass: row.targetStudentClass,
+          });
+        }
+      }
+
+      for (const [cUserId, uMap] of tempMap.entries()) {
+        commentedMap.set(cUserId, Array.from(uMap.values()));
+      }
+    } catch (commentErr) {
+      console.error("Error fetching commented users:", commentErr);
+    }
+
+    subs = subs.map((s) => ({
+      ...s,
+      commentedUsers: commentedMap.get(s.userId) || [],
+    }));
+
     const pageParam = c.req.query("page");
     const limitParam = c.req.query("limit");
     const searchParam = c.req.query("search");

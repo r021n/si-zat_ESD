@@ -60,7 +60,8 @@ app.use('/api/*', async (c, next) => {
     path === '/api/auth/register' ||
     path === '/api/auth/me' ||
     path === '/api/access/status' ||
-    path === '/api/enroll/status'
+    path === '/api/enroll/status' ||
+    path.startsWith('/api/quiz/images')
   ) {
     return await next()
   }

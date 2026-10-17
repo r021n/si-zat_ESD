@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { Question } from "../../../types/quiz";
+import { compressImage } from "../../../utils/image";
 
 export function useQuizQuestionsBuilder(showAlert: (msg: string, title?: string) => void) {
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -103,12 +104,13 @@ export function useQuizQuestionsBuilder(showAlert: (msg: string, title?: string)
   const handleImageUpload = (questionId: string, files: FileList | null) => {
     if (!files || files.length === 0) return;
 
-    const readPromises = Array.from(files).map((file) => {
+    const readPromises = Array.from(files).map(async (file) => {
+      const compressed = await compressImage(file, 250 * 1024, 1200);
       return new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = () => resolve(reader.result as string);
         reader.onerror = reject;
-        reader.readAsDataURL(file);
+        reader.readAsDataURL(compressed);
       });
     });
 

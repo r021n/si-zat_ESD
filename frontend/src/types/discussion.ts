@@ -26,6 +26,12 @@ export interface DiscussionMessage {
   studentClass?: string;
 }
 
+export interface CommentedUserItem {
+  userId: number;
+  studentName: string;
+  studentClass?: string;
+}
+
 export interface SubmissionItem {
   id: string;
   announcementId: string;
@@ -40,6 +46,7 @@ export interface SubmissionItem {
   gradedAt?: string;
   gradedBy?: string;
   hasImage?: boolean;
+  commentedUsers?: CommentedUserItem[];
 }
 
 export interface RankedStudent {

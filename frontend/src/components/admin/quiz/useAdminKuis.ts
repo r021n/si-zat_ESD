@@ -6,6 +6,7 @@ import {
   createQuizApi,
   updateQuizApi,
   deleteQuizApi,
+  deleteQuizSubmissionApi,
   getQuizSubmissionsApi,
 } from "../../../api/api";
 import type { Quiz, Submission, QuizViewMode } from "../../../types/quiz";
@@ -178,6 +179,36 @@ export function useAdminKuis() {
     }
   };
 
+  const handleDeleteSubmission = async (submissionId: string) => {
+    if (!token) return;
+    try {
+      await deleteQuizSubmissionApi(token, submissionId);
+      setSubmissions((prev) => prev.filter((s) => s.id !== submissionId));
+      if (selectedQuiz) {
+        if (submissionsCache.current[selectedQuiz.id]) {
+          submissionsCache.current[selectedQuiz.id] = submissionsCache.current[
+            selectedQuiz.id
+          ].filter((s) => s.id !== submissionId);
+        }
+        setQuizzes((prev) =>
+          prev.map((q) =>
+            q.id === selectedQuiz.id
+              ? {
+                  ...q,
+                  submissionsCount: Math.max(0, (q.submissionsCount || 1) - 1),
+                }
+              : q,
+          ),
+        );
+      }
+      showAlert("Data pengerjaan siswa berhasil dihapus.", "Sukses");
+    } catch (err: unknown) {
+      const errorMsg =
+        err instanceof Error ? err.message : "Gagal menghapus data pengerjaan.";
+      showAlert(errorMsg, "Gagal");
+    }
+  };
+
   const handleSaveQuiz = async () => {
     if (!quizTitle.trim()) {
       showAlert("Judul kuis harus diisi!", "Peringatan");
@@ -260,6 +291,7 @@ export function useAdminKuis() {
     handleCreateNewQuiz,
     handleEditQuiz,
     handleDeleteQuiz,
+    handleDeleteSubmission,
     handleOpenAnalysis,
     handleAddQuestion,
     handleRemoveQuestion,

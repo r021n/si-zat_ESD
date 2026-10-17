@@ -1,6 +1,7 @@
 import { FiClock, FiAlertTriangle } from "react-icons/fi";
 import type { Quiz } from "../../types/quiz";
 import { formatDurationMMSS } from "../../utils/time";
+import { getQuizImageUrl } from "../../utils/quizImage";
 
 interface QuizActivePlayerViewProps {
   quiz: Quiz;
@@ -67,8 +68,9 @@ export default function QuizActivePlayerView({
             {currentQuestion.images.map((img, imgIdx) => (
               <img
                 key={imgIdx}
-                src={img}
+                src={getQuizImageUrl(img)}
                 alt={`Ilustrasi Soal ${imgIdx + 1}`}
+                loading="lazy"
                 className="max-h-35 max-w-full object-contain rounded-xl border border-[#F0EDFF]"
               />
             ))}

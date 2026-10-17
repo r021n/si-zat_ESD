@@ -1,4 +1,6 @@
-export const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8787";
+export const API_URL =
+  (typeof import.meta !== "undefined" && import.meta.env?.VITE_API_URL) ||
+  "http://localhost:8787";
 
 export const PLACEHOLDER_IMAGE_URL =
   "https://placehold.co/800x400/e8e8e8/9C98A6?text=Tidak%20Ada%20Gambar";

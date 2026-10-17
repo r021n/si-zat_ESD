@@ -22,6 +22,7 @@ interface QuizAnalysisProps {
   submissions: Submission[];
   onClose: () => void;
   onKkmChange?: (kkm: number | null) => void;
+  onDeleteSubmission?: (submissionId: string) => void;
 }
 
 export default function QuizAnalysis({
@@ -29,6 +30,7 @@ export default function QuizAnalysis({
   submissions,
   onClose,
   onKkmChange,
+  onDeleteSubmission,
 }: QuizAnalysisProps) {
   const { token } = useAuthStore();
   const [analysisTab, setAnalysisTab] = useState<"SUMMARY" | "ITEMS">("SUMMARY");
@@ -39,13 +41,14 @@ export default function QuizAnalysis({
     "ORDER_ASC" | "ACCURACY_DESC" | "ACCURACY_ASC" | "ANSWERED_DESC" | "EMPTY_DESC"
   >("ORDER_ASC");
   const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const [summaryPage, setSummaryPage] = useState(1);
   const SUMMARY_PAGE_SIZE = 10;
 
   useEffect(() => {
     setSummaryPage(1);
-  }, [scoreSort]);
+  }, [scoreSort, searchQuery]);
 
   // KKM states
   const [kkmValue, setKkmValue] = useState<number | null>(selectedQuiz.kkm ?? null);
@@ -105,7 +108,12 @@ export default function QuizAnalysis({
     ? quizSubmissions.filter((s) => s.score < (kkmValue as number)).length
     : 0;
 
-  const sortedSubmissions = sortSubmissions(quizSubmissions, scoreSort);
+  const filteredSubmissions = quizSubmissions.filter((s) => {
+    if (!searchQuery.trim()) return true;
+    return s.studentName.toLowerCase().includes(searchQuery.trim().toLowerCase());
+  });
+
+  const sortedSubmissions = sortSubmissions(filteredSubmissions, scoreSort);
   const totalSummaryPages = Math.ceil(sortedSubmissions.length / SUMMARY_PAGE_SIZE) || 1;
   const paginatedSummarySubmissions = sortedSubmissions.slice(
     (summaryPage - 1) * SUMMARY_PAGE_SIZE,
@@ -208,6 +216,8 @@ export default function QuizAnalysis({
                   kkmActive={kkmActive}
                   kkmValue={kkmValue}
                   belowKkmCount={belowKkmCount}
+                  searchQuery={searchQuery}
+                  onSearchQueryChange={setSearchQuery}
                   scoreSort={scoreSort}
                   onScoreSortChange={setScoreSort}
                   currentPage={summaryPage}
@@ -216,6 +226,12 @@ export default function QuizAnalysis({
                   pageSize={SUMMARY_PAGE_SIZE}
                   onPageChange={setSummaryPage}
                   onSelectSubmission={setSelectedSubmission}
+                  onDeleteSubmission={(sub) => {
+                    if (selectedSubmission?.id === sub.id) {
+                      setSelectedSubmission(null);
+                    }
+                    onDeleteSubmission?.(sub.id);
+                  }}
                 />
               )}
 
