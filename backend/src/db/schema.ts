@@ -159,4 +159,17 @@ export const announcementDiscussions = sqliteTable('announcement_discussions', {
   senderRole: text('sender_role').notNull(),
   content: text('content').notNull(),
   createdAt: text('created_at').notNull(),
-})
+})
+
+export const announcementSubmissionComments = sqliteTable('announcement_submission_comments', {
+  id: text('id').primaryKey(),
+  submissionId: text('submission_id').notNull().references(() => announcementSubmissions.id, { onDelete: 'cascade' }),
+  announcementId: text('announcement_id').notNull().references(() => announcements.id, { onDelete: 'cascade' }),
+  userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  userName: text('user_name').notNull(),
+  userRole: text('user_role').notNull().default('SISWA'),
+  userClass: text('user_class').notNull().default(''),
+  content: text('content').notNull(),
+  createdAt: text('created_at').notNull(),
+})
+

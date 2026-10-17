@@ -55,3 +55,39 @@ export interface ContributorData {
   detail?: string;
   count: number;
 }
+
+export interface PeerSubmissionItem {
+  id: string;
+  announcementId: string;
+  userId: number;
+  studentName: string;
+  studentClass: string;
+  answer: string;
+  fileName: string;
+  submittedAt: string;
+  hasImage?: boolean;
+  commentsCount: number;
+  hasReviewed: boolean;
+}
+
+export interface PeerSubmissionsResponse {
+  hasSubmittedOwn: boolean;
+  canView: boolean;
+  myReviewedCount: number;
+  targetReviewedCount: number;
+  isRequirementMet: boolean;
+  submissions: PeerSubmissionItem[];
+}
+
+export interface PeerCommentItem {
+  id: string;
+  submissionId: string;
+  announcementId: string;
+  userId: number;
+  userName: string;
+  userRole: string;
+  userClass: string;
+  content: string;
+  createdAt: string;
+}
+
