@@ -1,12 +1,15 @@
 import { type FormEvent } from "react";
+import { SCHOOL_OPTIONS } from "../../constants/schools";
 
 interface ProfileFormCardProps {
   nama: string;
   kelas: string;
+  sekolah: string;
   loading: boolean;
   message: { type: "success" | "error"; text: string } | null;
   setNama: (val: string) => void;
   setKelas: (val: string) => void;
+  setSekolah: (val: string) => void;
   clearMessage: () => void;
   onSubmit: (e: FormEvent) => void;
 }
@@ -14,10 +17,12 @@ interface ProfileFormCardProps {
 export default function ProfileFormCard({
   nama,
   kelas,
+  sekolah,
   loading,
   message,
   setNama,
   setKelas,
+  setSekolah,
   clearMessage,
   onSubmit,
 }: ProfileFormCardProps) {
@@ -106,6 +111,46 @@ export default function ProfileFormCard({
           required
           className="w-full p-4 border border-[#F0EDFF] bg-[#FAF9FF] text-[#2C2B30] text-xs font-bold focus:outline-none focus:border-[#8C66FF] transition-none rounded-2xl"
         />
+      </div>
+
+      {/* Asal Sekolah Input */}
+      <div className="flex flex-col gap-1.5">
+        <label className="text-[10px] font-black uppercase tracking-widest text-[#9C98A6]">
+          Asal Sekolah
+        </label>
+        <div className="relative">
+          <select
+            value={sekolah}
+            onChange={(e) => {
+              setSekolah(e.target.value);
+              clearMessage();
+            }}
+            className="w-full p-4 pr-10 border border-[#F0EDFF] bg-[#FAF9FF] text-[#2C2B30] text-xs font-bold focus:outline-none focus:border-[#8C66FF] transition-none rounded-2xl appearance-none cursor-pointer"
+          >
+            <option value="">-- Pilih Asal Sekolah --</option>
+            {SCHOOL_OPTIONS.map((sch) => (
+              <option key={sch} value={sch}>
+                {sch}
+              </option>
+            ))}
+          </select>
+          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-[#9C98A6]">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={2}
+              stroke="currentColor"
+              className="w-4 h-4"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M19.5 8.25l-7.5 7.5-7.5-7.5"
+              />
+            </svg>
+          </div>
+        </div>
       </div>
 
       {/* Submit Button */}

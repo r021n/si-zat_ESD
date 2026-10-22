@@ -52,6 +52,7 @@ auth.post('/register', async (c) => {
         email: newUser.email,
         kelas: newUser.kelas,
         nama: newUser.nama,
+        sekolah: newUser.sekolah || '',
         status: newUser.status,
         createdAt: newUser.createdAt,
         openCount: newUser.openCount,
@@ -103,6 +104,7 @@ auth.post('/login', async (c) => {
         email: user.email,
         kelas: user.kelas,
         nama: user.nama,
+        sekolah: user.sekolah || '',
         status: user.status,
         createdAt: user.createdAt,
         openCount: user.openCount,
@@ -132,6 +134,7 @@ auth.get('/me', async (c) => {
       email: users.email,
       kelas: users.kelas,
       nama: users.nama,
+      sekolah: users.sekolah,
       status: users.status,
       createdAt: users.createdAt,
       openCount: users.openCount,
@@ -144,7 +147,10 @@ auth.get('/me', async (c) => {
 
     return c.json({
       status: 'success',
-      user
+      user: {
+        ...user,
+        sekolah: user.sekolah || ''
+      }
     })
   } catch (error) {
     console.error('Token verification failed:', error)
@@ -163,18 +169,23 @@ auth.put('/me', async (c) => {
     const payload = await verify(token, getJwtSecret(), 'HS256')
     const userId = payload.id as number
 
-    const { kelas, nama } = await c.req.json()
+    const { kelas, nama, sekolah } = await c.req.json()
 
     if (!kelas) {
       return c.json({ error: 'Kelas tidak boleh kosong.' }, 400)
     }
 
-    // Update user in DB (only nama and kelas)
+    // Update user in DB (nama, kelas, and sekolah)
+    const updatePayload: { kelas: string; nama: string; sekolah?: string } = {
+      kelas,
+      nama: nama || ''
+    }
+    if (sekolah !== undefined) {
+      updatePayload.sekolah = sekolah
+    }
+
     const [updatedUser] = await db.update(users)
-      .set({
-        kelas,
-        nama: nama || ''
-      })
+      .set(updatePayload)
       .where(eq(users.id, userId))
       .returning()
 
@@ -201,6 +212,7 @@ auth.put('/me', async (c) => {
         email: updatedUser.email,
         kelas: updatedUser.kelas,
         nama: updatedUser.nama,
+        sekolah: updatedUser.sekolah || '',
         status: updatedUser.status,
         createdAt: updatedUser.createdAt,
         openCount: updatedUser.openCount,
@@ -313,6 +325,7 @@ auth.get('/users', async (c) => {
       email: users.email,
       kelas: users.kelas,
       nama: users.nama,
+      sekolah: users.sekolah,
       status: users.status,
       createdAt: users.createdAt,
       openCount: users.openCount,
@@ -337,7 +350,8 @@ auth.get('/users', async (c) => {
       filtered = filtered.filter(u =>
         (u.nama || '').toLowerCase().includes(q) ||
         (u.email || '').toLowerCase().includes(q) ||
-        (u.kelas || '').toLowerCase().includes(q)
+        (u.kelas || '').toLowerCase().includes(q) ||
+        (u.sekolah || '').toLowerCase().includes(q)
       )
     }
 
@@ -485,6 +499,7 @@ auth.post('/google', async (c) => {
         kelas,
         password: hashedPassword,
         nama: payload.name || '',
+        sekolah: '',
         status: 'siswa'
       }).returning()
 
@@ -510,6 +525,7 @@ auth.post('/google', async (c) => {
         email: user.email,
         kelas: user.kelas,
         nama: user.nama,
+        sekolah: user.sekolah || '',
         status: user.status,
         createdAt: user.createdAt,
         openCount: user.openCount,
@@ -523,5 +539,3 @@ auth.post('/google', async (c) => {
 })
 
 export default auth
-
-

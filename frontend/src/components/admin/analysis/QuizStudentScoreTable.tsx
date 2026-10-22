@@ -72,14 +72,14 @@ export default function QuizStudentScoreTable({
         </span>
         <div className="flex items-center gap-2 w-full sm:w-auto">
           {/* Search Box */}
-          <div className="relative flex-1 sm:w-48 md:w-56">
+          <div className="relative flex-1 sm:w-48 md:w-60">
             <FiSearch
               className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#9C98A6]"
               size={13}
             />
             <input
               type="text"
-              placeholder="Cari nama siswa..."
+              placeholder="Cari nama atau sekolah..."
               value={searchQuery}
               onChange={(e) => onSearchQueryChange(e.target.value)}
               className="w-full pl-8 pr-7 py-1.5 bg-white border border-[#F0EDFF] rounded-xl text-[10px] md:text-xs font-semibold text-[#2C2B30] placeholder:text-[#9C98A6] focus:outline-none focus:border-[#8C66FF] shadow-xs normal-case"
@@ -113,11 +113,12 @@ export default function QuizStudentScoreTable({
       </div>
 
       <div className="flex-1 overflow-auto border border-[#F0EDFF] rounded-[24px] shadow-[0_4px_12px_rgba(0,0,0,0.02)] bg-white no-scrollbar">
-        <table className="w-full min-w-[660px] border-collapse text-left text-xs md:text-sm">
+        <table className="w-full min-w-[780px] border-collapse text-left text-xs md:text-sm">
           <thead className="sticky top-0 bg-[#FAF9FF] z-10">
             <tr className="bg-[#FAF9FF] text-[#2C2B30] border-b border-[#F0EDFF] uppercase font-black text-[9px] md:text-[10px] tracking-wider">
               <th className="p-3.5 md:p-4 border-r border-[#F0EDFF]/50 whitespace-nowrap">Nama Siswa</th>
               <th className="p-3.5 md:p-4 border-r border-[#F0EDFF]/50 text-center whitespace-nowrap">Kelas</th>
+              <th className="p-3.5 md:p-4 border-r border-[#F0EDFF]/50 text-center whitespace-nowrap">Asal Sekolah</th>
               <th className="p-3.5 md:p-4 border-r border-[#F0EDFF]/50 text-center whitespace-nowrap">Durasi</th>
               <th className="p-3.5 md:p-4 border-r border-[#F0EDFF]/50 text-center whitespace-nowrap">Terisi / Kosong</th>
               <th className="p-3.5 md:p-4 border-r border-[#F0EDFF]/50 text-center whitespace-nowrap">Keluar App</th>
@@ -129,11 +130,11 @@ export default function QuizStudentScoreTable({
             {submissions.length === 0 ? (
               <tr>
                 <td
-                  colSpan={7}
+                  colSpan={8}
                   className="p-8 text-center text-[#9C98A6] font-semibold text-xs"
                 >
                   {searchQuery.trim()
-                    ? `Tidak ditemukan siswa dengan nama "${searchQuery.trim()}".`
+                    ? `Tidak ditemukan hasil dengan kata kunci "${searchQuery.trim()}".`
                     : "Belum ada respon siswa."}
                 </td>
               </tr>
@@ -158,6 +159,15 @@ export default function QuizStudentScoreTable({
                   </td>
                   <td className="p-3.5 md:p-4 text-center font-mono text-[#9C98A6] font-bold whitespace-nowrap">
                     {sub.studentClass}
+                  </td>
+                  <td className="p-3.5 md:p-4 text-center text-xs whitespace-nowrap">
+                    {sub.studentSchool ? (
+                      <span className="inline-block px-2.5 py-1 bg-[#FAF9FF] border border-[#F0EDFF] text-[#8C66FF] rounded-full text-[10px] font-black">
+                        {sub.studentSchool}
+                      </span>
+                    ) : (
+                      <span className="text-[#9C98A6] font-semibold text-[10px]">-</span>
+                    )}
                   </td>
                   <td className="p-3.5 md:p-4 text-center font-mono text-[#9C98A6] font-semibold whitespace-nowrap">
                     {formatDurationFriendly(sub.duration)}

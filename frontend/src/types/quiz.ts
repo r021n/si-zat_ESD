@@ -22,6 +22,7 @@ export interface Submission {
   quizId: string;
   studentName: string;
   studentClass: string;
+  studentSchool?: string;
   answers: Record<string, number[]>;
   score: number;
   duration?: number;

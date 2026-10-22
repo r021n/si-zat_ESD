@@ -39,6 +39,7 @@ export default function QuizStudentAnswerModal({
             </h2>
             <p className="text-[10px] md:text-xs font-bold text-[#8C66FF]">
               Kelas: {submission.studentClass || "-"}
+              {submission.studentSchool ? ` • ${submission.studentSchool}` : ""}
             </p>
           </div>
           <button

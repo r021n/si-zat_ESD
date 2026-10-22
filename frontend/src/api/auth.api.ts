@@ -26,7 +26,7 @@ export async function getMeApi(token: string): Promise<{ user: User }> {
 
 export async function updateProfileApi(
   token: string,
-  profileData: { kelas: string; nama: string },
+  profileData: { kelas: string; nama: string; sekolah?: string },
 ): Promise<{ token: string; user: User }> {
   return apiClient.put<{ token: string; user: User }>("/api/auth/me", profileData, { token });
 }

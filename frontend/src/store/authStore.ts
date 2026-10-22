@@ -28,7 +28,7 @@ interface AuthState {
   ) => Promise<{ registered: boolean; email?: string; nama?: string }>;
   logout: () => void;
   checkAuth: () => Promise<void>;
-  updateProfile: (kelas: string, nama: string) => Promise<void>;
+  updateProfile: (kelas: string, nama: string, sekolah?: string) => Promise<void>;
   checkEnrollment: () => Promise<void>;
   setEnrolled: (deadline: string) => void;
 }
@@ -152,13 +152,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
-  updateProfile: async (kelas, nama) => {
+  updateProfile: async (kelas, nama, sekolah) => {
     const token = localStorage.getItem("token");
     if (!token) throw new Error("Tidak terautentikasi");
 
     set({ loading: true, error: null });
     try {
-      const data = await updateProfileApi(token, { kelas, nama });
+      const data = await updateProfileApi(token, { kelas, nama, sekolah });
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
       set({ user: data.user, token: data.token, loading: false });

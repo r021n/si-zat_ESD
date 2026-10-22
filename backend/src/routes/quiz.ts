@@ -259,6 +259,7 @@ quiz.get('/my-submissions', async (c: any) => {
       quizId: sub.quizId,
       studentName: sub.studentName,
       studentClass: sub.studentClass,
+      studentSchool: user.sekolah || "",
       answers: JSON.parse(sub.answers),
       score: sub.score,
       duration: sub.duration,
@@ -282,13 +283,28 @@ quiz.get('/my-submissions', async (c: any) => {
 quiz.get('/:id/submissions', adminMiddleware, async (c: any) => {
   try {
     const id = c.req.param('id')
-    const quizSubmissions = await db.select().from(submissions).where(eq(submissions.quizId, id))
+    const quizSubmissions = await db.select({
+      id: submissions.id,
+      quizId: submissions.quizId,
+      studentName: submissions.studentName,
+      studentClass: submissions.studentClass,
+      studentSchool: users.sekolah,
+      answers: submissions.answers,
+      score: submissions.score,
+      duration: submissions.duration,
+      violationCount: submissions.violationCount,
+      createdAt: submissions.createdAt
+    })
+    .from(submissions)
+    .leftJoin(users, eq(submissions.userId, users.id))
+    .where(eq(submissions.quizId, id))
 
     const parsedSubmissions = quizSubmissions.map(sub => ({
       id: sub.id,
       quizId: sub.quizId,
       studentName: sub.studentName,
       studentClass: sub.studentClass,
+      studentSchool: sub.studentSchool || "",
       answers: JSON.parse(sub.answers),
       score: sub.score,
       duration: sub.duration,
@@ -548,4 +564,5 @@ quiz.post('/:id/submit', async (c: any) => {
     return c.json({ error: 'Gagal mengirimkan jawaban kuis ke server.' }, 500)
   }
 })
+
 export default quiz

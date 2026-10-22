@@ -3,6 +3,7 @@ export interface User {
   email: string;
   kelas: string;
   nama: string;
+  sekolah?: string;
   status: string;
   createdAt?: string;
   openCount?: number;
@@ -25,7 +26,7 @@ export interface AuthState {
   ) => Promise<{ registered: boolean; email?: string; nama?: string }>;
   logout: () => void;
   checkAuth: () => Promise<void>;
-  updateProfile: (kelas: string, nama: string) => Promise<void>;
+  updateProfile: (kelas: string, nama: string, sekolah?: string) => Promise<void>;
   checkEnrollment: () => Promise<void>;
   setEnrolled: (deadline: string) => void;
 }

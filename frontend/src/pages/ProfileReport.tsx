@@ -11,6 +11,7 @@ export default function ProfileReport() {
     user,
     nama,
     kelas,
+    sekolah,
     loading,
     message,
     analyticsData,
@@ -19,6 +20,7 @@ export default function ProfileReport() {
     analyticsError,
     setNama,
     setKelas,
+    setSekolah,
     clearMessage,
     setIsAnalyticsModalOpen,
     handleSubmit,
@@ -94,13 +96,18 @@ export default function ProfileReport() {
               <p className="text-[9px] text-purple-200 font-bold uppercase tracking-wide truncate">
                 Email: {user.email}
               </p>
-              <div className="flex gap-2 mt-1">
+              <div className="flex flex-wrap gap-2 mt-1">
                 <span className="inline-block text-[9px] px-3 py-1 bg-[#FF5E8C] text-white font-extrabold rounded-full shadow-sm">
                   {user.status.toUpperCase()}
                 </span>
                 <span className="inline-block text-[9px] px-3 py-1 bg-white/20 text-white font-extrabold rounded-full">
                   Kelas: {user.kelas || "-"}
                 </span>
+                {user.sekolah && (
+                  <span className="inline-block text-[9px] px-3 py-1 bg-white/20 text-white font-extrabold rounded-full truncate max-w-48">
+                    {user.sekolah}
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -109,10 +116,12 @@ export default function ProfileReport() {
           <ProfileFormCard
             nama={nama}
             kelas={kelas}
+            sekolah={sekolah}
             loading={loading}
             message={message}
             setNama={setNama}
             setKelas={setKelas}
+            setSekolah={setSekolah}
             clearMessage={clearMessage}
             onSubmit={handleSubmit}
           />

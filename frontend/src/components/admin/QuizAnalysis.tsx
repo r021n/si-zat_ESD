@@ -110,7 +110,11 @@ export default function QuizAnalysis({
 
   const filteredSubmissions = quizSubmissions.filter((s) => {
     if (!searchQuery.trim()) return true;
-    return s.studentName.toLowerCase().includes(searchQuery.trim().toLowerCase());
+    const q = searchQuery.trim().toLowerCase();
+    return (
+      s.studentName.toLowerCase().includes(q) ||
+      (s.studentSchool || "").toLowerCase().includes(q)
+    );
   });
 
   const sortedSubmissions = sortSubmissions(filteredSubmissions, scoreSort);

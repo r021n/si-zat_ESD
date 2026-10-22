@@ -9,6 +9,7 @@ export function useProfileReport() {
 
   const [nama, setNama] = useState("");
   const [kelas, setKelas] = useState("");
+  const [sekolah, setSekolah] = useState("");
   const [message, setMessage] = useState<{
     type: "success" | "error";
     text: string;
@@ -28,13 +29,14 @@ export function useProfileReport() {
     }
     setNama(user.nama || "");
     setKelas(user.kelas || "");
+    setSekolah(user.sekolah || "");
   }, [user, navigate]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setMessage(null);
     try {
-      await updateProfile(kelas, nama);
+      await updateProfile(kelas, nama, sekolah);
       setMessage({ type: "success", text: "Profil berhasil diperbarui!" });
     } catch (err: unknown) {
       const errorMsg =
@@ -83,6 +85,7 @@ export function useProfileReport() {
     user,
     nama,
     kelas,
+    sekolah,
     loading,
     message,
     analyticsData,
@@ -91,6 +94,7 @@ export function useProfileReport() {
     analyticsError,
     setNama,
     setKelas,
+    setSekolah,
     clearMessage: () => setMessage(null),
     setIsAnalyticsModalOpen,
     handleSubmit,
