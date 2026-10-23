@@ -1,178 +1,190 @@
-# Panduan Update Backend di VPS (Docker)
+# Panduan Update Docker Image di VPS Saat Resource / Kode Berubah dari GitHub
 
-Dokumen ini menjelaskan cara **meng-update backend** yang berjalan di VPS menggunakan **Docker Compose** (`backend/Dockerfile` + `backend/compose.yaml`) setelah kode di-repo berubah.
-
-> Catatan: panduan deploy awal ke Vercel ada di [DEPLOY_BACKEND.md](./DEPLOY_BACKEND.md), dan deploy frontend ke GitHub Pages ada di [DEPLOY_FRONTEND.md](./DEPLOY_FRONTEND.md). Dokumen ini khusus untuk **update berkala backend di VPS**.
+Panduan ini menjelaskan alur lengkap dan praktis untuk **memperbarui Docker image dan container backend di VPS** ketika ada perubahan resource (fitur baru, perbaikan bug, dependency, skema database, atau konfigurasi) yang telah di-*push* ke GitHub.
 
 ---
 
-## 1. Arsitektur Singkat
+## ⚡ Ringkasan Cepat (*Quick Cheat-Sheet*)
 
-- Backend adalah aplikasi **Hono + Node.js** yang di-build jadi image `si-zat-esd-backend:latest` dan berjalan sebagai container `si-zat-backend`.
-- Port container `3000` di-publish ke **`127.0.0.1:8080`** di VPS (hanya bisa diakses lokal VPS — di depannya biasanya ada reverse proxy seperti Nginx/Caddy yang meneruskan traffic HTTPS).
-- Database **Turso (libsql)** berada di cloud — data **tidak** disimpan di container, jadi update/rebuild container aman terhadap data.
-- Health check endpoint: `GET /api/health` (dipakai Docker healthcheck dan verifikasi pasca-deploy).
-
----
-
-## 2. Prasyarat di VPS
-
-1. **Docker** dan plugin **Docker Compose** sudah terpasang:
-   ```bash
-   docker --version
-   docker compose version
-   ```
-2. Kode repo `si-zat_ESD` sudah pernah di-clone di VPS (misalnya di `/opt/si-zat_ESD`).
-3. File **`backend/.env`** sudah ada di VPS (tidak ikut git — harus disalin manual sekali saat awal deploy) dan berisi minimal:
-   ```
-   TURSO_DATABASE_URL=libsql://...
-   TURSO_AUTH_TOKEN=...
-   JWT_SECRET=...
-   ```
-4. (Jika repo VPS di-clone via SSH) kunci SSH/deploy key sudah terpasang supaya `git pull` bisa jalan tanpa interaksi.
-
----
-
-## 3. Update Rutin (Kode Berubah)
-
-Ini langkah standar setelah ada commit baru di `main` (misalnya update fitur kuis, KKM, dll.):
+Jika Anda hanya mengubah kode/resource backend dan sudah push ke branch `main`, jalankan perintah berikut di terminal VPS:
 
 ```bash
-# 1. Masuk ke folder repo di VPS
-cd /opt/si-zat_ESD
+# Masuk ke folder repo, pull perubahan, rebuild image, dan restart container
+cd /opt/si-zat_ESD && \
+git pull origin main && \
+cd backend && \
+docker compose up -d --build --wait && \
+docker image prune -f
+```
 
-# 2. Ambil kode terbaru
-git pull origin main
-
-# 3. Masuk ke folder backend & rebuild image + restart container
-cd backend
-docker compose up -d --build --wait
-
-# 4. Verifikasi
-docker compose ps                # pastikan status: healthy (bukan unhealthy/restarting)
-docker compose logs --tail=50 backend
+Periksa apakah backend sudah berjalan normal:
+```bash
+docker compose ps
 curl -s http://127.0.0.1:8080/api/health
 ```
 
-Penjelasan flag:
-- `--build` — build ulang image dari kode terbaru sebelum start.
-- `-d` — jalan di background.
-- `--wait` — tunggu container benar-benar **healthy** sebelum command selesai (healthcheck jalan tiap 30 detik, start-period 15 detik).
-
-> Downtime: `docker compose up -d --build` akan menghentikan container lama lalu memulai yang baru — biasanya hanya beberapa detik.
-
-Jika ada perubahan dependency (`backend/package.json` / `package-lock.json`), tidak perlu langkah tambahan — `npm ci` sudah dijalankan otomatis saat build image.
-
 ---
 
-## 4. Jika Ada Perubahan Database (Schema)
+## 🧭 Panduan Berdasarkan Jenis Resource yang Berubah
 
-Backend **tidak menjalankan migration otomatis** saat start. Perubahan schema (penambahan kolom/tabel di `backend/src/db/schema.ts`, seperti kolom `kkm` di tabel `quizzes`) harus diterapkan ke Turso secara terpisah **dari mesin yang punya `backend/.env`** (misalnya komputer lokal):
+Tidak semua perubahan di GitHub ditangani dengan cara yang sama. Kenali tipe resource yang Anda ubah:
 
-```bash
-cd backend
-npm ci            # sekali saja, jika dependencies berubah
-npm run db:push   # sinkronkan schema.ts ke database Turso
+```mermaid
+flowchart TD
+    A["Resource Berubah di GitHub (Push ke main)"] --> B{"Apa yang berubah?"}
+    B -->|"Kode Backend / Endpoint / Logic (src/)"| C["1. git pull<br/>2. docker compose up -d --build --wait"]
+    B -->|"Dependency (package.json)"| D["1. git pull<br/>2. docker compose build --no-cache<br/>3. docker compose up -d"]
+    B -->|"Skema Database (schema.ts)"| E["1. npm run db:push (sinkron Turso)<br/>2. git pull & rebuild container"]
+    B -->|"Environment Baru (.env.example)"| F["1. git pull<br/>2. nano backend/.env<br/>3. docker compose up -d --force-recreate"]
+    B -->|"Frontend (frontend/)"| G["Otomatis di-deploy oleh GitHub Actions ke GitHub Pages<br/>(Tidak perlu tindakan di VPS)"]
 ```
 
-Urutan yang disarankan:
-1. Jalankan `npm run db:push` dari lokal (atau VPS yang punya `.env`) **sebelum** atau **bersamaan** dengan update container.
-2. Lalu update container seperti langkah di §3.
+---
 
-> [!IMPORTANT]
-> - Perubahan schema harus bersifat **additive** (menambah kolom/tabel baru, nullable) agar aman terhadap data lama. `db:push` akan menolak/meminta konfirmasi jika ada perubahan yang menghapus data.
-> - Pastikan `schema.ts` selalu mencerminkan tabel yang benar-benar ada di DB (termasuk tabel `materials` & `material_blocks`) supaya `db:push` tidak berusaha menghapus tabel yang tidak didefinisikan.
-> - Kode lama yang berjalan bersamaan dengan schema baru biasanya aman untuk perubahan additive (kolom baru nullable).
+## 🛠️ Langkah Demi Langkah di VPS
+
+### Langkah 1: Masuk ke Server VPS
+Gunakan SSH dari terminal komputer Anda:
+```bash
+ssh user@ip-vps-anda
+```
+
+### Langkah 2: Ambil Perubahan Terbaru dari GitHub (`git pull`)
+Arahkan ke direktori repositori di VPS:
+```bash
+cd /opt/si-zat_ESD
+
+# Pastikan branch berada di main dan tarik commit terbaru
+git pull origin main
+```
+> [!TIP]
+> Jika `git pull` menolak karena ada perubahan lokal di VPS, periksa dengan `git status`. Hindari mengedit file proyek langsung di VPS kecuali file konfigurasi `backend/.env`.
 
 ---
 
-## 5. Jika `.env` di VPS Perlu Ditambah/Ubah
+### Langkah 3: Update & Rebuild Docker Image
 
-`.env` tidak ikut git. Jika ada variabel env baru (atau nilainya berubah):
-
+Masuk ke folder `backend`:
 ```bash
-nano /opt/si-zat_ESD/backend/.env   # edit sesuai kebutuhan
 cd /opt/si-zat_ESD/backend
-docker compose up -d --build --wait  # restart agar env baru terbaca
 ```
 
-`env_file` di `compose.yaml` dibaca ulang setiap container dibuat ulang, jadi cukup `up -d` (tidak perlu build ulang jika kode tidak berubah):
+Pilih perintah sesuai kondisi:
+
+#### Opsi A: Update Rutin (Standar)
+Docker akan mendeteksi file mana saja yang berubah dan meng-invalidate cache layer yang relevan:
 ```bash
-docker compose up -d --force-recreate
+docker compose up -d --build --wait
+```
+- `--build`: Memaksa pembuatan ulang (*rebuild*) Docker image dengan kode terbaru.
+- `-d`: Menjalankan container di latar belakang (*detached*).
+- `--wait`: Menunggu health check endpoint (`/api/health`) berstatus **healthy** sebelum proses dianggap selesai.
+
+#### Opsi B: Jika Mengubah Dependency atau Cache Bermasalah (*Fresh Build*)
+Gunakan flag `--no-cache` jika ada perubahan package/library (`package.json`, `package-lock.json`) atau jika perubahan resource tidak tampak:
+```bash
+docker compose build --no-cache backend
+docker compose up -d --wait
 ```
 
 ---
 
-## 6. Troubleshooting
+### Langkah 4: Verifikasi Status Container
 
-| Gejala | Cek / Solusi |
-|---|---|
-| Container `unhealthy` | `docker compose logs backend` — biasanya env kurang/Turso tidak terjangkau. Cek isi `.env`. |
-| Build gagal di `npm ci` | `docker compose build --no-cache backend` (paksa tanpa cache), cek `package-lock.json` tidak korup. |
-| Perubahan kode tidak masuk | Pastikan `git pull` berhasil dan benar-benar commit terbaru; lalu `docker compose build --no-cache` dan `up -d`. |
-| Port 8080 bentrok / proxy 502 | Cek `docker compose ps`, `curl http://127.0.0.1:8080/api/health` langsung di VPS, lalu cek konfigurasi reverse proxy. |
-| Mau lihat isi container | `docker compose exec backend sh` |
+Pastikan container baru telah aktif dan sehat:
 
-Membersihkan image lama agar hemat disk:
+1. **Cek status container:**
+   ```bash
+   docker compose ps
+   ```
+   *Pastikan kolom STATUS menampilkan `Up ... (healthy)`.*
+
+2. **Cek log aplikasi:**
+   ```bash
+   docker compose logs --tail=50 backend
+   ```
+
+3. **Uji endpoint health secara lokal:**
+   ```bash
+   curl -i http://127.0.0.1:8080/api/health
+   ```
+   *Respons yang diharapkan: `HTTP/1.1 200 OK` dengan status `{"status":"ok",...}`.*
+
+---
+
+### Langkah 5: Bersihkan Image Lama (*Disk Housekeeping*)
+Setiap kali Anda me-rebuild image, image versi lama akan menjadi *dangling image* (`<none>:<none>`) yang memakan kapasitas penyimpanan disk VPS.
+
+Jalankan pembersihan rutin:
 ```bash
 docker image prune -f
 ```
 
 ---
 
-## 7. Rollback (Jika Update Bermasalah)
+## 🗄️ Penanganan Khusus: Perubahan Database & Konfigurasi
+
+### 1. Jika Ada Perubahan Skema Database (`schema.ts`)
+Aplikasi menggunakan **Turso (libsql)** yang berada di cloud dan skema dikelola melalui **Drizzle ORM**. Container backend tidak menjalankan migrasi otomatis saat start.
+
+Langkah:
+1. Jalankan sinkronisasi skema dari komputer pengembang (atau dari VPS yang memiliki file `backend/.env`):
+   ```bash
+   cd backend
+   npm run db:push
+   ```
+2. Pastikan perubahan skema berhasil diterapkan di Turso.
+3. Lakukan update Docker image di VPS seperti biasa (Langkah 3).
+
+### 2. Jika Ada Environment Variable Baru
+File `.env` diabaikan oleh Git demi keamanan:
+1. Buka file `.env` di VPS:
+   ```bash
+   nano /opt/si-zat_ESD/backend/.env
+   ```
+2. Tambahkan/sesuaikan variabel yang diperlukan.
+3. Restart container agar membaca konfigurasi baru:
+   ```bash
+   cd /opt/si-zat_ESD/backend
+   docker compose up -d --force-recreate
+   ```
+
+---
+
+## 🔄 Prosedur Rollback (Jika Terjadi Error Pasca Update)
+
+Jika image baru mengalami masalah di server produksi, Anda bisa mengembalikan versi secara cepat:
 
 ```bash
 cd /opt/si-zat_ESD
 
-# Lihat commit sebelumnya
+# 1. Cek riwayat commit sebelumnya
 git log --oneline -5
 
-# Kembali ke versi sebelumnya (ganti <commit> dengan hash commit lama)
-git checkout <commit>
+# 2. Checkout ke commit yang stabil sebelumnya (ganti <commit-hash>)
+git checkout <commit-hash>
 
+# 3. Rebuild dan jalankan ulang container versi sebelumnya
 cd backend
 docker compose up -d --build --wait
 ```
 
-Setelah stabil, kembali ke `main`:
+Setelah masalah diperbaiki di GitHub, kembalikan branch VPS ke `main`:
 ```bash
-cd /opt/si-zat_ESD && git checkout main && git pull origin main
-cd backend && docker compose up -d --build --wait
-```
-
-Tips: sebelum update penting, beri tag image lama agar rollback bisa cepat tanpa rebuild:
-```bash
-docker tag si-zat-esd-backend:latest si-zat-esd-backend:backup-$(date +%Y%m%d)
-```
-
----
-
-## 8. Alternatif: Build Image di Lokal (VPS Tanpa Akses Git / Build Lambat)
-
-Jika VPS tidak bisa `git pull` (atau build di VPS lambat), build image di komputer lokal lalu transfer:
-
-```bash
-# Di komputer lokal
+cd /opt/si-zat_ESD
+git checkout main
+git pull origin main
 cd backend
-docker build -t si-zat-esd-backend:latest .
-docker save si-zat-esd-backend:latest | gzip > si-zat-backend.tar.gz
-scp si-zat-backend.tar.gz user@vps:/tmp/
-
-# Di VPS
-docker load < /tmp/si-zat-backend.tar.gz
-cd /opt/si-zat_ESD/backend
-docker compose up -d --wait
+docker compose up -d --build --wait
 ```
-
-Cara lain yang lebih rapi: push image ke registry (Docker Hub/GHCR) lalu di VPS cukup `docker compose pull && docker compose up -d --wait`.
 
 ---
 
-## 9. Catatan Frontend
+## ❓ FAQ & Solusi Masalah (*Troubleshooting*)
 
-Frontend di-host di **GitHub Pages** dan di-deploy **otomatis** oleh GitHub Actions setiap push ke `main` (lihat [DEPLOY_FRONTEND.md](./DEPLOY_FRONTEND.md)) — tidak perlu diapa-apakan di VPS.
-
-Yang perlu diperhatikan hanya:
-- Jika **URL backend** berubah (misalnya ganti domain VPS), update nilai secret `VITE_API_URL` di GitHub **dan** lakukan rebuild frontend (re-run workflow / push perubahan kosong), karena nilai itu di-bake saat build.
-- Jika menambah variabel env frontend (`VITE_*`), tambahkan ke GitHub Secrets dan pastikan di-pass di `.github/workflows/deploy.yml`.
+| Masalah | Penyebab | Solusi |
+| :--- | :--- | :--- |
+| **Perubahan kode tidak terlihat di web** | Docker menggunakan layer build cache lama. | Jalankan `docker compose build --no-cache backend && docker compose up -d`. |
+| **Status container `unhealthy` atau restart terus-menerus** | Konfigurasi `.env` salah, token Turso kedaluwarsa, atau crash runtime. | Jalankan `docker compose logs --tail=100 backend` untuk membaca pesan error node.js. |
+| **Error `npm ci` saat build** | `package.json` dan `package-lock.json` tidak sinkron. | Pastikan `npm install` sudah dijalankan di lokal sebelum di-commit & push ke GitHub. |
+| **Ruang disk VPS penuh (*no space left on device*)** | Image lama menumpuk. | Jalankan `docker system prune -a --volumes` (hati-hati, hanya menghapus container/image yang tidak terpakai). |
