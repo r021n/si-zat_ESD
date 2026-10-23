@@ -215,6 +215,8 @@ export default function QuizAnalysis({
               {/* TAB A: SUMMARY TABLE */}
               {analysisTab === "SUMMARY" && (
                 <QuizStudentScoreTable
+                  quizTitle={selectedQuiz.title}
+                  allSubmissions={sortedSubmissions}
                   submissions={paginatedSummarySubmissions}
                   totalQuestions={selectedQuiz.questions.length}
                   kkmActive={kkmActive}

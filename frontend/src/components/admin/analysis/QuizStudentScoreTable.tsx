@@ -1,10 +1,13 @@
-import { FiAlertTriangle, FiTrash2, FiSearch, FiX } from "react-icons/fi";
+import { FiAlertTriangle, FiTrash2, FiSearch, FiX, FiDownload } from "react-icons/fi";
 import type { Submission } from "../../../types/quiz";
 import { formatDurationFriendly } from "../../../utils/time";
+import { exportQuizScoresToExcel } from "../../../utils/exportQuizScores";
 import Pagination from "../../common/Pagination";
 import { useCustomDialog } from "../../CustomDialog";
 
 interface QuizStudentScoreTableProps {
+  quizTitle?: string;
+  allSubmissions?: Submission[];
   submissions: Submission[];
   totalQuestions: number;
   kkmActive: boolean;
@@ -24,6 +27,8 @@ interface QuizStudentScoreTableProps {
 }
 
 export default function QuizStudentScoreTable({
+  quizTitle,
+  allSubmissions,
   submissions,
   totalQuestions,
   kkmActive,
@@ -42,6 +47,17 @@ export default function QuizStudentScoreTable({
   onDeleteSubmission,
 }: QuizStudentScoreTableProps) {
   const { showConfirm } = useCustomDialog();
+
+  const handleExportExcel = () => {
+    const dataToExport = allSubmissions && allSubmissions.length > 0 ? allSubmissions : submissions;
+    exportQuizScoresToExcel({
+      quizTitle: quizTitle || "Kuis",
+      submissions: dataToExport,
+      totalQuestions,
+      kkmActive,
+      kkmValue,
+    });
+  };
 
   const handleDeleteClick = async (e: React.MouseEvent, sub: Submission) => {
     e.stopPropagation();
@@ -109,6 +125,17 @@ export default function QuizStudentScoreTable({
               <option value="VIOLATION_DESC">Pelanggaran Terbanyak</option>
             </select>
           </div>
+
+          <button
+            type="button"
+            onClick={handleExportExcel}
+            disabled={(allSubmissions?.length ?? submissions.length) === 0}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-[#FAF9FF] active:bg-[#F0ECFF] border border-[#F0EDFF] text-[#2C8578] hover:text-[#236b60] disabled:opacity-40 disabled:cursor-not-allowed text-[9px] md:text-xs font-bold rounded-xl shadow-xs transition-colors cursor-pointer shrink-0"
+            title="Unduh data nilai siswa ke format Excel (.xlsx)"
+          >
+            <FiDownload size={13} />
+            <span>Unduh Excel</span>
+          </button>
         </div>
       </div>
 
