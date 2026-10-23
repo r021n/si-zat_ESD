@@ -208,6 +208,7 @@ export default function KuisMenu() {
               onSetShowReview={setShowReview}
               onBackToLobby={() => setActiveQuiz(null)}
               viewingHistory={viewingHistory}
+              onRetake={() => handleSelectQuiz(activeQuiz)}
             />
           )}
         </div>

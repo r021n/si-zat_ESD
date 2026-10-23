@@ -1,7 +1,7 @@
-import { FiClock } from "react-icons/fi";
 import type { Quiz } from "../../types/quiz";
 import { formatDurationFriendly } from "../../utils/time";
 import { getQuizImageUrl } from "../../utils/quizImage";
+import QuizScoreResultCard from "./QuizScoreResultCard";
 
 interface QuizScoreReviewViewProps {
   quiz: Quiz;
@@ -16,6 +16,7 @@ interface QuizScoreReviewViewProps {
   onSetShowReview: (show: boolean) => void;
   onBackToLobby: () => void;
   viewingHistory: boolean;
+  onRetake?: () => void;
 }
 
 export default function QuizScoreReviewView({
@@ -31,62 +32,24 @@ export default function QuizScoreReviewView({
   onSetShowReview,
   onBackToLobby,
   viewingHistory,
+  onRetake,
 }: QuizScoreReviewViewProps) {
+  // If not in review mode, show the gamified result card matching score_example design
   if (!showReview) {
     return (
-      <div className="w-full bg-white rounded-[28px] p-6 shadow-md border border-[#F0EDFF] text-center flex flex-col gap-5">
-        <div>
-          <p className="text-[10px] font-extrabold uppercase text-[#9C98A6] tracking-wider">
-            Hasil Tes
-          </p>
-          <div className="text-6xl font-black tracking-tight text-[#8C66FF] my-4">
-            {score}
-          </div>
-          <p className="text-xs text-[#9C98A6] font-semibold leading-relaxed">
-            Anda menjawab dengan benar{" "}
-            <strong className="text-[#2C2B30] font-bold">{correct}</strong> dari{" "}
-            <strong className="text-[#2C2B30] font-bold">{total}</strong> soal.
-          </p>
-          <p className="text-[11px] text-[#9C98A6] font-semibold mt-2 flex items-center justify-center gap-3">
-            <span>
-              Terjawab:{" "}
-              <strong className="text-[#2C8578] font-extrabold">{answeredCount}</strong>
-            </span>
-            <span className="text-[#F0EDFF]">&bull;</span>
-            <span>
-              Kosong:{" "}
-              <strong className="text-[#FF5E8C] font-extrabold">{emptyCount}</strong>
-            </span>
-          </p>
-          <p className="text-xs text-[#9C98A6] font-semibold mt-2 flex items-center justify-center gap-1.5">
-            <FiClock size={12} className="text-[#8C66FF]" />
-            <span>
-              Durasi Pengerjaan:{" "}
-              <strong className="text-[#8C66FF] font-extrabold">
-                {formatDurationFriendly(duration)}
-              </strong>
-            </span>
-          </p>
-        </div>
-        <div className="h-px bg-[#F0EDFF] w-full"></div>
-        <div className="flex flex-col gap-2.5">
-          <button
-            onClick={() => onSetShowReview(true)}
-            className="w-full py-3.5 bg-white border border-[#F0EDFF] text-[#8C66FF] font-extrabold uppercase tracking-wider text-[10px] rounded-full shadow-sm cursor-pointer transition-none flex items-center justify-center"
-          >
-            Tinjau Jawaban
-          </button>
-          <button
-            onClick={onBackToLobby}
-            className="w-full py-3.5 bg-[#8C66FF] text-white font-extrabold uppercase tracking-wider text-[10px] rounded-full shadow-md shadow-purple-100 cursor-pointer transition-none flex items-center justify-center"
-          >
-            Kembali ke Daftar Tes
-          </button>
-        </div>
-      </div>
+      <QuizScoreResultCard
+        quiz={quiz}
+        score={score}
+        correct={correct}
+        total={total}
+        onViewReview={() => onSetShowReview(true)}
+        onBackToLobby={onBackToLobby}
+        onRetake={onRetake}
+      />
     );
   }
 
+  // Question-by-question review mode
   return (
     <div className="w-full bg-white rounded-[28px] p-5 shadow-md border border-[#F0EDFF] flex flex-col gap-4">
       <div className="flex justify-between items-center pb-2 border-b border-[#F0EDFF]">
@@ -102,7 +65,7 @@ export default function QuizScoreReviewView({
               onSetShowReview(false);
             }
           }}
-          className="text-xs font-extrabold text-[#8C66FF] cursor-pointer"
+          className="text-xs font-extrabold text-[#8C66FF] cursor-pointer hover:underline"
         >
           Kembali
         </button>
@@ -124,6 +87,7 @@ export default function QuizScoreReviewView({
         </div>
       </div>
 
+      {/* Questions List */}
       <div className="max-h-95 overflow-y-auto space-y-4 pr-1 no-scrollbar">
         {quiz.questions.map((q, idx) => {
           const userAns = answers[q.id] || [];
@@ -185,7 +149,7 @@ export default function QuizScoreReviewView({
           onBackToLobby();
           onSetShowReview(false);
         }}
-        className="w-full py-3.5 bg-[#8C66FF] text-white font-extrabold uppercase tracking-wider text-[10px] rounded-full shadow-md shadow-purple-100 cursor-pointer transition-none flex items-center justify-center"
+        className="w-full py-3.5 bg-[#8C66FF] hover:bg-[#7844FF] text-white font-extrabold uppercase tracking-wider text-[10px] rounded-full shadow-md shadow-purple-100 cursor-pointer transition-none flex items-center justify-center active:scale-[0.99]"
       >
         Kembali ke Menu Tes
       </button>
