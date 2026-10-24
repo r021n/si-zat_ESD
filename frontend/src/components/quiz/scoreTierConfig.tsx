@@ -4,7 +4,7 @@ import { LuSprout, LuMountain, LuCircleCheck, LuSparkles } from "react-icons/lu"
 export type ScoreTierKey = "pemula" | "pemberani" | "tangguh" | "hebat" | "luar_biasa";
 
 export type PrimaryActionType = "open_material" | "view_review";
-export type SecondaryActionType = "retake" | "view_review" | "back_to_lobby";
+export type SecondaryActionType = "view_review" | "back_to_lobby";
 
 export interface ScoreTierConfig {
   key: ScoreTierKey;
@@ -52,7 +52,7 @@ export function getScoreTier(correct: number, _total: number = 16, _kkmQuestions
       badgeText: "PEMULA DI TES INI",
       statusLabel: "Belum Mencapai",
       passedKKM: false,
-      headline: "Yuk, coba lagi ya",
+      headline: "Tetap semangat ya",
       renderIcon: (cls = "text-[#334155]") => <LuSprout size={28} className={cls} />,
       theme: {
         headerBg: "bg-[#EDF2F7]",
@@ -70,8 +70,8 @@ export function getScoreTier(correct: number, _total: number = 16, _kkmQuestions
       ),
       getDescriptionContent: () => (
         <span>
-          Pelajari kembali materinya, kemudian coba kerjakan ulang soal-soalnya lebih cermat. Tetap
-          semangat, kamu pasti bisa meningkatkan hasilnya!
+          Pelajari kembali materinya dan periksa jawabanmu untuk memahami bagian yang masih
+          keliru. Tetap semangat, kamu pasti bisa terus berkembang!
         </span>
       ),
       primaryAction: {
@@ -79,8 +79,8 @@ export function getScoreTier(correct: number, _total: number = 16, _kkmQuestions
         actionType: "open_material",
       },
       secondaryAction: {
-        label: "KERJAKAN ULANG",
-        actionType: "retake",
+        label: "LIHAT JAWABANKU",
+        actionType: "view_review",
       },
     };
   }
@@ -117,8 +117,8 @@ export function getScoreTier(correct: number, _total: number = 16, _kkmQuestions
       },
       getDescriptionContent: () => (
         <span>
-          Masih ada beberapa bagian yang perlu diperbaiki. Coba baca kembali materinya lalu kerjakan
-          ulang dengan lebih teliti!
+          Masih ada beberapa bagian yang perlu diperbaiki. Coba baca kembali materinya lalu tinjau
+          kembali jawabanmu dengan lebih teliti!
         </span>
       ),
       primaryAction: {
@@ -175,8 +175,8 @@ export function getScoreTier(correct: number, _total: number = 16, _kkmQuestions
         actionType: "view_review",
       },
       secondaryAction: {
-        label: "KERJAKAN ULANG",
-        actionType: "retake",
+        label: "KEMBALI KE DAFTAR TES",
+        actionType: "back_to_lobby",
       },
     };
   }
@@ -211,7 +211,7 @@ export function getScoreTier(correct: number, _total: number = 16, _kkmQuestions
       getDescriptionContent: () => (
         <span>
           Masih ada beberapa soal yang belum tepat. Pelajari kembali bagian materi yang belum
-          dipahami, lalu coba lagi!
+          dipahami dan pertahankan prestasimu!
         </span>
       ),
       primaryAction: {
@@ -219,8 +219,8 @@ export function getScoreTier(correct: number, _total: number = 16, _kkmQuestions
         actionType: "view_review",
       },
       secondaryAction: {
-        label: "KERJAKAN ULANG",
-        actionType: "retake",
+        label: "KEMBALI KE DAFTAR TES",
+        actionType: "back_to_lobby",
       },
     };
   }

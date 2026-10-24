@@ -10,7 +10,6 @@ interface QuizScoreResultCardProps {
   total: number;
   onViewReview: () => void;
   onBackToLobby: () => void;
-  onRetake?: () => void;
 }
 
 export default function QuizScoreResultCard({
@@ -20,7 +19,6 @@ export default function QuizScoreResultCard({
   total,
   onViewReview,
   onBackToLobby,
-  onRetake,
 }: QuizScoreResultCardProps) {
   const navigate = useNavigate();
 
@@ -64,13 +62,6 @@ export default function QuizScoreResultCard({
     switch (actionType) {
       case "view_review":
         onViewReview();
-        break;
-      case "retake":
-        if (onRetake) {
-          onRetake();
-        } else {
-          onBackToLobby();
-        }
         break;
       case "back_to_lobby":
         onBackToLobby();

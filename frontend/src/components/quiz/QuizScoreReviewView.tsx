@@ -16,7 +16,6 @@ interface QuizScoreReviewViewProps {
   onSetShowReview: (show: boolean) => void;
   onBackToLobby: () => void;
   viewingHistory: boolean;
-  onRetake?: () => void;
 }
 
 export default function QuizScoreReviewView({
@@ -32,7 +31,6 @@ export default function QuizScoreReviewView({
   onSetShowReview,
   onBackToLobby,
   viewingHistory,
-  onRetake,
 }: QuizScoreReviewViewProps) {
   // If not in review mode, show the gamified result card matching score_example design
   if (!showReview) {
@@ -44,7 +42,6 @@ export default function QuizScoreReviewView({
         total={total}
         onViewReview={() => onSetShowReview(true)}
         onBackToLobby={onBackToLobby}
-        onRetake={onRetake}
       />
     );
   }
