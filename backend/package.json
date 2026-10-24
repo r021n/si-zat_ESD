@@ -8,7 +8,7 @@
     "start": "node dist/index.js",
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
-    "test": "TURSO_DATABASE_URL=\"file::memory:\" tsx --test src/**/*.test.ts"
+    "test": "TURSO_DATABASE_URL=\"file:/tmp/sizat_test.db\" tsx --test 'src/**/*.test.ts'"
   },
   "keywords": [],
   "author": "",

@@ -24,7 +24,7 @@ export function invalidateQuizzesServerCache() {
   baseQuizzesCache = null
 }
 
-export async function processQuestionImages(questionId: string, rawImages: string[]): Promise<string[]> {
+export async function processQuestionImages(questionId: string, rawImages: string[], txRunner: any = db): Promise<string[]> {
   if (!rawImages || !Array.isArray(rawImages)) return []
   const result: string[] = []
 
@@ -37,7 +37,7 @@ export async function processQuestionImages(questionId: string, rawImages: strin
         const imageBuffer = Buffer.from(match[2], 'base64')
         const imgId = `qi-${questionId}-${idx}-${Date.now().toString(36)}`
 
-        await db.insert(questionImages).values({
+        await txRunner.insert(questionImages).values({
           id: imgId,
           questionId,
           imageBlob: imageBuffer,
@@ -349,6 +349,7 @@ quiz.get('/:id/submissions', adminMiddleware, async (c: any) => {
 
 // POST /api/quiz - Create a new quiz (Admin only)
 quiz.post('/', adminMiddleware, async (c: any) => {
+  await ensureQuestionImagesTable()
   try {
     const { id, title, createdAt, questions: quizQuestions } = await c.req.json()
 
@@ -356,28 +357,34 @@ quiz.post('/', adminMiddleware, async (c: any) => {
       return c.json({ error: 'Data kuis tidak lengkap.' }, 400)
     }
 
-    // Insert Quiz
-    await db.insert(quizzes).values({
-      id,
-      title,
-      createdAt: createdAt || new Date().toLocaleDateString('id-ID')
-    })
-
-    // Insert Questions
-    for (let i = 0; i < quizQuestions.length; i++) {
-      const q = quizQuestions[i]
-      const processedImages = await processQuestionImages(q.id, q.images || [])
-      await db.insert(questions).values({
-        id: q.id,
-        quizId: id,
-        text: q.text,
-        options: JSON.stringify(q.options),
-        correctAnswers: JSON.stringify(q.correctAnswers),
-        images: JSON.stringify(processedImages),
-        questionType: q.questionType || "",
-        sortOrder: i
+    await db.transaction(async (tx) => {
+      // Insert Quiz
+      await tx.insert(quizzes).values({
+        id,
+        title,
+        createdAt: createdAt || new Date().toLocaleDateString('id-ID')
       })
-    }
+
+      // Insert Questions first, then process images so questionId foreign key is valid
+      for (let i = 0; i < quizQuestions.length; i++) {
+        const q = quizQuestions[i]
+        await tx.insert(questions).values({
+          id: q.id,
+          quizId: id,
+          text: q.text,
+          options: JSON.stringify(q.options),
+          correctAnswers: JSON.stringify(q.correctAnswers),
+          images: '[]',
+          questionType: q.questionType || "",
+          sortOrder: i
+        })
+
+        const processedImages = await processQuestionImages(q.id, q.images || [], tx)
+        await tx.update(questions)
+          .set({ images: JSON.stringify(processedImages) })
+          .where(eq(questions.id, q.id))
+      }
+    })
 
     invalidateQuizzesServerCache()
     return c.json({ success: true, message: 'Kuis berhasil dibuat.' })
@@ -389,6 +396,7 @@ quiz.post('/', adminMiddleware, async (c: any) => {
 
 // PUT /api/quiz/:id - Update an existing quiz (Admin only)
 quiz.put('/:id', adminMiddleware, async (c: any) => {
+  await ensureQuestionImagesTable()
   try {
     const id = c.req.param('id')
     const { title, questions: quizQuestions } = await c.req.json()
@@ -397,53 +405,76 @@ quiz.put('/:id', adminMiddleware, async (c: any) => {
       return c.json({ error: 'Data pembaruan kuis tidak lengkap.' }, 400)
     }
 
-    // Update Quiz Title
-    await db.update(quizzes).set({ title }).where(eq(quizzes.id, id))
+    await db.transaction(async (tx) => {
+      // 1. Update Quiz Title
+      await tx.update(quizzes).set({ title }).where(eq(quizzes.id, id))
 
-    // Collect all preserved image IDs from updated questions
-    const keptImageIds = new Set<string>()
-    for (const q of quizQuestions) {
-      if (Array.isArray(q.images)) {
-        for (const imgUrl of q.images) {
-          if (typeof imgUrl === 'string') {
-            const match = imgUrl.match(/\/api\/quiz\/images\/([^/?#]+)/)
-            if (match) {
-              keptImageIds.add(match[1])
+      // 2. Collect all preserved image IDs from updated questions
+      const keptImageIds = new Set<string>()
+      for (const q of quizQuestions) {
+        if (Array.isArray(q.images)) {
+          for (const imgUrl of q.images) {
+            if (typeof imgUrl === 'string') {
+              const match = imgUrl.match(/\/api\/quiz\/images\/([^/?#]+)/)
+              if (match) {
+                keptImageIds.add(match[1])
+              }
             }
           }
         }
       }
-    }
 
-    // Find previous questions for this quiz and delete orphaned images
-    const oldQuestions = await db.select({ id: questions.id }).from(questions).where(eq(questions.quizId, id))
-    for (const oldQ of oldQuestions) {
-      const oldImgs = await db.select({ id: questionImages.id }).from(questionImages).where(eq(questionImages.questionId, oldQ.id))
-      for (const oldImg of oldImgs) {
-        if (!keptImageIds.has(oldImg.id)) {
-          await db.delete(questionImages).where(eq(questionImages.id, oldImg.id))
+      // 3. Find previous questions for this quiz and delete only orphaned images
+      const oldQuestions = await tx.select({ id: questions.id }).from(questions).where(eq(questions.quizId, id))
+      const oldQuestionIds = new Set(oldQuestions.map(q => q.id))
+      const newQuestionIds = new Set(quizQuestions.map((q: any) => q.id))
+
+      for (const oldQ of oldQuestions) {
+        const oldImgs = await tx.select({ id: questionImages.id }).from(questionImages).where(eq(questionImages.questionId, oldQ.id))
+        for (const oldImg of oldImgs) {
+          if (!keptImageIds.has(oldImg.id)) {
+            await tx.delete(questionImages).where(eq(questionImages.id, oldImg.id))
+          }
         }
       }
-    }
 
-    // Delete old questions
-    await db.delete(questions).where(eq(questions.quizId, id))
+      // 4. Delete only old questions that were removed by the admin
+      for (const oldQ of oldQuestions) {
+        if (!newQuestionIds.has(oldQ.id)) {
+          await tx.delete(questions).where(eq(questions.id, oldQ.id))
+        }
+      }
 
-    // Re-insert new questions with processed images
-    for (let i = 0; i < quizQuestions.length; i++) {
-      const q = quizQuestions[i]
-      const processedImages = await processQuestionImages(q.id, q.images || [])
-      await db.insert(questions).values({
-        id: q.id,
-        quizId: id,
-        text: q.text,
-        options: JSON.stringify(q.options),
-        correctAnswers: JSON.stringify(q.correctAnswers),
-        images: JSON.stringify(processedImages),
-        questionType: q.questionType || "",
-        sortOrder: i
-      })
-    }
+      // 5. Upsert questions & process images (guaranteeing questions record exists before questionImages insert)
+      for (let i = 0; i < quizQuestions.length; i++) {
+        const q = quizQuestions[i]
+        if (oldQuestionIds.has(q.id)) {
+          await tx.update(questions).set({
+            text: q.text,
+            options: JSON.stringify(q.options),
+            correctAnswers: JSON.stringify(q.correctAnswers),
+            questionType: q.questionType || "",
+            sortOrder: i
+          }).where(eq(questions.id, q.id))
+        } else {
+          await tx.insert(questions).values({
+            id: q.id,
+            quizId: id,
+            text: q.text,
+            options: JSON.stringify(q.options),
+            correctAnswers: JSON.stringify(q.correctAnswers),
+            images: '[]',
+            questionType: q.questionType || "",
+            sortOrder: i
+          })
+        }
+
+        const processedImages = await processQuestionImages(q.id, q.images || [], tx)
+        await tx.update(questions)
+          .set({ images: JSON.stringify(processedImages) })
+          .where(eq(questions.id, q.id))
+      }
+    })
 
     invalidateQuizzesServerCache()
     return c.json({ success: true, message: 'Kuis berhasil diperbarui.' })
