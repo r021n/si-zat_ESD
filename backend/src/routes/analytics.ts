@@ -74,13 +74,22 @@ analytics.get('/', async (c: any) => {
 
 // POST /record - Record a menu click/open
 analytics.post('/record', async (c: any) => {
+  let body: any
+  try {
+    body = await c.req.json()
+  } catch {
+    // Gracefully handle empty body, malformed JSON, or aborted stream (TypeError: Body is unusable)
+    return c.json({ error: 'Payload tidak valid atau kosong.' }, 400)
+  }
+
+  const menuKey = typeof body?.menuKey === 'string' ? body.menuKey.trim() : ''
+
+  if (!menuKey) {
+    return c.json({ error: 'Kunci menu (menuKey) harus dikirimkan.' }, 400)
+  }
+
   try {
     const user = c.get('user')
-    const { menuKey } = await c.req.json()
-
-    if (!menuKey) {
-      return c.json({ error: 'Kunci menu (menuKey) harus dikirimkan.' }, 400)
-    }
 
     // Select existing record
     const existing = await db.select().from(menuClicks)

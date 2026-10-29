@@ -26,8 +26,8 @@ export default function QuizScoreResultCard({
   // In the DB/admin, quiz.kkm is typically an integer score (0-100, e.g. 70 or 75)
   // If quiz.kkm is not specified, default to 75% of total questions (12 for 16-question quiz)
   const rawKkm = quiz.kkm;
-  let kkmQuestions = 12;
-  let kkmScore = 75;
+  let kkmQuestions: number;
+  let kkmScore: number;
 
   if (typeof rawKkm === "number" && rawKkm > 0) {
     if (rawKkm <= total) {

@@ -19,9 +19,9 @@ export function useHeartbeatTracker() {
       });
     }
 
-    // 2. Track usage time
+    // 2. Track usage time (throttled to 60s interval to reduce DB write contention)
     let elapsedSeconds = 0;
-    const intervalTime = 10; // Heartbeat interval in seconds
+    const intervalTime = 60; // Heartbeat interval in seconds
 
     const timer = setInterval(() => {
       if (document.visibilityState === "visible") {
@@ -37,19 +37,30 @@ export function useHeartbeatTracker() {
       }
     }, 1000);
 
-    return () => {
-      clearInterval(timer);
+    const flushRemaining = () => {
       if (elapsedSeconds > 0) {
+        const secondsToSend = elapsedSeconds;
+        elapsedSeconds = 0;
         fetch(`${API_URL}/api/auth/record-usage`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ seconds: elapsedSeconds }),
+          body: JSON.stringify({ seconds: secondsToSend }),
           keepalive: true,
         }).catch(() => {});
       }
+    };
+
+    window.addEventListener("pagehide", flushRemaining);
+    window.addEventListener("beforeunload", flushRemaining);
+
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener("pagehide", flushRemaining);
+      window.removeEventListener("beforeunload", flushRemaining);
+      flushRemaining();
     };
   }, [user, token]);
 }

@@ -135,3 +135,8 @@ Desktop.ini
 
 # Cloudflare Pages deployment guide
 DEPLOY_CLOUDFLARE_PAGES.md
+
+# ==========================================
+# 8. LOCAL / WORKING DIRECTORIES
+# ==========================================
+optimization/
