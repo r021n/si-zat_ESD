@@ -6,7 +6,7 @@ import AnnouncementInfoTab from "../components/discussion/AnnouncementInfoTab";
 import DiscussionChatTab from "../components/discussion/DiscussionChatTab";
 import PeerReviewTab from "../components/discussion/PeerReviewTab";
 import SubmissionHistoryTab from "../components/discussion/SubmissionHistoryTab";
-import ZoomImageModal from "../components/discussion/ZoomImageModal";
+import ZoomImageModal from "../components/common/ZoomImageModal";
 
 export default function RuangDiskusi() {
   const {

@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { FiClock, FiAlertTriangle } from "react-icons/fi";
 import type { Quiz } from "../../types/quiz";
 import { formatDurationMMSS } from "../../utils/time";
 import { getQuizImageUrl } from "../../utils/quizImage";
+import ZoomImageModal from "../common/ZoomImageModal";
 
 interface QuizActivePlayerViewProps {
   quiz: Quiz;
@@ -26,6 +28,8 @@ export default function QuizActivePlayerView({
   onPrev,
   onSubmit,
 }: QuizActivePlayerViewProps) {
+  const [activeImageIndex, setActiveImageIndex] = useState<number | null>(null);
+
   const currentQuestion = quiz.questions[currentIdx];
   const userAnswers = answers[currentQuestion.id] || [];
   const isMulti = currentQuestion.correctAnswers.length > 1;
@@ -71,7 +75,9 @@ export default function QuizActivePlayerView({
                 src={getQuizImageUrl(img)}
                 alt={`Ilustrasi Soal ${imgIdx + 1}`}
                 loading="lazy"
-                className="max-h-35 max-w-full object-contain rounded-xl border border-[#F0EDFF]"
+                onClick={() => setActiveImageIndex(imgIdx)}
+                title="Klik untuk memperbesar gambar"
+                className="max-h-35 max-w-full object-contain rounded-xl border border-[#F0EDFF] cursor-zoom-in hover:opacity-90 hover:border-[#8C66FF]/50 active:scale-[0.99] transition-all"
               />
             ))}
           </div>
@@ -143,6 +149,18 @@ export default function QuizActivePlayerView({
           </button>
         )}
       </div>
+
+      {/* Fullscreen Image Preview */}
+      {activeImageIndex !== null &&
+        currentQuestion.images &&
+        currentQuestion.images[activeImageIndex] && (
+          <ZoomImageModal
+            imageUrl={getQuizImageUrl(currentQuestion.images[activeImageIndex])}
+            images={currentQuestion.images.map(getQuizImageUrl)}
+            initialIndex={activeImageIndex}
+            onClose={() => setActiveImageIndex(null)}
+          />
+        )}
     </div>
   );
 }

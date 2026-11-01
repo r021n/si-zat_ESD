@@ -1,5 +1,5 @@
 import AnnouncementForm from "../components/admin/AnnouncementForm";
-import ZoomImageModal from "../components/discussion/ZoomImageModal";
+import ZoomImageModal from "../components/common/ZoomImageModal";
 import AdminTopicListView from "../components/discussion/admin/AdminTopicListView";
 import AdminTopicSubmissionsView from "../components/discussion/admin/AdminTopicSubmissionsView";
 import AdminGradingModal from "../components/discussion/admin/AdminGradingModal";

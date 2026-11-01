@@ -30,7 +30,7 @@ export default function ZoomImageModal({
   }, [initialIndex, list.length]);
 
   useEffect(() => {
-    if (!singleUrl) return;
+    if (list.length === 0) return;
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         onClose();
@@ -42,9 +42,9 @@ export default function ZoomImageModal({
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [list.length, singleUrl, onClose]);
+  }, [list.length, onClose]);
 
-  if (!singleUrl || list.length === 0) return null;
+  if (list.length === 0) return null;
 
   const currentUrl = list[currentIndex] || list[0];
   const hasMultiple = list.length > 1;
