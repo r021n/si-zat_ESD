@@ -15,6 +15,9 @@ import { invalidateAnnouncementsServerCache } from "./cache.js";
 
 const submissionsRoute = new Hono();
 
+const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5 MB
+
 // GET /api/announcements/submissions/:submissionId/image - Stream binary blob
 submissionsRoute.get("/submissions/:submissionId/image", async (c: any) => {
   await ensureTables();
@@ -24,6 +27,7 @@ submissionsRoute.get("/submissions/:submissionId/image", async (c: any) => {
       .select({
         imageBlob: announcementSubmissions.imageBlob,
         imageType: announcementSubmissions.imageType,
+        submittedAt: announcementSubmissions.submittedAt,
       })
       .from(announcementSubmissions)
       .where(eq(announcementSubmissions.id, submissionId))
@@ -33,11 +37,26 @@ submissionsRoute.get("/submissions/:submissionId/image", async (c: any) => {
       return c.json({ error: "Gambar tidak ditemukan." }, 404);
     }
 
+    const timestamp = sub.submittedAt ? new Date(sub.submittedAt).getTime() : 0;
+    const etag = `"${submissionId}-${timestamp}"`;
+    const clientEtag = c.req.header("if-none-match");
+
+    if (clientEtag && clientEtag === etag) {
+      return new Response(null, {
+        status: 304,
+        headers: {
+          ETag: etag,
+          "Cache-Control": "no-cache, must-revalidate",
+        },
+      });
+    }
+
     const mimeType = sub.imageType || "image/jpeg";
     return new Response(sub.imageBlob as any, {
       headers: {
         "Content-Type": mimeType,
-        "Cache-Control": "public, max-age=31536000",
+        "Cache-Control": "no-cache, must-revalidate",
+        ETag: etag,
       },
     });
   } catch (err: any) {
@@ -234,6 +253,8 @@ submissionsRoute.post("/:id/submissions", authMiddleware, async (c: any) => {
     const answer = body["answer"] as string;
     const fileName = body["fileName"] as string;
     const file = body["file"] as File | undefined;
+    const removeImage =
+      body["removeImage"] === "true" || body["removeImage"] === true;
 
     if (!answer || !answer.trim()) {
       return c.json({ error: "Jawaban tugas tidak boleh kosong." }, 400);
@@ -242,10 +263,27 @@ submissionsRoute.post("/:id/submissions", authMiddleware, async (c: any) => {
     let imageBuffer: Buffer | null = null;
     let imageType: string | null = null;
 
-    if (file && file.size > 0) {
+    if (
+      file &&
+      typeof file === "object" &&
+      typeof file.arrayBuffer === "function" &&
+      file.size > 0
+    ) {
+      if (file.size > MAX_IMAGE_SIZE) {
+        return c.json(
+          { error: "Ukuran gambar terlalu besar. Maksimal 5MB." },
+          400,
+        );
+      }
+      if (file.type && !ALLOWED_IMAGE_TYPES.includes(file.type.toLowerCase())) {
+        return c.json(
+          { error: "Format gambar tidak didukung. Gunakan JPG, PNG, atau WebP." },
+          400,
+        );
+      }
       const arrayBuffer = await file.arrayBuffer();
       imageBuffer = Buffer.from(arrayBuffer);
-      imageType = file.type;
+      imageType = file.type || "image/jpeg";
     }
 
     const now = new Date().toISOString();
@@ -268,16 +306,36 @@ submissionsRoute.post("/:id/submissions", authMiddleware, async (c: any) => {
 
     if (existing) {
       submissionId = existing.id;
+      const updatePayload: {
+        studentName: string;
+        studentClass: string;
+        answer: string;
+        fileName?: string;
+        imageBlob?: Buffer | null;
+        imageType?: string | null;
+        submittedAt: string;
+      } = {
+        studentName,
+        studentClass,
+        answer: answer.trim(),
+        submittedAt: now,
+      };
+
+      if (imageBuffer) {
+        updatePayload.imageBlob = imageBuffer;
+        updatePayload.imageType = imageType;
+        updatePayload.fileName = fileName || "";
+      } else if (removeImage) {
+        updatePayload.imageBlob = null;
+        updatePayload.imageType = null;
+        updatePayload.fileName = "";
+      } else if (fileName !== undefined) {
+        updatePayload.fileName = fileName;
+      }
+
       await db
         .update(announcementSubmissions)
-        .set({
-          studentName,
-          studentClass,
-          answer: answer.trim(),
-          fileName: fileName || existing.fileName,
-          ...(imageBuffer ? { imageBlob: imageBuffer, imageType } : {}),
-          submittedAt: now,
-        })
+        .set(updatePayload)
         .where(eq(announcementSubmissions.id, existing.id));
     } else {
       submissionId = `sub-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
@@ -288,12 +346,22 @@ submissionsRoute.post("/:id/submissions", authMiddleware, async (c: any) => {
         studentName,
         studentClass,
         answer: answer.trim(),
-        fileName: fileName || "",
+        fileName: imageBuffer ? fileName || "" : "",
         imageBlob: imageBuffer,
         imageType,
         submittedAt: now,
       });
     }
+
+    const finalHasImage =
+      !!imageBuffer || (!removeImage && existing ? !!existing.imageBlob : false);
+    const finalFileName = imageBuffer
+      ? fileName || ""
+      : removeImage
+      ? ""
+      : existing
+      ? existing.fileName || ""
+      : "";
 
     invalidateAnnouncementsServerCache();
     return c.json({
@@ -306,11 +374,9 @@ submissionsRoute.post("/:id/submissions", authMiddleware, async (c: any) => {
         studentName,
         studentClass,
         answer: answer.trim(),
-        fileName: fileName || "",
+        fileName: finalFileName,
         submittedAt: now,
-        hasImage:
-          !!imageBuffer ||
-          (existing && !imageBuffer ? !!existing.imageBlob : false),
+        hasImage: finalHasImage,
       },
     });
   } catch (err: any) {

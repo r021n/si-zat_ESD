@@ -2,7 +2,7 @@ import type { ChangeEvent } from "react";
 import { FiCheckCircle, FiX, FiImage } from "react-icons/fi";
 import { LuUpload } from "react-icons/lu";
 import type { SubmissionItem } from "../../types/discussion";
-import { API_URL } from "../../utils/constants";
+import { getSubmissionImageUrl } from "./discussionUtils";
 import { formatDateIndo } from "../../utils/date";
 
 interface SubmissionHistoryTabProps {
@@ -88,13 +88,13 @@ export default function SubmissionHistoryTab({
             <div
               onClick={() =>
                 onZoomImage(
-                  `${API_URL}/api/announcements/submissions/${mySubmission.id}/image`,
+                  getSubmissionImageUrl(mySubmission.id, mySubmission.submittedAt),
                 )
               }
               className="w-14 h-14 bg-white rounded-lg overflow-hidden border border-[#E2E8F0] cursor-pointer hover:opacity-80 transition-opacity"
             >
               <img
-                src={`${API_URL}/api/announcements/submissions/${mySubmission.id}/image`}
+                src={getSubmissionImageUrl(mySubmission.id, mySubmission.submittedAt)}
                 alt="Lampiran"
                 className="w-full h-full object-cover"
               />
@@ -164,6 +164,9 @@ export default function SubmissionHistoryTab({
               <input
                 type="file"
                 accept="image/*"
+                onClick={(e) => {
+                  (e.target as HTMLInputElement).value = "";
+                }}
                 onChange={onImageSelect}
                 className="hidden"
               />

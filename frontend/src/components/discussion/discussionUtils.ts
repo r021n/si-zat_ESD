@@ -1,3 +1,5 @@
+import { API_URL } from "../../utils/constants.ts";
+
 export const parseListItems = (text: string): string[] => {
   if (!text) return [];
   return text
@@ -15,4 +17,13 @@ export const formatChatTime = (dateStr: string): string => {
   } catch {
     return "";
   }
+};
+
+export const getSubmissionImageUrl = (
+  submissionId: string,
+  submittedAt?: string,
+): string => {
+  if (!submissionId) return "";
+  const version = submittedAt ? `?v=${encodeURIComponent(submittedAt)}` : "";
+  return `${API_URL}/api/announcements/submissions/${submissionId}/image${version}`;
 };

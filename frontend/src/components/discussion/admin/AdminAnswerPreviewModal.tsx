@@ -1,7 +1,7 @@
 import { FiX, FiEye } from "react-icons/fi";
 import { LuAward } from "react-icons/lu";
 import type { SubmissionItem } from "../../../types/discussion";
-import { API_URL } from "../../../utils/constants";
+import { getSubmissionImageUrl } from "../discussionUtils";
 import { formatDateIndo } from "../../../utils/date";
 
 interface AdminAnswerPreviewModalProps {
@@ -49,12 +49,12 @@ export default function AdminAnswerPreviewModal({
               <p className="text-xs font-black text-[#524F5D] mb-1.5">Lampiran Foto:</p>
               <div
                 onClick={() =>
-                  onZoomImage(`${API_URL}/api/announcements/submissions/${submission.id}/image`)
+                  onZoomImage(getSubmissionImageUrl(submission.id, submission.submittedAt))
                 }
                 className="w-full h-52 bg-[#F8FAFC] rounded-2xl overflow-hidden border border-[#E2E8F0] relative cursor-pointer group"
               >
                 <img
-                  src={`${API_URL}/api/announcements/submissions/${submission.id}/image`}
+                  src={getSubmissionImageUrl(submission.id, submission.submittedAt)}
                   alt="Lampiran"
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                 />

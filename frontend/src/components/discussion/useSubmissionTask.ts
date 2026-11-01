@@ -6,7 +6,7 @@ import {
 } from "../../api/api";
 import type { SubmissionItem, AnnouncementItem } from "../../types/discussion";
 import { compressImage } from "../../utils/image";
-import { API_URL } from "../../utils/constants";
+import { getSubmissionImageUrl } from "./discussionUtils";
 
 export function useSubmissionTask(
   token: string | null,
@@ -24,6 +24,7 @@ export function useSubmissionTask(
   const [taskAnswer, setTaskAnswer] = useState<string>("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string>("");
+  const [removeImage, setRemoveImage] = useState<boolean>(false);
   const [compressingImage, setCompressingImage] = useState<boolean>(false);
   const [submittingTask, setSubmittingTask] = useState<boolean>(false);
   const [showSubmissionForm, setShowSubmissionForm] = useState<boolean>(false);
@@ -66,10 +67,12 @@ export function useSubmissionTask(
       });
       setSelectedFile(compressedFile);
       setImagePreviewUrl(URL.createObjectURL(compressedFile));
+      setRemoveImage(false);
     } catch (err) {
       console.error("Compression error:", err);
       setSelectedFile(file);
       setImagePreviewUrl(URL.createObjectURL(file));
+      setRemoveImage(false);
     } finally {
       setCompressingImage(false);
     }
@@ -77,9 +80,12 @@ export function useSubmissionTask(
 
   const handleClearImage = () => {
     setSelectedFile(null);
-    if (imagePreviewUrl) {
+    if (imagePreviewUrl && imagePreviewUrl.startsWith("blob:")) {
       URL.revokeObjectURL(imagePreviewUrl);
-      setImagePreviewUrl("");
+    }
+    setImagePreviewUrl("");
+    if (mySubmission?.hasImage) {
+      setRemoveImage(true);
     }
   };
 
@@ -97,6 +103,8 @@ export function useSubmissionTask(
       if (selectedFile) {
         formData.append("file", selectedFile);
         formData.append("fileName", selectedFile.name);
+      } else if (removeImage) {
+        formData.append("removeImage", "true");
       }
 
       const res = await submitAnnouncementTaskApi(token, selectedAnnouncement.id, formData);
@@ -105,6 +113,7 @@ export function useSubmissionTask(
       setShowSubmissionForm(false);
       setTaskAnswer("");
       handleClearImage();
+      setRemoveImage(false);
 
       const prev = mySubmission;
       const raw = res?.data;
@@ -158,9 +167,10 @@ export function useSubmissionTask(
     if (!mySubmission) return;
     setTaskAnswer(mySubmission.answer || "");
     setSelectedFile(null);
+    setRemoveImage(false);
     setImagePreviewUrl(
       mySubmission.hasImage
-        ? `${API_URL}/api/announcements/submissions/${mySubmission.id}/image`
+        ? getSubmissionImageUrl(mySubmission.id, mySubmission.submittedAt)
         : "",
     );
     setShowSubmissionForm(true);
@@ -169,6 +179,7 @@ export function useSubmissionTask(
   const resetSubmissionState = () => {
     setMySubmission(null);
     setLoadedSubmissionsFor(null);
+    setRemoveImage(false);
   };
 
   return {

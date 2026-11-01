@@ -2,7 +2,7 @@ import { useState } from "react";
 import { FiClock, FiEye, FiImage } from "react-icons/fi";
 import { LuAward } from "react-icons/lu";
 import type { SubmissionItem } from "../../../types/discussion";
-import { API_URL } from "../../../utils/constants";
+import { getSubmissionImageUrl } from "../discussionUtils";
 import { formatDateIndo } from "../../../utils/date";
 import Pagination from "../../common/Pagination";
 import AdminCommentedUsersModal from "./AdminCommentedUsersModal";
@@ -140,13 +140,13 @@ export default function AdminSubmissionTable({
                       {sub.hasImage ? (
                         <button
                           onClick={() =>
-                            onZoomImage(`${API_URL}/api/announcements/submissions/${sub.id}/image`)
+                            onZoomImage(getSubmissionImageUrl(sub.id, sub.submittedAt))
                           }
                           className="group/img relative inline-block w-12 h-12 rounded-xl overflow-hidden border border-[#E9E6F5] cursor-pointer hover:border-[#8C66FF] transition-all"
                           title="Klik untuk melihat foto lampiran"
                         >
                           <img
-                            src={`${API_URL}/api/announcements/submissions/${sub.id}/image`}
+                            src={getSubmissionImageUrl(sub.id, sub.submittedAt)}
                             alt="Thumbnail"
                             className="w-full h-full object-cover group-hover/img:scale-110 transition-transform"
                           />
@@ -253,7 +253,7 @@ export default function AdminSubmissionTable({
               {sub.hasImage && (
                 <div
                   onClick={() =>
-                    onZoomImage(`${API_URL}/api/announcements/submissions/${sub.id}/image`)
+                    onZoomImage(getSubmissionImageUrl(sub.id, sub.submittedAt))
                   }
                   className="flex items-center gap-1.5 text-xs font-bold text-[#8C66FF] cursor-pointer hover:underline"
                 >

@@ -1,6 +1,6 @@
 import { FiX, FiCheckCircle, FiEye } from "react-icons/fi";
 import type { SubmissionItem } from "../../../types/discussion";
-import { API_URL } from "../../../utils/constants";
+import { getSubmissionImageUrl } from "../discussionUtils";
 
 interface AdminGradingModalProps {
   submission: SubmissionItem;
@@ -71,12 +71,12 @@ export default function AdminGradingModal({
                 </label>
                 <div
                   onClick={() =>
-                    onZoomImage(`${API_URL}/api/announcements/submissions/${submission.id}/image`)
+                    onZoomImage(getSubmissionImageUrl(submission.id, submission.submittedAt))
                   }
                   className="w-full h-44 bg-[#F8FAFC] rounded-2xl overflow-hidden border border-[#E2E8F0] relative cursor-pointer group"
                 >
                   <img
-                    src={`${API_URL}/api/announcements/submissions/${submission.id}/image`}
+                    src={getSubmissionImageUrl(submission.id, submission.submittedAt)}
                     alt="Lampiran"
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
                   />

@@ -7,7 +7,7 @@ import type {
   PeerCommentItem,
 } from "../../types/discussion";
 import type { User } from "../../types/auth";
-import { API_URL } from "../../utils/constants";
+import { getSubmissionImageUrl } from "./discussionUtils";
 import { formatDateIndo } from "../../utils/date";
 
 interface PeerReviewTabProps {
@@ -87,13 +87,13 @@ export default function PeerReviewTab({
               <div
                 onClick={() =>
                   onZoomImage(
-                    `${API_URL}/api/announcements/submissions/${selectedPeerSub.id}/image`,
+                    getSubmissionImageUrl(selectedPeerSub.id, selectedPeerSub.submittedAt),
                   )
                 }
                 className="w-16 h-16 bg-[#F8FAFC] rounded-lg overflow-hidden border border-[#E2E8F0] cursor-pointer hover:opacity-80 transition-opacity"
               >
                 <img
-                  src={`${API_URL}/api/announcements/submissions/${selectedPeerSub.id}/image`}
+                  src={getSubmissionImageUrl(selectedPeerSub.id, selectedPeerSub.submittedAt)}
                   alt="Lampiran Tugas"
                   className="w-full h-full object-cover"
                 />

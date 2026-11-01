@@ -215,6 +215,74 @@ describe("Announcements Route Modular Refactoring", () => {
 
       (db as any).select = originalSelect;
     });
+
+    it("GET /submissions/:submissionId/image should return 200 with ETag and Cache-Control no-cache", async () => {
+      const originalSelect = db.select;
+      (db as any).select = () => ({
+        from: () => ({
+          where: () => ({
+            limit: async () => [
+              {
+                imageBlob: Buffer.from("fake-image"),
+                imageType: "image/jpeg",
+                submittedAt: "2026-11-01T10:00:00.000Z",
+              },
+            ],
+          }),
+        }),
+      });
+
+      const res = await announcementsRoute.request(
+        "/submissions/sub-123/image",
+      );
+      assert.strictEqual(res.status, 200);
+      assert.strictEqual(res.headers.get("Content-Type"), "image/jpeg");
+      assert.strictEqual(
+        res.headers.get("Cache-Control"),
+        "no-cache, must-revalidate",
+      );
+      const etag = res.headers.get("ETag");
+      assert.ok(etag && etag.includes("sub-123"));
+
+      (db as any).select = originalSelect;
+    });
+
+    it("GET /submissions/:submissionId/image should return 304 Not Modified when If-None-Match matches ETag", async () => {
+      const originalSelect = db.select;
+      const submittedAt = "2026-11-01T10:00:00.000Z";
+      const expectedEtag = `"sub-123-${new Date(submittedAt).getTime()}"`;
+
+      (db as any).select = () => ({
+        from: () => ({
+          where: () => ({
+            limit: async () => [
+              {
+                imageBlob: Buffer.from("fake-image"),
+                imageType: "image/jpeg",
+                submittedAt,
+              },
+            ],
+          }),
+        }),
+      });
+
+      const res = await announcementsRoute.request(
+        "/submissions/sub-123/image",
+        {
+          headers: {
+            "If-None-Match": expectedEtag,
+          },
+        },
+      );
+      assert.strictEqual(res.status, 304);
+      assert.strictEqual(res.headers.get("ETag"), expectedEtag);
+      assert.strictEqual(
+        res.headers.get("Cache-Control"),
+        "no-cache, must-revalidate",
+      );
+
+      (db as any).select = originalSelect;
+    });
   });
 
   describe("Authenticated Flow with In-Memory Mocking", () => {
@@ -301,6 +369,86 @@ describe("Announcements Route Modular Refactoring", () => {
       assert.strictEqual(res.status, 403);
       const json = await res.json();
       assert.match(json.error, /Akses ditolak/);
+
+      (db as any).select = originalSelect;
+    });
+
+    it("POST /:id/submissions should reject file larger than 5MB with 400", async () => {
+      const studentToken = await sign({ id: 102 }, "sizatesdsecret");
+
+      const originalSelect = db.select;
+      (db as any).select = () => ({
+        from: () => ({
+          where: () => ({
+            limit: async () => [
+              {
+                id: 102,
+                email: "siswa@example.com",
+                nama: "Siswa",
+                status: "SISWA",
+              },
+            ],
+          }),
+        }),
+      });
+
+      const formData = new FormData();
+      formData.append("answer", "Jawaban saya");
+      const largeBlob = new Blob([new Uint8Array(6 * 1024 * 1024)], {
+        type: "image/jpeg",
+      });
+      formData.append("file", largeBlob, "large.jpg");
+
+      const res = await announcementsRoute.request("/ann-1/submissions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${studentToken}`,
+        },
+        body: formData,
+      });
+
+      assert.strictEqual(res.status, 400);
+      const json = await res.json();
+      assert.match(json.error, /Maksimal 5MB/);
+
+      (db as any).select = originalSelect;
+    });
+
+    it("POST /:id/submissions should reject non-image file type with 400", async () => {
+      const studentToken = await sign({ id: 103 }, "sizatesdsecret");
+
+      const originalSelect = db.select;
+      (db as any).select = () => ({
+        from: () => ({
+          where: () => ({
+            limit: async () => [
+              {
+                id: 103,
+                email: "siswa@example.com",
+                nama: "Siswa",
+                status: "SISWA",
+              },
+            ],
+          }),
+        }),
+      });
+
+      const formData = new FormData();
+      formData.append("answer", "Jawaban saya");
+      const textBlob = new Blob(["teks biasa"], { type: "text/plain" });
+      formData.append("file", textBlob, "not-image.txt");
+
+      const res = await announcementsRoute.request("/ann-1/submissions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${studentToken}`,
+        },
+        body: formData,
+      });
+
+      assert.strictEqual(res.status, 400);
+      const json = await res.json();
+      assert.match(json.error, /Format gambar tidak didukung/);
 
       (db as any).select = originalSelect;
     });
