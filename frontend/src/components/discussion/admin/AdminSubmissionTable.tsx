@@ -16,7 +16,7 @@ interface AdminSubmissionTableProps {
   onPageChange: (page: number) => void;
   onOpenGrading: (sub: SubmissionItem) => void;
   onOpenAnswerPreview: (sub: SubmissionItem) => void;
-  onZoomImage: (url: string) => void;
+  onZoomImage: (url: string, index?: number, allUrls?: string[]) => void;
 }
 
 export default function AdminSubmissionTable({
@@ -137,26 +137,41 @@ export default function AdminSubmissionTable({
 
                     {/* Attachment */}
                     <td className="p-4 text-center border-r border-[#F0EDFF]/40">
-                      {sub.hasImage ? (
-                        <button
-                          onClick={() =>
-                            onZoomImage(getSubmissionImageUrl(sub.id, sub.submittedAt))
-                          }
-                          className="group/img relative inline-block w-12 h-12 rounded-xl overflow-hidden border border-[#E9E6F5] cursor-pointer hover:border-[#8C66FF] transition-all"
-                          title="Klik untuk melihat foto lampiran"
-                        >
-                          <img
-                            src={getSubmissionImageUrl(sub.id, sub.submittedAt)}
-                            alt="Thumbnail"
-                            className="w-full h-full object-cover group-hover/img:scale-110 transition-transform"
-                          />
-                          <div className="absolute inset-0 bg-black/30 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center text-white">
-                            <FiEye size={14} />
-                          </div>
-                        </button>
-                      ) : (
-                        <span className="text-xs text-[#9C98A6] font-semibold">-</span>
-                      )}
+                      {(() => {
+                        const subImages =
+                          sub.images && sub.images.length > 0
+                            ? sub.images.map((img) =>
+                                getSubmissionImageUrl(sub.id, sub.submittedAt, img.id),
+                              )
+                            : sub.hasImage
+                            ? [getSubmissionImageUrl(sub.id, sub.submittedAt)]
+                            : [];
+
+                        return subImages.length > 0 ? (
+                          <button
+                            type="button"
+                            onClick={() => onZoomImage(subImages[0], 0, subImages)}
+                            className="group/img relative inline-block w-12 h-12 rounded-xl overflow-hidden border border-[#E9E6F5] cursor-pointer hover:border-[#8C66FF] transition-all"
+                            title={`Klik untuk melihat ${subImages.length} foto lampiran`}
+                          >
+                            <img
+                              src={subImages[0]}
+                              alt="Thumbnail"
+                              className="w-full h-full object-cover group-hover/img:scale-110 transition-transform"
+                            />
+                            {subImages.length > 1 && (
+                              <span className="absolute bottom-0 right-0 bg-black/70 text-white text-[9px] font-bold px-1 rounded-tl-md">
+                                +{subImages.length}
+                              </span>
+                            )}
+                            <div className="absolute inset-0 bg-black/30 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center text-white">
+                              <FiEye size={14} />
+                            </div>
+                          </button>
+                        ) : (
+                          <span className="text-xs text-[#9C98A6] font-semibold">-</span>
+                        );
+                      })()}
                     </td>
 
                     {/* Grade */}
@@ -250,17 +265,30 @@ export default function AdminSubmissionTable({
                 </div>
               )}
 
-              {sub.hasImage && (
-                <div
-                  onClick={() =>
-                    onZoomImage(getSubmissionImageUrl(sub.id, sub.submittedAt))
-                  }
-                  className="flex items-center gap-1.5 text-xs font-bold text-[#8C66FF] cursor-pointer hover:underline"
-                >
-                  <FiImage size={14} />
-                  <span>Lihat Foto Lampiran Siswa</span>
-                </div>
-              )}
+              {(() => {
+                const subImages =
+                  sub.images && sub.images.length > 0
+                    ? sub.images.map((img) =>
+                        getSubmissionImageUrl(sub.id, sub.submittedAt, img.id),
+                      )
+                    : sub.hasImage
+                    ? [getSubmissionImageUrl(sub.id, sub.submittedAt)]
+                    : [];
+
+                return (
+                  subImages.length > 0 && (
+                    <div
+                      onClick={() => onZoomImage(subImages[0], 0, subImages)}
+                      className="flex items-center gap-1.5 text-xs font-bold text-[#8C66FF] cursor-pointer hover:underline"
+                    >
+                      <FiImage size={14} />
+                      <span>
+                        Lihat Foto Lampiran Siswa ({subImages.length})
+                      </span>
+                    </div>
+                  )
+                );
+              })()}
 
               <button
                 onClick={() => onOpenGrading(sub)}

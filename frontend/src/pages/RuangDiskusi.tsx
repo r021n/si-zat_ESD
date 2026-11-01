@@ -51,18 +51,22 @@ export default function RuangDiskusi() {
     loadingSubmission,
     taskAnswer,
     setTaskAnswer,
-    imagePreviewUrl,
+    attachments,
     compressingImage,
+    compressionProgress,
     submittingTask,
     showSubmissionForm,
     setShowSubmissionForm,
     handleImageSelect,
-    handleClearImage,
+    handleRemoveAttachment,
     handleSubmitTask,
     handleDeleteSubmission,
     handlePrepareEditSubmission,
     zoomImageUrl,
-    setZoomImageUrl,
+    zoomImages,
+    zoomInitialIndex,
+    handleZoomImage,
+    handleCloseZoom,
     parseListItems,
     formatChatTime,
     hasSubmission,
@@ -210,7 +214,7 @@ export default function RuangDiskusi() {
                 onSendPeerComment={handleSendPeerComment}
                 onDeletePeerComment={handleDeletePeerComment}
                 onOpenRiwayatTab={openRiwayatTab}
-                onZoomImage={setZoomImageUrl}
+                onZoomImage={handleZoomImage}
                 peerCommentBottomRef={peerCommentBottomRef}
               />
             )}
@@ -224,15 +228,16 @@ export default function RuangDiskusi() {
                 onSetShowSubmissionForm={setShowSubmissionForm}
                 taskAnswer={taskAnswer}
                 onTaskAnswerChange={setTaskAnswer}
-                imagePreviewUrl={imagePreviewUrl}
-                onClearImage={handleClearImage}
+                attachments={attachments}
+                onRemoveAttachment={handleRemoveAttachment}
                 compressingImage={compressingImage}
+                compressionProgress={compressionProgress}
                 onImageSelect={handleImageSelect}
                 submittingTask={submittingTask}
                 onSubmitTask={handleSubmitTask}
                 onDeleteSubmission={handleDeleteSubmission}
                 onPrepareEditSubmission={handlePrepareEditSubmission}
-                onZoomImage={setZoomImageUrl}
+                onZoomImage={handleZoomImage}
               />
             )}
           </div>
@@ -240,7 +245,12 @@ export default function RuangDiskusi() {
       </div>
 
       {/* FULLSCREEN IMAGE MODAL */}
-      <ZoomImageModal zoomImageUrl={zoomImageUrl} onClose={() => setZoomImageUrl(null)} />
+      <ZoomImageModal
+        zoomImageUrl={zoomImageUrl}
+        images={zoomImages}
+        initialIndex={zoomInitialIndex}
+        onClose={handleCloseZoom}
+      />
     </div>
   );
 }

@@ -1,9 +1,12 @@
 import type { ChangeEvent } from "react";
-import { FiCheckCircle, FiX, FiImage } from "react-icons/fi";
+import { FiCheckCircle } from "react-icons/fi";
 import { LuUpload } from "react-icons/lu";
 import type { SubmissionItem } from "../../types/discussion";
 import { getSubmissionImageUrl } from "./discussionUtils";
 import { formatDateIndo } from "../../utils/date";
+import SubmissionImageGallery, {
+  type GalleryAttachmentItem,
+} from "./SubmissionImageGallery";
 
 interface SubmissionHistoryTabProps {
   loadingSubmission: boolean;
@@ -12,15 +15,16 @@ interface SubmissionHistoryTabProps {
   onSetShowSubmissionForm: (show: boolean) => void;
   taskAnswer: string;
   onTaskAnswerChange: (val: string) => void;
-  imagePreviewUrl: string;
-  onClearImage: () => void;
+  attachments?: GalleryAttachmentItem[];
+  onRemoveAttachment?: (id: string) => void;
   compressingImage: boolean;
+  compressionProgress?: string;
   onImageSelect: (e: ChangeEvent<HTMLInputElement>) => void;
   submittingTask: boolean;
   onSubmitTask: () => void;
   onDeleteSubmission: () => void;
   onPrepareEditSubmission: () => void;
-  onZoomImage: (url: string) => void;
+  onZoomImage: (url: string, index?: number, allUrls?: string[]) => void;
 }
 
 export default function SubmissionHistoryTab({
@@ -30,9 +34,10 @@ export default function SubmissionHistoryTab({
   onSetShowSubmissionForm,
   taskAnswer,
   onTaskAnswerChange,
-  imagePreviewUrl,
-  onClearImage,
+  attachments = [],
+  onRemoveAttachment,
   compressingImage,
+  compressionProgress,
   onImageSelect,
   submittingTask,
   onSubmitTask,
@@ -40,6 +45,24 @@ export default function SubmissionHistoryTab({
   onPrepareEditSubmission,
   onZoomImage,
 }: SubmissionHistoryTabProps) {
+  // Convert existing mySubmission images to GalleryAttachmentItem format
+  const displayImages: GalleryAttachmentItem[] =
+    mySubmission?.images && mySubmission.images.length > 0
+      ? mySubmission.images.map((img, idx) => ({
+          id: img.id,
+          url: getSubmissionImageUrl(mySubmission.id, mySubmission.submittedAt, img.id),
+          name: img.fileName || `Lampiran ${idx + 1}`,
+        }))
+      : mySubmission?.hasImage
+      ? [
+          {
+            id: "legacy",
+            url: getSubmissionImageUrl(mySubmission.id, mySubmission.submittedAt),
+            name: mySubmission.fileName || "Lampiran",
+          },
+        ]
+      : [];
+
   return (
     <div className="flex-1 overflow-y-auto pr-0.5 space-y-4 no-scrollbar pb-6">
       {loadingSubmission ? (
@@ -84,21 +107,12 @@ export default function SubmissionHistoryTab({
             {mySubmission.answer}
           </div>
 
-          {mySubmission.hasImage && (
-            <div
-              onClick={() =>
-                onZoomImage(
-                  getSubmissionImageUrl(mySubmission.id, mySubmission.submittedAt),
-                )
-              }
-              className="w-14 h-14 bg-white rounded-lg overflow-hidden border border-[#E2E8F0] cursor-pointer hover:opacity-80 transition-opacity"
-            >
-              <img
-                src={getSubmissionImageUrl(mySubmission.id, mySubmission.submittedAt)}
-                alt="Lampiran"
-                className="w-full h-full object-cover"
-              />
-            </div>
+          {displayImages.length > 0 && (
+            <SubmissionImageGallery
+              isEditMode={false}
+              images={displayImages}
+              onZoomImage={onZoomImage}
+            />
           )}
 
           <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#F0EDFF]">
@@ -140,38 +154,16 @@ export default function SubmissionHistoryTab({
             className="w-full p-3 bg-[#FAF9FF] border border-[#E9E6F5] rounded-xl text-xs font-medium text-[#2C2B30] placeholder:text-[#9C98A6] focus:outline-none focus:border-[#8C66FF] leading-relaxed resize-none"
           />
 
-          {imagePreviewUrl ? (
-            <div className="relative w-full h-24 bg-[#F8FAFC] rounded-xl overflow-hidden border border-[#E2E8F0]">
-              <img
-                src={imagePreviewUrl}
-                alt="Preview"
-                className="w-full h-full object-cover"
-              />
-              <button
-                type="button"
-                onClick={onClearImage}
-                className="absolute top-1.5 right-1.5 w-6 h-6 bg-black/60 text-white rounded-full flex items-center justify-center hover:bg-black transition-colors cursor-pointer"
-              >
-                <FiX size={12} />
-              </button>
-            </div>
-          ) : (
-            <label className="w-full py-2.5 px-3 border border-dashed border-[#DFDCF0] hover:border-[#8C66FF] rounded-xl flex items-center gap-2 cursor-pointer bg-[#FAF9FF] transition-colors">
-              <FiImage className="text-[#8C66FF]" size={16} />
-              <span className="text-xs font-bold text-[#524F5D]">
-                {compressingImage ? "Memproses..." : "Lampirkan Foto"}
-              </span>
-              <input
-                type="file"
-                accept="image/*"
-                onClick={(e) => {
-                  (e.target as HTMLInputElement).value = "";
-                }}
-                onChange={onImageSelect}
-                className="hidden"
-              />
-            </label>
-          )}
+          <SubmissionImageGallery
+            isEditMode={true}
+            attachments={attachments}
+            onRemoveAttachment={onRemoveAttachment}
+            onSelectFiles={onImageSelect}
+            compressing={compressingImage}
+            compressionProgress={compressionProgress}
+            maxFiles={10}
+            onZoomImage={onZoomImage}
+          />
 
           <button
             type="button"

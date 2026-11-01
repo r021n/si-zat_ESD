@@ -44,7 +44,10 @@ export default function AdminDiskusi() {
     setRankingAnnouncement,
     loadingRanking,
     zoomImageUrl,
-    setZoomImageUrl,
+    zoomImages,
+    zoomInitialIndex,
+    handleZoomImage,
+    handleCloseZoom,
     fetchAnnouncements,
     handleOpenCreateForm,
     handleOpenEditForm,
@@ -86,7 +89,7 @@ export default function AdminDiskusi() {
             onDeleteAnnouncement={handleDeleteAnnouncement}
             onOpenSubmissions={(ann) => handleOpenSubmissions(ann)}
             onOpenRanking={handleOpenRanking}
-            onZoomImage={setZoomImageUrl}
+            onZoomImage={handleZoomImage}
           />
         ) : (
           <AdminTopicSubmissionsView
@@ -113,7 +116,7 @@ export default function AdminDiskusi() {
             onPageChange={setSubmissionPage}
             onOpenGrading={handleOpenGradingModal}
             onOpenAnswerPreview={setViewingAnswerSub}
-            onZoomImage={setZoomImageUrl}
+            onZoomImage={handleZoomImage}
           />
         )}
       </div>
@@ -141,7 +144,7 @@ export default function AdminDiskusi() {
           savingGrade={savingGrade}
           onSaveGrade={handleSaveGrade}
           onClose={() => setGradingSubmission(null)}
-          onZoomImage={setZoomImageUrl}
+          onZoomImage={handleZoomImage}
         />
       )}
 
@@ -151,7 +154,7 @@ export default function AdminDiskusi() {
           submission={viewingAnswerSub}
           onClose={() => setViewingAnswerSub(null)}
           onOpenGrading={handleOpenGradingModal}
-          onZoomImage={setZoomImageUrl}
+          onZoomImage={handleZoomImage}
         />
       )}
 
@@ -166,7 +169,12 @@ export default function AdminDiskusi() {
       )}
 
       {/* ZOOM IMAGE MODAL */}
-      <ZoomImageModal zoomImageUrl={zoomImageUrl} onClose={() => setZoomImageUrl(null)} />
+      <ZoomImageModal
+        zoomImageUrl={zoomImageUrl}
+        images={zoomImages}
+        initialIndex={zoomInitialIndex}
+        onClose={handleCloseZoom}
+      />
     </div>
   );
 }

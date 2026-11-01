@@ -52,6 +52,20 @@ export function useAdminDiskusi() {
 
   // Zoom Image
   const [zoomImageUrl, setZoomImageUrl] = useState<string | null>(null);
+  const [zoomImages, setZoomImages] = useState<string[]>([]);
+  const [zoomInitialIndex, setZoomInitialIndex] = useState<number>(0);
+
+  const handleZoomImage = (url: string, index = 0, allUrls?: string[]) => {
+    setZoomImageUrl(url);
+    setZoomImages(allUrls && allUrls.length > 0 ? allUrls : [url]);
+    setZoomInitialIndex(index);
+  };
+
+  const handleCloseZoom = () => {
+    setZoomImageUrl(null);
+    setZoomImages([]);
+    setZoomInitialIndex(0);
+  };
 
   // Ranking hook
   const {
@@ -267,7 +281,11 @@ export function useAdminDiskusi() {
     setRankingAnnouncement,
     loadingRanking,
     zoomImageUrl,
+    zoomImages,
+    zoomInitialIndex,
     setZoomImageUrl,
+    handleZoomImage,
+    handleCloseZoom,
     fetchAnnouncements,
     handleOpenCreateForm,
     handleOpenEditForm,

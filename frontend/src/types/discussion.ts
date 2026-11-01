@@ -32,6 +32,12 @@ export interface CommentedUserItem {
   studentClass?: string;
 }
 
+export interface SubmissionImageItem {
+  id: string;
+  fileName?: string;
+  sortOrder?: number;
+}
+
 export interface SubmissionItem {
   id: string;
   announcementId: string;
@@ -46,6 +52,7 @@ export interface SubmissionItem {
   gradedAt?: string;
   gradedBy?: string;
   hasImage?: boolean;
+  images?: SubmissionImageItem[];
   commentedUsers?: CommentedUserItem[];
 }
 
@@ -73,6 +80,7 @@ export interface PeerSubmissionItem {
   fileName: string;
   submittedAt: string;
   hasImage?: boolean;
+  images?: SubmissionImageItem[];
   commentsCount: number;
   hasReviewed: boolean;
 }

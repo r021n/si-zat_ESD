@@ -27,6 +27,21 @@ describe("discussionUtils", () => {
         ),
       );
     });
+
+    test("returns specific image URL when imageId is provided", () => {
+      const submittedAt = "2026-11-01T10:00:00.000Z";
+      const url = getSubmissionImageUrl("sub-123", submittedAt, "img-456");
+      assert.ok(
+        url.endsWith(
+          `/api/announcements/submissions/sub-123/images/img-456?v=${encodeURIComponent(submittedAt)}`,
+        ),
+      );
+    });
+
+    test("returns fallback image URL when imageId is legacy", () => {
+      const url = getSubmissionImageUrl("sub-123", undefined, "legacy");
+      assert.ok(url.endsWith("/api/announcements/submissions/sub-123/image"));
+    });
   });
 
   describe("parseListItems", () => {

@@ -35,7 +35,7 @@ interface AdminTopicSubmissionsViewProps {
   onPageChange: (page: number) => void;
   onOpenGrading: (sub: SubmissionItem) => void;
   onOpenAnswerPreview: (sub: SubmissionItem) => void;
-  onZoomImage: (url: string) => void;
+  onZoomImage: (url: string, index?: number, allUrls?: string[]) => void;
 }
 
 export default function AdminTopicSubmissionsView({

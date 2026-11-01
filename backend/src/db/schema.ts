@@ -162,6 +162,16 @@ export const announcementSubmissions = sqliteTable('announcement_submissions', {
   gradedBy: text('graded_by'),
 })
 
+export const announcementSubmissionImages = sqliteTable('announcement_submission_images', {
+  id: text('id').primaryKey(),
+  submissionId: text('submission_id').notNull().references(() => announcementSubmissions.id, { onDelete: 'cascade' }),
+  imageBlob: blob('image_blob', { mode: 'buffer' }).notNull(),
+  imageType: text('image_type').notNull().default('image/jpeg'),
+  fileName: text('file_name').default(''),
+  sortOrder: integer('sort_order').notNull().default(0),
+  createdAt: text('created_at').notNull(),
+})
+
 export const announcementDiscussions = sqliteTable('announcement_discussions', {
   id: text('id').primaryKey(),
   announcementId: text('announcement_id').notNull().references(() => announcements.id, { onDelete: 'cascade' }),

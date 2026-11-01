@@ -4,6 +4,7 @@ import {
   announcements,
   announcementSubmissions,
   announcementDiscussions,
+  announcementSubmissionImages,
 } from "../../db/schema.js";
 import { eq, sql, and } from "drizzle-orm";
 import {
@@ -231,11 +232,40 @@ topicsRoute.get("/:id", authMiddleware, async (c: any) => {
       )
       .limit(1);
 
+    let mySubWithImages = null;
+    if (mySub) {
+      const dbImages = await db
+        .select({
+          id: announcementSubmissionImages.id,
+          fileName: announcementSubmissionImages.fileName,
+          sortOrder: announcementSubmissionImages.sortOrder,
+        })
+        .from(announcementSubmissionImages)
+        .where(eq(announcementSubmissionImages.submissionId, mySub.id))
+        .orderBy(announcementSubmissionImages.sortOrder);
+
+      const hasImages = dbImages.length > 0 || !!mySub.hasImage;
+      mySubWithImages = {
+        ...mySub,
+        hasImage: hasImages,
+        images:
+          dbImages.length > 0
+            ? dbImages.map((img) => ({
+                id: img.id,
+                fileName: img.fileName || "",
+                sortOrder: img.sortOrder,
+              }))
+            : mySub.hasImage
+            ? [{ id: "legacy", fileName: mySub.fileName || "", sortOrder: 0 }]
+            : [],
+      };
+    }
+
     return c.json({
       status: "success",
       data: {
         ...announcement,
-        mySubmission: mySub || null,
+        mySubmission: mySubWithImages,
       },
     });
   } catch (err: any) {

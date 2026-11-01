@@ -452,5 +452,46 @@ describe("Announcements Route Modular Refactoring", () => {
 
       (db as any).select = originalSelect;
     });
+
+    it("POST /:id/submissions should reject more than 10 images with 400", async () => {
+      const studentToken = await sign({ id: 104 }, "sizatesdsecret");
+
+      const originalSelect = db.select;
+      (db as any).select = () => ({
+        from: () => ({
+          where: () => ({
+            limit: async () => [
+              {
+                id: 104,
+                email: "siswa@example.com",
+                nama: "Siswa",
+                status: "SISWA",
+              },
+            ],
+          }),
+        }),
+      });
+
+      const formData = new FormData();
+      formData.append("answer", "Jawaban saya");
+      for (let i = 0; i < 11; i++) {
+        const imgBlob = new Blob([new Uint8Array(10)], { type: "image/jpeg" });
+        formData.append("files", imgBlob, `img_${i}.jpg`);
+      }
+
+      const res = await announcementsRoute.request("/ann-1/submissions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${studentToken}`,
+        },
+        body: formData,
+      });
+
+      assert.strictEqual(res.status, 400);
+      const json = await res.json();
+      assert.match(json.error, /Maksimal 10 gambar/);
+
+      (db as any).select = originalSelect;
+    });
   });
 });

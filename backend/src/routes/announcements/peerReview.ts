@@ -3,6 +3,7 @@ import { db } from "../../db/index.js";
 import {
   announcementSubmissions,
   announcementSubmissionComments,
+  announcementSubmissionImages,
 } from "../../db/schema.js";
 import { eq, sql, and } from "drizzle-orm";
 import { authMiddleware } from "./middleware.js";
@@ -89,11 +90,60 @@ peerReviewRoute.get("/:id/peer-submissions", authMiddleware, async (c: any) => {
       }
     }
 
-    const submissionsWithMeta = peerSubs.map((sub) => ({
-      ...sub,
-      commentsCount: commentsPerSub[sub.id] || 0,
-      hasReviewed: myReviewedSubs.has(sub.id),
-    }));
+    const subIds = peerSubs.map((s) => s.id);
+    const imagesMap = new Map<
+      string,
+      { id: string; fileName: string; sortOrder: number }[]
+    >();
+    if (subIds.length > 0) {
+      try {
+        const dbImages = await db
+          .select({
+            id: announcementSubmissionImages.id,
+            submissionId: announcementSubmissionImages.submissionId,
+            fileName: announcementSubmissionImages.fileName,
+            sortOrder: announcementSubmissionImages.sortOrder,
+          })
+          .from(announcementSubmissionImages)
+          .where(
+            sql`${announcementSubmissionImages.submissionId} IN (${sql.join(
+              subIds.map((id) => sql`${id}`),
+              sql`, `,
+            )})`,
+          )
+          .orderBy(announcementSubmissionImages.sortOrder);
+
+        for (const img of dbImages) {
+          if (!imagesMap.has(img.submissionId)) {
+            imagesMap.set(img.submissionId, []);
+          }
+          imagesMap.get(img.submissionId)!.push({
+            id: img.id,
+            fileName: img.fileName || "",
+            sortOrder: img.sortOrder,
+          });
+        }
+      } catch (imgErr) {
+        console.error("Error fetching peer submission images:", imgErr);
+      }
+    }
+
+    const submissionsWithMeta = peerSubs.map((sub) => {
+      const dbImgs = imagesMap.get(sub.id) || [];
+      const hasImages = dbImgs.length > 0 || !!sub.hasImage;
+      return {
+        ...sub,
+        hasImage: hasImages,
+        images:
+          dbImgs.length > 0
+            ? dbImgs
+            : sub.hasImage
+            ? [{ id: "legacy", fileName: sub.fileName || "", sortOrder: 0 }]
+            : [],
+        commentsCount: commentsPerSub[sub.id] || 0,
+        hasReviewed: myReviewedSubs.has(sub.id),
+      };
+    });
 
     // Sort: unreviewed first, then newest
     submissionsWithMeta.sort((a, b) => {

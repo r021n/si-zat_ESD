@@ -37,6 +37,20 @@ export function useRuangDiskusi() {
 
   // Fullscreen Image Modal
   const [zoomImageUrl, setZoomImageUrl] = useState<string | null>(null);
+  const [zoomImages, setZoomImages] = useState<string[]>([]);
+  const [zoomInitialIndex, setZoomInitialIndex] = useState<number>(0);
+
+  const handleZoomImage = (url: string, index = 0, allUrls?: string[]) => {
+    setZoomImageUrl(url);
+    setZoomImages(allUrls && allUrls.length > 0 ? allUrls : [url]);
+    setZoomInitialIndex(index);
+  };
+
+  const handleCloseZoom = () => {
+    setZoomImageUrl(null);
+    setZoomImages([]);
+    setZoomInitialIndex(0);
+  };
 
   const fetchAnnouncements = useCallback(
     async (force = false) => {
@@ -102,13 +116,17 @@ export function useRuangDiskusi() {
     setLoadedSubmissionsFor,
     taskAnswer,
     setTaskAnswer,
+    attachments,
     imagePreviewUrl,
     compressingImage,
+    compressionProgress,
     submittingTask,
     showSubmissionForm,
     setShowSubmissionForm,
     fetchSubmissions,
     handleImageSelect,
+    handleRemoveAttachment,
+    handleClearAttachments,
     handleClearImage,
     handleSubmitTask,
     handleDeleteSubmission,
@@ -265,18 +283,26 @@ export function useRuangDiskusi() {
     loadingSubmission,
     taskAnswer,
     setTaskAnswer,
+    attachments,
     imagePreviewUrl,
     compressingImage,
+    compressionProgress,
     submittingTask,
     showSubmissionForm,
     setShowSubmissionForm,
     handleImageSelect,
+    handleRemoveAttachment,
+    handleClearAttachments,
     handleClearImage,
     handleSubmitTask,
     handleDeleteSubmission,
     handlePrepareEditSubmission,
     zoomImageUrl,
+    zoomImages,
+    zoomInitialIndex,
     setZoomImageUrl,
+    handleZoomImage,
+    handleCloseZoom,
     parseListItems,
     formatChatTime,
     hasSubmission,

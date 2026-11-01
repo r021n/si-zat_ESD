@@ -5,8 +5,18 @@ import {
   deleteAnnouncementSubmissionApi,
 } from "../../api/api";
 import type { SubmissionItem, AnnouncementItem } from "../../types/discussion";
-import { compressImage } from "../../utils/image";
+import { compressImagesBatch } from "../../utils/image";
 import { getSubmissionImageUrl } from "./discussionUtils";
+
+export interface SubmissionAttachmentItem {
+  id: string;
+  url: string;
+  file?: File;
+  isExisting?: boolean;
+  name?: string;
+}
+
+const MAX_SUBMISSION_IMAGES = 10;
 
 export function useSubmissionTask(
   token: string | null,
@@ -22,10 +32,10 @@ export function useSubmissionTask(
   const [loadedSubmissionsFor, setLoadedSubmissionsFor] = useState<string | null>(null);
 
   const [taskAnswer, setTaskAnswer] = useState<string>("");
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [imagePreviewUrl, setImagePreviewUrl] = useState<string>("");
-  const [removeImage, setRemoveImage] = useState<boolean>(false);
+  const [attachments, setAttachments] = useState<SubmissionAttachmentItem[]>([]);
+  const [removedImageIds, setRemovedImageIds] = useState<string[]>([]);
   const [compressingImage, setCompressingImage] = useState<boolean>(false);
+  const [compressionProgress, setCompressionProgress] = useState<string>("");
   const [submittingTask, setSubmittingTask] = useState<boolean>(false);
   const [showSubmissionForm, setShowSubmissionForm] = useState<boolean>(false);
 
@@ -51,42 +61,90 @@ export function useSubmissionTask(
   );
 
   const handleImageSelect = async (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const fileList = e.target.files;
+    if (!fileList || fileList.length === 0) return;
 
-    if (!file.type.startsWith("image/")) {
-      showAlert("Hanya file gambar (JPG, PNG, WebP) yang dapat dilampirkan.", "Format Tidak Didukung");
+    const files = Array.from(fileList);
+    const validFiles = files.filter((f) => f.type.startsWith("image/"));
+    if (validFiles.length < files.length) {
+      showAlert(
+        "Beberapa file diabaikan karena bukan format gambar yang didukung (JPG, PNG, WebP).",
+        "Format File",
+      );
+    }
+    if (validFiles.length === 0) return;
+
+    const currentCount = attachments.length;
+    const availableSlots = MAX_SUBMISSION_IMAGES - currentCount;
+    if (availableSlots <= 0) {
+      showAlert(
+        `Maksimal ${MAX_SUBMISSION_IMAGES} gambar yang dapat dilampirkan.`,
+        "Batas Maksimal Gambar",
+      );
       return;
     }
 
+    const filesToProcess = validFiles.slice(0, availableSlots);
+    if (validFiles.length > availableSlots) {
+      showAlert(
+        `Hanya ${availableSlots} gambar pertama yang ditambahkan karena batas maksimal ${MAX_SUBMISSION_IMAGES} gambar.`,
+        "Batas Maksimal Gambar",
+      );
+    }
+
     setCompressingImage(true);
+    setCompressionProgress(`Mengompresi 1/${filesToProcess.length}...`);
     try {
-      const compressedBlob = await compressImage(file, 250 * 1024);
-      const compressedFile = new File([compressedBlob], file.name, {
-        type: compressedBlob.type || "image/jpeg",
-      });
-      setSelectedFile(compressedFile);
-      setImagePreviewUrl(URL.createObjectURL(compressedFile));
-      setRemoveImage(false);
+      const compressedFiles = await compressImagesBatch(
+        filesToProcess,
+        250 * 1024,
+        1200,
+        (completed, total) => {
+          setCompressionProgress(`Mengompresi ${completed}/${total}...`);
+        },
+      );
+
+      const newItems: SubmissionAttachmentItem[] = compressedFiles.map((file, idx) => ({
+        id: `blob-${Date.now()}-${idx}-${Math.floor(Math.random() * 1000)}`,
+        url: URL.createObjectURL(file),
+        file,
+        isExisting: false,
+        name: file.name,
+      }));
+
+      setAttachments((prev) => [...prev, ...newItems]);
     } catch (err) {
-      console.error("Compression error:", err);
-      setSelectedFile(file);
-      setImagePreviewUrl(URL.createObjectURL(file));
-      setRemoveImage(false);
+      console.error("Batch compression error:", err);
+      showAlert("Gagal memproses kompresi gambar.", "Error");
     } finally {
       setCompressingImage(false);
+      setCompressionProgress("");
     }
   };
 
-  const handleClearImage = () => {
-    setSelectedFile(null);
-    if (imagePreviewUrl && imagePreviewUrl.startsWith("blob:")) {
-      URL.revokeObjectURL(imagePreviewUrl);
+  const handleRemoveAttachment = (id: string) => {
+    setAttachments((prev) => {
+      const target = prev.find((a) => a.id === id);
+      if (target && !target.isExisting && target.url.startsWith("blob:")) {
+        URL.revokeObjectURL(target.url);
+      }
+      return prev.filter((a) => a.id !== id);
+    });
+
+    const target = attachments.find((a) => a.id === id);
+    if (target?.isExisting) {
+      setRemovedImageIds((prev) => [...prev, id]);
     }
-    setImagePreviewUrl("");
-    if (mySubmission?.hasImage) {
-      setRemoveImage(true);
-    }
+  };
+
+  const handleClearAttachments = () => {
+    attachments.forEach((a) => {
+      if (!a.isExisting && a.url.startsWith("blob:")) {
+        URL.revokeObjectURL(a.url);
+      }
+    });
+    setAttachments([]);
+    setRemovedImageIds([]);
   };
 
   const handleSubmitTask = async () => {
@@ -100,10 +158,20 @@ export function useSubmissionTask(
     try {
       const formData = new FormData();
       formData.append("answer", taskAnswer.trim());
-      if (selectedFile) {
-        formData.append("file", selectedFile);
-        formData.append("fileName", selectedFile.name);
-      } else if (removeImage) {
+
+      const newFiles = attachments
+        .filter((a) => !a.isExisting && a.file)
+        .map((a) => a.file as File);
+
+      for (const file of newFiles) {
+        formData.append("files", file);
+      }
+
+      if (removedImageIds.length > 0) {
+        formData.append("removedImageIds", JSON.stringify(removedImageIds));
+      }
+
+      if (attachments.length === 0 && mySubmission?.hasImage) {
         formData.append("removeImage", "true");
       }
 
@@ -112,8 +180,7 @@ export function useSubmissionTask(
 
       setShowSubmissionForm(false);
       setTaskAnswer("");
-      handleClearImage();
-      setRemoveImage(false);
+      handleClearAttachments();
 
       const prev = mySubmission;
       const raw = res?.data;
@@ -166,20 +233,48 @@ export function useSubmissionTask(
   const handlePrepareEditSubmission = () => {
     if (!mySubmission) return;
     setTaskAnswer(mySubmission.answer || "");
-    setSelectedFile(null);
-    setRemoveImage(false);
-    setImagePreviewUrl(
-      mySubmission.hasImage
-        ? getSubmissionImageUrl(mySubmission.id, mySubmission.submittedAt)
-        : "",
-    );
+
+    // Clear prior local blob urls
+    attachments.forEach((a) => {
+      if (!a.isExisting && a.url.startsWith("blob:")) {
+        URL.revokeObjectURL(a.url);
+      }
+    });
+    setRemovedImageIds([]);
+
+    const existingItems: SubmissionAttachmentItem[] = [];
+    if (mySubmission.images && mySubmission.images.length > 0) {
+      mySubmission.images.forEach((img, idx) => {
+        existingItems.push({
+          id: img.id,
+          url: getSubmissionImageUrl(mySubmission.id, mySubmission.submittedAt, img.id),
+          isExisting: true,
+          name: img.fileName || `Lampiran ${idx + 1}`,
+        });
+      });
+    } else if (mySubmission.hasImage) {
+      existingItems.push({
+        id: "legacy",
+        url: getSubmissionImageUrl(mySubmission.id, mySubmission.submittedAt),
+        isExisting: true,
+        name: mySubmission.fileName || "Lampiran",
+      });
+    }
+
+    setAttachments(existingItems);
     setShowSubmissionForm(true);
   };
 
   const resetSubmissionState = () => {
+    attachments.forEach((a) => {
+      if (!a.isExisting && a.url.startsWith("blob:")) {
+        URL.revokeObjectURL(a.url);
+      }
+    });
+    setAttachments([]);
+    setRemovedImageIds([]);
     setMySubmission(null);
     setLoadedSubmissionsFor(null);
-    setRemoveImage(false);
   };
 
   return {
@@ -190,14 +285,18 @@ export function useSubmissionTask(
     setLoadedSubmissionsFor,
     taskAnswer,
     setTaskAnswer,
-    imagePreviewUrl,
+    attachments,
+    imagePreviewUrl: attachments[0]?.url || "",
     compressingImage,
+    compressionProgress,
     submittingTask,
     showSubmissionForm,
     setShowSubmissionForm,
     fetchSubmissions,
     handleImageSelect,
-    handleClearImage,
+    handleRemoveAttachment,
+    handleClearAttachments,
+    handleClearImage: handleClearAttachments,
     handleSubmitTask,
     handleDeleteSubmission,
     handlePrepareEditSubmission,

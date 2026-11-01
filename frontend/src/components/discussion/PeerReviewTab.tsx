@@ -8,6 +8,9 @@ import type {
 } from "../../types/discussion";
 import type { User } from "../../types/auth";
 import { getSubmissionImageUrl } from "./discussionUtils";
+import SubmissionImageGallery, {
+  type GalleryAttachmentItem,
+} from "./SubmissionImageGallery";
 import { formatDateIndo } from "../../utils/date";
 
 interface PeerReviewTabProps {
@@ -24,7 +27,7 @@ interface PeerReviewTabProps {
   onSendPeerComment: (e: FormEvent) => void;
   onDeletePeerComment: (commentId: string) => void;
   onOpenRiwayatTab: (openForm?: boolean) => void;
-  onZoomImage: (url: string) => void;
+  onZoomImage: (url: string, index?: number, allUrls?: string[]) => void;
   peerCommentBottomRef: RefObject<HTMLDivElement | null>;
 }
 
@@ -83,22 +86,41 @@ export default function PeerReviewTab({
             <p className="text-xs text-[#2C2B30] font-medium leading-relaxed whitespace-pre-wrap">
               {selectedPeerSub.answer}
             </p>
-            {selectedPeerSub.hasImage && (
-              <div
-                onClick={() =>
-                  onZoomImage(
-                    getSubmissionImageUrl(selectedPeerSub.id, selectedPeerSub.submittedAt),
-                  )
-                }
-                className="w-16 h-16 bg-[#F8FAFC] rounded-lg overflow-hidden border border-[#E2E8F0] cursor-pointer hover:opacity-80 transition-opacity"
-              >
-                <img
-                  src={getSubmissionImageUrl(selectedPeerSub.id, selectedPeerSub.submittedAt)}
-                  alt="Lampiran Tugas"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            )}
+            {(() => {
+              const peerImages: GalleryAttachmentItem[] =
+                selectedPeerSub.images && selectedPeerSub.images.length > 0
+                  ? selectedPeerSub.images.map((img, idx) => ({
+                      id: img.id,
+                      url: getSubmissionImageUrl(
+                        selectedPeerSub.id,
+                        selectedPeerSub.submittedAt,
+                        img.id,
+                      ),
+                      name: img.fileName || `Lampiran ${idx + 1}`,
+                    }))
+                  : selectedPeerSub.hasImage
+                  ? [
+                      {
+                        id: "legacy",
+                        url: getSubmissionImageUrl(
+                          selectedPeerSub.id,
+                          selectedPeerSub.submittedAt,
+                        ),
+                        name: selectedPeerSub.fileName || "Lampiran",
+                      },
+                    ]
+                  : [];
+
+              return (
+                peerImages.length > 0 && (
+                  <SubmissionImageGallery
+                    isEditMode={false}
+                    images={peerImages}
+                    onZoomImage={onZoomImage}
+                  />
+                )
+              );
+            })()}
           </div>
 
           <div className="flex items-center justify-between pt-1">

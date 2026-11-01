@@ -22,8 +22,12 @@ export const formatChatTime = (dateStr: string): string => {
 export const getSubmissionImageUrl = (
   submissionId: string,
   submittedAt?: string,
+  imageId?: string,
 ): string => {
   if (!submissionId) return "";
   const version = submittedAt ? `?v=${encodeURIComponent(submittedAt)}` : "";
+  if (imageId && imageId !== "legacy") {
+    return `${API_URL}/api/announcements/submissions/${submissionId}/images/${imageId}${version}`;
+  }
   return `${API_URL}/api/announcements/submissions/${submissionId}/image${version}`;
 };

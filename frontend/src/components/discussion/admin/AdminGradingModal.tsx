@@ -1,6 +1,9 @@
-import { FiX, FiCheckCircle, FiEye } from "react-icons/fi";
+import { FiX, FiCheckCircle } from "react-icons/fi";
 import type { SubmissionItem } from "../../../types/discussion";
 import { getSubmissionImageUrl } from "../discussionUtils";
+import SubmissionImageGallery, {
+  type GalleryAttachmentItem,
+} from "../SubmissionImageGallery";
 
 interface AdminGradingModalProps {
   submission: SubmissionItem;
@@ -11,7 +14,7 @@ interface AdminGradingModalProps {
   savingGrade: boolean;
   onSaveGrade: () => void;
   onClose: () => void;
-  onZoomImage: (url: string) => void;
+  onZoomImage: (url: string, index?: number, allUrls?: string[]) => void;
 }
 
 export default function AdminGradingModal({
@@ -64,29 +67,46 @@ export default function AdminGradingModal({
               </div>
             </div>
 
-            {submission.hasImage && (
-              <div>
-                <label className="text-xs font-black text-[#524F5D] block mb-1.5">
-                  Lampiran Foto Siswa:
-                </label>
-                <div
-                  onClick={() =>
-                    onZoomImage(getSubmissionImageUrl(submission.id, submission.submittedAt))
-                  }
-                  className="w-full h-44 bg-[#F8FAFC] rounded-2xl overflow-hidden border border-[#E2E8F0] relative cursor-pointer group"
-                >
-                  <img
-                    src={getSubmissionImageUrl(submission.id, submission.submittedAt)}
-                    alt="Lampiran"
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                  />
-                  <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold gap-1.5">
-                    <FiEye size={15} />
-                    <span>Klik untuk memperbesar gambar</span>
+            {(() => {
+              const adminImages: GalleryAttachmentItem[] =
+                submission.images && submission.images.length > 0
+                  ? submission.images.map((img, idx) => ({
+                      id: img.id,
+                      url: getSubmissionImageUrl(
+                        submission.id,
+                        submission.submittedAt,
+                        img.id,
+                      ),
+                      name: img.fileName || `Lampiran ${idx + 1}`,
+                    }))
+                  : submission.hasImage
+                  ? [
+                      {
+                        id: "legacy",
+                        url: getSubmissionImageUrl(
+                          submission.id,
+                          submission.submittedAt,
+                        ),
+                        name: submission.fileName || "Lampiran",
+                      },
+                    ]
+                  : [];
+
+              return (
+                adminImages.length > 0 && (
+                  <div>
+                    <label className="text-xs font-black text-[#524F5D] block mb-1.5">
+                      Lampiran Foto Siswa ({adminImages.length}):
+                    </label>
+                    <SubmissionImageGallery
+                      isEditMode={false}
+                      images={adminImages}
+                      onZoomImage={onZoomImage}
+                    />
                   </div>
-                </div>
-              </div>
-            )}
+                )
+              );
+            })()}
           </div>
 
           {/* Right Column: Teacher Score & Feedback Inputs */}

@@ -76,3 +76,32 @@ export function compressImage(
     reader.readAsDataURL(file);
   });
 }
+
+/**
+ * Sequential batch compression for multiple images to avoid UI thread freeze and peak RAM spikes.
+ */
+export async function compressImagesBatch(
+  files: File[],
+  maxSizeBytes: number = 250 * 1024,
+  maxDimension: number = 1200,
+  onProgress?: (completed: number, total: number) => void,
+): Promise<File[]> {
+  const result: File[] = [];
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    try {
+      const blob = await compressImage(file, maxSizeBytes, maxDimension);
+      const compressedFile = new File([blob], file.name, {
+        type: blob.type || "image/jpeg",
+      });
+      result.push(compressedFile);
+    } catch (err) {
+      console.error(`Failed to compress ${file.name}, using original:`, err);
+      result.push(file);
+    }
+    if (onProgress) {
+      onProgress(i + 1, files.length);
+    }
+  }
+  return result;
+}

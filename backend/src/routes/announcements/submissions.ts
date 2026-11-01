@@ -4,6 +4,7 @@ import {
   announcements,
   announcementSubmissions,
   announcementSubmissionComments,
+  announcementSubmissionImages,
 } from "../../db/schema.js";
 import { eq, sql, and } from "drizzle-orm";
 import {
@@ -17,12 +18,99 @@ const submissionsRoute = new Hono();
 
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5 MB
+const MAX_SUBMISSION_IMAGES = 10;
 
-// GET /api/announcements/submissions/:submissionId/image - Stream binary blob
+// GET /api/announcements/submissions/:submissionId/images/:imageId - Stream specific binary blob
+submissionsRoute.get(
+  "/submissions/:submissionId/images/:imageId",
+  async (c: any) => {
+    await ensureTables();
+    try {
+      const submissionId = c.req.param("submissionId");
+      const imageId = c.req.param("imageId");
+
+      let imageBlob: Buffer | null = null;
+      let imageType: string | null = null;
+      let submittedAt: string | null = null;
+
+      if (imageId === "legacy") {
+        const [sub] = await db
+          .select({
+            imageBlob: announcementSubmissions.imageBlob,
+            imageType: announcementSubmissions.imageType,
+            submittedAt: announcementSubmissions.submittedAt,
+          })
+          .from(announcementSubmissions)
+          .where(eq(announcementSubmissions.id, submissionId))
+          .limit(1);
+
+        if (sub) {
+          imageBlob = sub.imageBlob as Buffer | null;
+          imageType = sub.imageType;
+          submittedAt = sub.submittedAt;
+        }
+      } else {
+        const [img] = await db
+          .select({
+            imageBlob: announcementSubmissionImages.imageBlob,
+            imageType: announcementSubmissionImages.imageType,
+            createdAt: announcementSubmissionImages.createdAt,
+          })
+          .from(announcementSubmissionImages)
+          .where(
+            and(
+              eq(announcementSubmissionImages.id, imageId),
+              eq(announcementSubmissionImages.submissionId, submissionId),
+            ),
+          )
+          .limit(1);
+
+        if (img) {
+          imageBlob = img.imageBlob as Buffer | null;
+          imageType = img.imageType;
+          submittedAt = img.createdAt;
+        }
+      }
+
+      if (!imageBlob) {
+        return c.json({ error: "Gambar tidak ditemukan." }, 404);
+      }
+
+      const timestamp = submittedAt ? new Date(submittedAt).getTime() : 0;
+      const etag = `"${submissionId}-${imageId}-${timestamp}"`;
+      const clientEtag = c.req.header("if-none-match");
+
+      if (clientEtag && clientEtag === etag) {
+        return new Response(null, {
+          status: 304,
+          headers: {
+            ETag: etag,
+            "Cache-Control": "no-cache, must-revalidate",
+          },
+        });
+      }
+
+      const mimeType = imageType || "image/jpeg";
+      return new Response(imageBlob as any, {
+        headers: {
+          "Content-Type": mimeType,
+          "Cache-Control": "no-cache, must-revalidate",
+          ETag: etag,
+        },
+      });
+    } catch (err: any) {
+      console.error("Error streaming specific submission image:", err);
+      return c.json({ error: "Gagal memuat gambar." }, 500);
+    }
+  },
+);
+
+// GET /api/announcements/submissions/:submissionId/image - Stream binary blob (first/legacy image)
 submissionsRoute.get("/submissions/:submissionId/image", async (c: any) => {
   await ensureTables();
   try {
     const submissionId = c.req.param("submissionId");
+
     const [sub] = await db
       .select({
         imageBlob: announcementSubmissions.imageBlob,
@@ -33,11 +121,48 @@ submissionsRoute.get("/submissions/:submissionId/image", async (c: any) => {
       .where(eq(announcementSubmissions.id, submissionId))
       .limit(1);
 
-    if (!sub || !sub.imageBlob) {
+    let imageBlob: Buffer | null = null;
+    let imageType: string | null = null;
+    let submittedAt: string | null = null;
+
+    if (sub && sub.imageBlob) {
+      imageBlob = sub.imageBlob as Buffer | null;
+      imageType = sub.imageType;
+      submittedAt = sub.submittedAt;
+    } else {
+      try {
+        const query = db
+          .select({
+            id: announcementSubmissionImages.id,
+            imageBlob: announcementSubmissionImages.imageBlob,
+            imageType: announcementSubmissionImages.imageType,
+            createdAt: announcementSubmissionImages.createdAt,
+          })
+          .from(announcementSubmissionImages)
+          .where(eq(announcementSubmissionImages.submissionId, submissionId));
+
+        const imgs =
+          typeof (query as any).orderBy === "function"
+            ? await (query as any).orderBy(announcementSubmissionImages.sortOrder).limit(1)
+            : typeof (query as any).limit === "function"
+            ? await (query as any).limit(1)
+            : await query;
+
+        if (imgs && imgs[0] && imgs[0].imageBlob) {
+          imageBlob = imgs[0].imageBlob as Buffer | null;
+          imageType = imgs[0].imageType;
+          submittedAt = imgs[0].createdAt;
+        }
+      } catch (checkErr) {
+        console.error("Error checking announcementSubmissionImages:", checkErr);
+      }
+    }
+
+    if (!imageBlob) {
       return c.json({ error: "Gambar tidak ditemukan." }, 404);
     }
 
-    const timestamp = sub.submittedAt ? new Date(sub.submittedAt).getTime() : 0;
+    const timestamp = submittedAt ? new Date(submittedAt).getTime() : 0;
     const etag = `"${submissionId}-${timestamp}"`;
     const clientEtag = c.req.header("if-none-match");
 
@@ -51,8 +176,8 @@ submissionsRoute.get("/submissions/:submissionId/image", async (c: any) => {
       });
     }
 
-    const mimeType = sub.imageType || "image/jpeg";
-    return new Response(sub.imageBlob as any, {
+    const mimeType = imageType || "image/jpeg";
+    return new Response(imageBlob as any, {
       headers: {
         "Content-Type": mimeType,
         "Cache-Control": "no-cache, must-revalidate",
@@ -176,10 +301,59 @@ submissionsRoute.get("/:id/submissions", authMiddleware, async (c: any) => {
       console.error("Error fetching commented users:", commentErr);
     }
 
-    subs = subs.map((s) => ({
-      ...s,
-      commentedUsers: commentedMap.get(s.userId) || [],
-    }));
+    const subIds = subs.map((s) => s.id);
+    const imagesMap = new Map<
+      string,
+      { id: string; fileName: string; sortOrder: number }[]
+    >();
+    if (subIds.length > 0) {
+      try {
+        const dbImages = await db
+          .select({
+            id: announcementSubmissionImages.id,
+            submissionId: announcementSubmissionImages.submissionId,
+            fileName: announcementSubmissionImages.fileName,
+            sortOrder: announcementSubmissionImages.sortOrder,
+          })
+          .from(announcementSubmissionImages)
+          .where(
+            sql`${announcementSubmissionImages.submissionId} IN (${sql.join(
+              subIds.map((id) => sql`${id}`),
+              sql`, `,
+            )})`,
+          )
+          .orderBy(announcementSubmissionImages.sortOrder);
+
+        for (const img of dbImages) {
+          if (!imagesMap.has(img.submissionId)) {
+            imagesMap.set(img.submissionId, []);
+          }
+          imagesMap.get(img.submissionId)!.push({
+            id: img.id,
+            fileName: img.fileName || "",
+            sortOrder: img.sortOrder,
+          });
+        }
+      } catch (imgErr) {
+        console.error("Error fetching submission images:", imgErr);
+      }
+    }
+
+    subs = subs.map((s) => {
+      const dbImgs = imagesMap.get(s.id) || [];
+      const hasImages = dbImgs.length > 0 || !!s.hasImage;
+      return {
+        ...s,
+        hasImage: hasImages,
+        images:
+          dbImgs.length > 0
+            ? dbImgs
+            : s.hasImage
+            ? [{ id: "legacy", fileName: s.fileName || "", sortOrder: 0 }]
+            : [],
+        commentedUsers: commentedMap.get(s.userId) || [],
+      };
+    });
 
     const pageParam = c.req.query("page");
     const limitParam = c.req.query("limit");
@@ -249,26 +423,89 @@ submissionsRoute.post("/:id/submissions", authMiddleware, async (c: any) => {
       return c.json({ error: "Diskusi tidak ditemukan." }, 404);
     }
 
-    const body = await c.req.parseBody();
-    const answer = body["answer"] as string;
-    const fileName = body["fileName"] as string;
-    const file = body["file"] as File | undefined;
-    const removeImage =
-      body["removeImage"] === "true" || body["removeImage"] === true;
+    let answer = "";
+    let removeImage = false;
+    let removedImageIds: string[] = [];
+    let files: File[] = [];
+
+    try {
+      const formData = await c.req.formData();
+      answer = (formData.get("answer") as string) || "";
+      removeImage = formData.get("removeImage") === "true";
+      const removedImageIdsRaw = formData.get("removedImageIds") as string | null;
+      if (removedImageIdsRaw) {
+        try {
+          const parsed = JSON.parse(removedImageIdsRaw);
+          if (Array.isArray(parsed)) removedImageIds = parsed;
+        } catch {}
+      }
+      const rawFiles = formData.getAll("files") as (File | string)[];
+      files = rawFiles.filter(
+        (f): f is File =>
+          !!f &&
+          typeof f === "object" &&
+          typeof (f as any).arrayBuffer === "function" &&
+          (f as any).size > 0,
+      );
+      // Legacy "file" fallback
+      const legacyFile = formData.get("file") as File | null;
+      if (
+        files.length === 0 &&
+        legacyFile &&
+        typeof legacyFile === "object" &&
+        typeof legacyFile.arrayBuffer === "function" &&
+        legacyFile.size > 0
+      ) {
+        files.push(legacyFile);
+      }
+    } catch {
+      const body = await c.req.parseBody({ all: true });
+      answer = (body["answer"] as string) || "";
+      removeImage = body["removeImage"] === "true" || body["removeImage"] === true;
+      const rawRemoved = body["removedImageIds"] as string;
+      if (rawRemoved) {
+        try {
+          const parsed = JSON.parse(rawRemoved);
+          if (Array.isArray(parsed)) removedImageIds = parsed;
+        } catch {}
+      }
+      const bodyFiles = Array.isArray(body["files"])
+        ? body["files"]
+        : body["files"]
+        ? [body["files"]]
+        : [];
+      files = (bodyFiles as any[]).filter(
+        (f) =>
+          !!f &&
+          typeof f === "object" &&
+          typeof f.arrayBuffer === "function" &&
+          f.size > 0,
+      );
+      if (
+        files.length === 0 &&
+        body["file"] &&
+        typeof body["file"] === "object" &&
+        typeof (body["file"] as any).arrayBuffer === "function" &&
+        (body["file"] as any).size > 0
+      ) {
+        files.push(body["file"] as File);
+      }
+    }
 
     if (!answer || !answer.trim()) {
       return c.json({ error: "Jawaban tugas tidak boleh kosong." }, 400);
     }
 
-    let imageBuffer: Buffer | null = null;
-    let imageType: string | null = null;
+    if (files.length > MAX_SUBMISSION_IMAGES) {
+      return c.json(
+        {
+          error: `Maksimal ${MAX_SUBMISSION_IMAGES} gambar yang dapat dilampirkan per tugas.`,
+        },
+        400,
+      );
+    }
 
-    if (
-      file &&
-      typeof file === "object" &&
-      typeof file.arrayBuffer === "function" &&
-      file.size > 0
-    ) {
+    for (const file of files) {
       if (file.size > MAX_IMAGE_SIZE) {
         return c.json(
           { error: "Ukuran gambar terlalu besar. Maksimal 5MB." },
@@ -281,9 +518,6 @@ submissionsRoute.post("/:id/submissions", authMiddleware, async (c: any) => {
           400,
         );
       }
-      const arrayBuffer = await file.arrayBuffer();
-      imageBuffer = Buffer.from(arrayBuffer);
-      imageType = file.type || "image/jpeg";
     }
 
     const now = new Date().toISOString();
@@ -302,35 +536,80 @@ submissionsRoute.post("/:id/submissions", authMiddleware, async (c: any) => {
       )
       .limit(1);
 
+    let existingImages: { id: string; sortOrder: number }[] = [];
+    if (existing) {
+      try {
+        const q = db
+          .select({
+            id: announcementSubmissionImages.id,
+            sortOrder: announcementSubmissionImages.sortOrder,
+          })
+          .from(announcementSubmissionImages)
+          .where(eq(announcementSubmissionImages.submissionId, existing.id));
+        const res =
+          typeof (q as any).orderBy === "function"
+            ? await (q as any).orderBy(announcementSubmissionImages.sortOrder)
+            : await q;
+        if (Array.isArray(res)) existingImages = res;
+      } catch {}
+    }
+
+    // Calculate current retained images count
+    let retainedCount = 0;
+    if (existing && !removeImage) {
+      const remainingDbImages = existingImages.filter(
+        (img) => !removedImageIds.includes(img.id),
+      );
+      const hasLegacy =
+        existing.imageBlob && !removedImageIds.includes("legacy");
+      retainedCount = remainingDbImages.length + (hasLegacy ? 1 : 0);
+    }
+
+    if (retainedCount + files.length > MAX_SUBMISSION_IMAGES) {
+      return c.json(
+        {
+          error: `Maksimal ${MAX_SUBMISSION_IMAGES} gambar yang dapat dilampirkan per tugas.`,
+        },
+        400,
+      );
+    }
+
     let submissionId: string;
 
     if (existing) {
       submissionId = existing.id;
-      const updatePayload: {
-        studentName: string;
-        studentClass: string;
-        answer: string;
-        fileName?: string;
-        imageBlob?: Buffer | null;
-        imageType?: string | null;
-        submittedAt: string;
-      } = {
+      const updatePayload: any = {
         studentName,
         studentClass,
         answer: answer.trim(),
         submittedAt: now,
       };
 
-      if (imageBuffer) {
-        updatePayload.imageBlob = imageBuffer;
-        updatePayload.imageType = imageType;
-        updatePayload.fileName = fileName || "";
-      } else if (removeImage) {
+      if (removeImage) {
         updatePayload.imageBlob = null;
         updatePayload.imageType = null;
         updatePayload.fileName = "";
-      } else if (fileName !== undefined) {
-        updatePayload.fileName = fileName;
+        await db
+          .delete(announcementSubmissionImages)
+          .where(eq(announcementSubmissionImages.submissionId, existing.id));
+      } else {
+        if (removedImageIds.includes("legacy")) {
+          updatePayload.imageBlob = null;
+          updatePayload.imageType = null;
+          updatePayload.fileName = "";
+        }
+        for (const remId of removedImageIds) {
+          if (remId !== "legacy") {
+            await db
+              .delete(announcementSubmissionImages)
+              .where(
+                and(
+                  eq(announcementSubmissionImages.id, remId),
+                  eq(announcementSubmissionImages.submissionId, existing.id),
+                ),
+              );
+          }
+        }
       }
 
       await db
@@ -346,22 +625,70 @@ submissionsRoute.post("/:id/submissions", authMiddleware, async (c: any) => {
         studentName,
         studentClass,
         answer: answer.trim(),
-        fileName: imageBuffer ? fileName || "" : "",
-        imageBlob: imageBuffer,
-        imageType,
+        fileName: files.length > 0 ? files[0].name : "",
+        imageBlob: null,
+        imageType: null,
         submittedAt: now,
       });
     }
 
-    const finalHasImage =
-      !!imageBuffer || (!removeImage && existing ? !!existing.imageBlob : false);
-    const finalFileName = imageBuffer
-      ? fileName || ""
-      : removeImage
-      ? ""
-      : existing
-      ? existing.fileName || ""
-      : "";
+    // Insert new files into announcementSubmissionImages
+    if (files.length > 0) {
+      let nextOrder = 0;
+      try {
+        const q = db
+          .select({ sortOrder: announcementSubmissionImages.sortOrder })
+          .from(announcementSubmissionImages)
+          .where(eq(announcementSubmissionImages.submissionId, submissionId));
+        const currentImages =
+          typeof (q as any).orderBy === "function"
+            ? await (q as any).orderBy(announcementSubmissionImages.sortOrder)
+            : await q;
+        if (Array.isArray(currentImages) && currentImages.length > 0) {
+          nextOrder = Math.max(...currentImages.map((i) => i.sortOrder)) + 1;
+        }
+      } catch {}
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const arrayBuf = await file.arrayBuffer();
+        const buf = Buffer.from(arrayBuf);
+        const imgId = `img-${Date.now()}-${i}-${Math.floor(Math.random() * 1000)}`;
+        await db.insert(announcementSubmissionImages).values({
+          id: imgId,
+          submissionId,
+          imageBlob: buf,
+          imageType: file.type || "image/jpeg",
+          fileName: file.name || `image_${i + 1}.jpg`,
+          sortOrder: nextOrder++,
+          createdAt: now,
+        });
+      }
+    }
+
+    // Query all current images for response
+    let finalImages: { id: string; fileName: string | null; sortOrder: number }[] = [];
+    try {
+      const q = db
+        .select({
+          id: announcementSubmissionImages.id,
+          fileName: announcementSubmissionImages.fileName,
+          sortOrder: announcementSubmissionImages.sortOrder,
+        })
+        .from(announcementSubmissionImages)
+        .where(eq(announcementSubmissionImages.submissionId, submissionId));
+      const res =
+        typeof (q as any).orderBy === "function"
+          ? await (q as any).orderBy(announcementSubmissionImages.sortOrder)
+          : await q;
+      if (Array.isArray(res)) finalImages = res;
+    } catch {}
+
+    const hasAnyImage =
+      finalImages.length > 0 ||
+      (!removeImage &&
+        !removedImageIds.includes("legacy") &&
+        existing?.imageBlob != null);
 
     invalidateAnnouncementsServerCache();
     return c.json({
@@ -374,9 +701,10 @@ submissionsRoute.post("/:id/submissions", authMiddleware, async (c: any) => {
         studentName,
         studentClass,
         answer: answer.trim(),
-        fileName: finalFileName,
+        fileName: finalImages.length > 0 ? finalImages[0].fileName : "",
         submittedAt: now,
-        hasImage: finalHasImage,
+        hasImage: hasAnyImage,
+        images: finalImages,
       },
     });
   } catch (err: any) {
@@ -410,6 +738,9 @@ submissionsRoute.delete(
         return c.json({ error: "Akses ditolak." }, 403);
       }
 
+      await db
+        .delete(announcementSubmissionImages)
+        .where(eq(announcementSubmissionImages.submissionId, submissionId));
       await db
         .delete(announcementSubmissions)
         .where(eq(announcementSubmissions.id, submissionId));
