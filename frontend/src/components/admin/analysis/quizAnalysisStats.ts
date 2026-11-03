@@ -16,6 +16,40 @@ export interface StudentResultItem {
   isCorrect: boolean;
 }
 
+export function isAnswerCorrect(
+  studentAns?: number[],
+  correctAnswers?: number[]
+): boolean {
+  const ans = studentAns || [];
+  const correct = correctAnswers || [];
+  return (
+    ans.length > 0 &&
+    ans.length === correct.length &&
+    ans.every((v) => correct.includes(v))
+  );
+}
+
+export function calculateScoreFromAnswers(
+  answers: Record<string, number[]> | undefined,
+  questions: Question[]
+): { correctCount: number; score: number } {
+  if (!questions || questions.length === 0) {
+    return { correctCount: 0, score: 0 };
+  }
+
+  const safeAnswers = answers || {};
+  let correctCount = 0;
+
+  for (const q of questions) {
+    if (isAnswerCorrect(safeAnswers[q.id], q.correctAnswers)) {
+      correctCount++;
+    }
+  }
+
+  const score = Math.round((correctCount / questions.length) * 100);
+  return { correctCount, score };
+}
+
 export function calculateQuizGeneralStats(submissions: Submission[]) {
   const count = submissions.length;
   if (count === 0) {
@@ -45,16 +79,14 @@ export function processQuestions(
 ): ProcessedQuestion[] {
   return questions.map((q, qIdx) => {
     const correctCount = submissions.filter((sub) => {
-      const ans = sub.answers[q.id] || [];
-      const correct = q.correctAnswers;
-      return ans.length === correct.length && ans.every((v) => correct.includes(v));
+      return isAnswerCorrect(sub.answers?.[q.id], q.correctAnswers);
     }).length;
 
     const accuracy =
       submissions.length > 0 ? Math.round((correctCount / submissions.length) * 100) : 0;
 
     const answeredCount = submissions.filter((sub) => {
-      const ans = sub.answers[q.id];
+      const ans = sub.answers?.[q.id];
       return ans && ans.length > 0;
     }).length;
 
@@ -86,13 +118,10 @@ export function sortProcessedQuestions(
 export function calculateStudentResults(quiz: Quiz, submission: Submission | null): StudentResultItem[] {
   if (!submission) return [];
   return quiz.questions.map((q, qIdx) => {
-    const studentAns = submission.answers[q.id] || [];
+    const studentAns = submission.answers?.[q.id] || [];
     const correct = q.correctAnswers || [];
     const isAnswered = studentAns.length > 0;
-    const isCorrect =
-      isAnswered &&
-      studentAns.length === correct.length &&
-      studentAns.every((v) => correct.includes(v));
+    const isCorrect = isAnswerCorrect(studentAns, correct);
 
     return {
       question: q,

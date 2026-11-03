@@ -24,6 +24,8 @@ export default function QuizStudentAnswerModal({
   if (!submission) return null;
 
   const studentCorrectCount = studentResults.filter((r) => r.isCorrect).length;
+  const calculatedScore =
+    totalQuestions > 0 ? Math.round((studentCorrectCount / totalQuestions) * 100) : 0;
 
   return (
     <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50 p-3 sm:p-4 md:p-6 backdrop-blur-xs">
@@ -58,10 +60,10 @@ export default function QuizStudentAnswerModal({
               Skor Siswa
             </span>
             <span className="text-sm sm:text-base md:text-xl font-black text-[#8C66FF] mt-0.5 truncate">
-              {submission.score}
+              {calculatedScore}
               <span className="text-[9px] sm:text-[10px] font-semibold text-[#9C98A6]">/100</span>
             </span>
-            {kkmActive && submission.score < (kkmValue as number) && (
+            {kkmActive && calculatedScore < (kkmValue as number) && (
               <span className="mt-1 inline-flex items-center justify-center gap-1 px-2 py-0.5 bg-[#FFEBF0] text-[#FF5E8C] rounded-full text-[8px] sm:text-[9px] font-black uppercase tracking-wider shrink-0">
                 <FiAlertTriangle size={9} />
                 Di Bawah KKM

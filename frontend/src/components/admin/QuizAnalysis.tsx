@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useAuthStore } from "../../store/authStore";
 import { updateQuizKkmApi } from "../../api/api";
 import { FiArrowLeft } from "react-icons/fi";
 import type { Quiz, Submission } from "../../types/quiz";
 
 import {
+  calculateScoreFromAnswers,
   calculateQuizGeneralStats,
   sortSubmissions,
   processQuestions,
@@ -101,7 +102,14 @@ export default function QuizAnalysis({
   };
 
   // Stats calculation
-  const quizSubmissions = submissions.filter((s) => s.quizId === selectedQuiz.id);
+  const quizSubmissions = useMemo(() => {
+    return submissions
+      .filter((s) => s.quizId === selectedQuiz.id)
+      .map((s) => {
+        const { score } = calculateScoreFromAnswers(s.answers, selectedQuiz.questions);
+        return { ...s, score };
+      });
+  }, [submissions, selectedQuiz]);
   const { avgScore, highestScore, lowestScore } = calculateQuizGeneralStats(quizSubmissions);
 
   const belowKkmCount = kkmActive
