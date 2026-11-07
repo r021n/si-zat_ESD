@@ -18,7 +18,8 @@ import ProtectedRoute from "./components/guards/ProtectedRoute";
 import AdminRoute from "./components/guards/AdminRoute";
 import AccessGuard from "./components/guards/AccessGuard";
 import EnrollGuard from "./components/guards/EnrollGuard";
-import LoadingScreen from "./components/common/LoadingScreen";
+import SplashScreen from "./components/common/SplashScreen";
+import { useSplashScreen } from "./hooks/useSplashScreen";
 
 // Pages
 import Auth from "./pages/Auth";
@@ -53,63 +54,72 @@ function AppListeners() {
 
 function AppContent() {
   const { checkAuth, initialized } = useAuthStore();
+  const { isVisible, isFading, skip } = useSplashScreen({ isReady: initialized });
 
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);
 
-  if (!initialized) {
-    return <LoadingScreen message="Memuat Sesi..." />;
-  }
-
   return (
-    <Router>
-      <AppListeners />
-      <Routes>
-        {/* Public Routes */}
-        <Route path="/" element={<Onboarding />} />
-        <Route path="/auth" element={<Auth />} />
-        <Route path="/locked" element={<Locked />} />
+    <>
+      {initialized && (
+        <Router>
+          <AppListeners />
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<Onboarding />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/locked" element={<Locked />} />
 
-        {/* Protected Routes (Require Authentication & Access Status Check) */}
-        <Route element={<ProtectedRoute />}>
-          <Route element={<AccessGuard />}>
-            {/* Student & Shared Pages */}
-            <Route path="/menu" element={<MainMenu />} />
-            <Route path="/profile-report" element={<ProfileReport />} />
-            <Route path="/profil-pengembang" element={<ProfilPengembang />} />
-            <Route path="/enroll" element={<EnrollPage />} />
+            {/* Protected Routes (Require Authentication & Access Status Check) */}
+            <Route element={<ProtectedRoute />}>
+              <Route element={<AccessGuard />}>
+                {/* Student & Shared Pages */}
+                <Route path="/menu" element={<MainMenu />} />
+                <Route path="/profile-report" element={<ProfileReport />} />
+                <Route path="/profil-pengembang" element={<ProfilPengembang />} />
+                <Route path="/enroll" element={<EnrollPage />} />
 
-            {/* Routes requiring enrollment */}
-            <Route element={<EnrollGuard />}>
-              <Route path="/materi" element={<Materi />} />
-              <Route path="/simulasi" element={<Simulasi />} />
-              <Route path="/simulasi/air" element={<SimulasiPencemaranAir />} />
-              <Route path="/simulasi/eutrofikasi" element={<SimulasiEutrofikasi />} />
-              <Route path="/simulasi/tanah" element={<SimulasiPencemaranTanah />} />
-              <Route path="/simulasi/udara" element={<SimulasiPencemaranUdara />} />
-              <Route path="/kuis" element={<KuisMenu />} />
-              <Route path="/kuis/berpikir-sistem" element={<PenilaianBerpikirSistem />} />
-              <Route path="/ruang-diskusi" element={<RuangDiskusi />} />
-              <Route path="/ruang-diskusi/:id" element={<RuangDiskusi />} />
+                {/* Routes requiring enrollment */}
+                <Route element={<EnrollGuard />}>
+                  <Route path="/materi" element={<Materi />} />
+                  <Route path="/simulasi" element={<Simulasi />} />
+                  <Route path="/simulasi/air" element={<SimulasiPencemaranAir />} />
+                  <Route path="/simulasi/eutrofikasi" element={<SimulasiEutrofikasi />} />
+                  <Route path="/simulasi/tanah" element={<SimulasiPencemaranTanah />} />
+                  <Route path="/simulasi/udara" element={<SimulasiPencemaranUdara />} />
+                  <Route path="/kuis" element={<KuisMenu />} />
+                  <Route path="/kuis/berpikir-sistem" element={<PenilaianBerpikirSistem />} />
+                  <Route path="/ruang-diskusi" element={<RuangDiskusi />} />
+                  <Route path="/ruang-diskusi/:id" element={<RuangDiskusi />} />
+                </Route>
+
+                {/* Admin Only Routes */}
+                <Route element={<AdminRoute />}>
+                  <Route path="/admin" element={<AdminMenu />} />
+                  <Route path="/admin/kuis" element={<AdminKuis />} />
+                  <Route path="/admin/change-password" element={<AdminChangePassword />} />
+                  <Route path="/admin/access-control" element={<AdminAccessControl />} />
+                  <Route path="/admin/enrollment" element={<AdminEnroll />} />
+                  <Route path="/admin/diskusi" element={<AdminDiskusi />} />
+                </Route>
+              </Route>
             </Route>
 
-            {/* Admin Only Routes */}
-            <Route element={<AdminRoute />}>
-              <Route path="/admin" element={<AdminMenu />} />
-              <Route path="/admin/kuis" element={<AdminKuis />} />
-              <Route path="/admin/change-password" element={<AdminChangePassword />} />
-              <Route path="/admin/access-control" element={<AdminAccessControl />} />
-              <Route path="/admin/enrollment" element={<AdminEnroll />} />
-              <Route path="/admin/diskusi" element={<AdminDiskusi />} />
-            </Route>
-          </Route>
-        </Route>
+            {/* Fallback route */}
+            <Route path="*" element={<Navigate to="/auth" replace />} />
+          </Routes>
+        </Router>
+      )}
 
-        {/* Fallback route */}
-        <Route path="*" element={<Navigate to="/auth" replace />} />
-      </Routes>
-    </Router>
+      {isVisible && (
+        <SplashScreen
+          isFading={isFading}
+          isInitializing={!initialized}
+          onSkip={initialized ? skip : undefined}
+        />
+      )}
+    </>
   );
 }
 
