@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 import { verifyEnrollCodeApi } from "../api/api";
 import { isAdmin } from "../utils/auth";
+import { useWalkthrough } from "../hooks/useWalkthrough";
 import MainMenuHeader from "../components/menu/MainMenuHeader";
 import MainMenuPromoCard from "../components/menu/MainMenuPromoCard";
 import MainMenuActivityList from "../components/menu/MainMenuActivityList";
@@ -10,6 +11,7 @@ import MainMenuStatsFooter from "../components/menu/MainMenuStatsFooter";
 import LogoutModal from "../components/menu/LogoutModal";
 import StatsDetailModal from "../components/menu/StatsDetailModal";
 import EnrollModal from "../components/menu/EnrollModal";
+import WalkthroughSpotlight from "../components/menu/WalkthroughSpotlight";
 
 interface MainMenuProps {
   onNavigate?: (menu: string) => void;
@@ -19,6 +21,23 @@ export default function MainMenu({ onNavigate }: MainMenuProps) {
   const navigate = useNavigate();
   const { user, logout, isEnrolled, enrollDeadline, setEnrolled } =
     useAuthStore();
+
+  const userIsAdmin = isAdmin(user);
+
+  const {
+    isOpen: isWalkthroughOpen,
+    currentStep: walkthroughStep,
+    steps: walkthroughSteps,
+    openWalkthrough,
+    closeWalkthrough,
+    nextStep: nextWalkthroughStep,
+    prevStep: prevWalkthroughStep,
+    setCurrentStep: setWalkthroughStep,
+  } = useWalkthrough({
+    userId: user?.id,
+    isAdmin: userIsAdmin,
+    isEnrolled: isEnrolled ?? false,
+  });
 
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [isEnrollModalOpen, setIsEnrollModalOpen] = useState(false);
@@ -121,7 +140,6 @@ export default function MainMenu({ onNavigate }: MainMenuProps) {
 
   const displayName = user.nama || user.email.split("@")[0];
   const displayStatus = user.status.toUpperCase();
-  const userIsAdmin = isAdmin(user);
 
   return (
     <div className="w-full min-h-screen bg-[#FAF9FF] flex justify-center items-center text-[#2C2B30] font-sans select-none overflow-hidden relative">
@@ -134,6 +152,7 @@ export default function MainMenu({ onNavigate }: MainMenuProps) {
           <MainMenuHeader
             displayName={displayName}
             onOpenLogout={() => setIsLogoutModalOpen(true)}
+            onOpenWalkthrough={openWalkthrough}
           />
 
           <MainMenuPromoCard
@@ -191,6 +210,16 @@ export default function MainMenu({ onNavigate }: MainMenuProps) {
           setEnrollError("");
         }}
         onEnroll={handleEnroll}
+      />
+
+      <WalkthroughSpotlight
+        isOpen={isWalkthroughOpen}
+        currentStep={walkthroughStep}
+        steps={walkthroughSteps}
+        onClose={closeWalkthrough}
+        onNext={nextWalkthroughStep}
+        onPrev={prevWalkthroughStep}
+        onSelectStep={setWalkthroughStep}
       />
     </div>
   );

@@ -12,7 +12,10 @@ export default function MainMenuPromoCard({
   kelas,
 }: MainMenuPromoCardProps) {
   return (
-    <div className="w-full bg-linear-to-br from-[#8C66FF] to-[#6039DF] text-white rounded-[28px] p-5 shadow-md relative overflow-hidden flex flex-col justify-between min-h-35">
+    <div
+      data-walkthrough="promo-card"
+      className="w-full bg-linear-to-br from-[#8C66FF] to-[#6039DF] text-white rounded-[28px] p-5 shadow-md relative overflow-hidden flex flex-col justify-between min-h-35"
+    >
       {/* Card Background elements */}
       <div className="absolute right-[-10%] top-[-25%] w-32.5 h-32.5 bg-white/10 rounded-full blur-md"></div>
       <div className="absolute right-[15%] bottom-[-20%] w-22.5 h-22.5 bg-white/5 rounded-full blur-sm"></div>

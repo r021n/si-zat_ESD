@@ -106,6 +106,7 @@ export default function MainMenuActivityList({
       {isEnrolled !== null && !isEnrolled && !userIsAdmin && (
         <button
           onClick={onOpenEnrollModal}
+          data-walkthrough="menu-enroll"
           className="w-full bg-linear-to-br from-[#FF5E8C] to-[#D95276] text-white rounded-3xl p-4 flex items-center justify-between shadow-[0_4px_12px_rgba(219,82,118,0.15)] border border-[#FF8FAD] cursor-pointer text-left transition-none mb-3"
         >
           <div className="flex items-center gap-4">
@@ -137,12 +138,19 @@ export default function MainMenuActivityList({
       )}
 
       <div className="w-full flex flex-col gap-3">
-        {menus.map((menu) => (
-          <button
-            key={menu.id}
-            onClick={() => onMenuClick(menu.id)}
-            className="w-full bg-white rounded-3xl p-4 flex items-center justify-between shadow-[0_4px_12px_rgba(0,0,0,0.02)] border border-[#F0EDFF] cursor-pointer text-left transition-none"
-          >
+        {menus.map((menu) => {
+          const walkthroughKey =
+            menu.id === "kuis/berpikir-sistem"
+              ? "menu-berpikir-sistem"
+              : `menu-${menu.id.replace("/", "-")}`;
+
+          return (
+            <button
+              key={menu.id}
+              onClick={() => onMenuClick(menu.id)}
+              data-walkthrough={walkthroughKey}
+              className="w-full bg-white rounded-3xl p-4 flex items-center justify-between shadow-[0_4px_12px_rgba(0,0,0,0.02)] border border-[#F0EDFF] cursor-pointer text-left transition-none"
+            >
             <div className="flex items-center gap-4">
               <div
                 className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-inner ${menu.bgIcon} ${menu.textIcon}`}
@@ -172,7 +180,8 @@ export default function MainMenuActivityList({
               />
             </svg>
           </button>
-        ))}
+          );
+        })}
       </div>
     </>
   );

@@ -1,13 +1,16 @@
+import { LuCircleHelp } from "react-icons/lu";
 import unsLogo from "../../assets/uns_logo.webp";
 
 interface MainMenuHeaderProps {
   displayName: string;
   onOpenLogout: () => void;
+  onOpenWalkthrough: () => void;
 }
 
 export default function MainMenuHeader({
   displayName,
   onOpenLogout,
+  onOpenWalkthrough,
 }: MainMenuHeaderProps) {
   return (
     <div className="w-full flex justify-between items-center mt-4 mb-4">
@@ -21,6 +24,17 @@ export default function MainMenuHeader({
       </div>
 
       <div className="flex items-center gap-2">
+        {/* Tombol Panduan Aplikasi (Walkthrough) */}
+        <button
+          onClick={onOpenWalkthrough}
+          data-walkthrough="help-button"
+          className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-[#F0EDFF] text-[#8C66FF] hover:bg-[#FAF9FF] cursor-pointer transition-none"
+          title="Panduan Aplikasi"
+          aria-label="Panduan Aplikasi"
+        >
+          <LuCircleHelp className="w-6 h-6" />
+        </button>
+
         {/* Logo UNS Card */}
         <div className="h-12 px-4 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-[#F0EDFF]">
           <img

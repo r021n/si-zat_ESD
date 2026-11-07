@@ -12,7 +12,10 @@ export default function MainMenuStatsFooter({
   onOpenStatsDetail,
 }: MainMenuStatsFooterProps) {
   return (
-    <div className="w-full mt-6 mb-2 bg-white rounded-3xl p-4 shadow-[0_4px_12px_rgba(0,0,0,0.02)] border border-[#F0EDFF] flex items-center justify-between">
+    <div
+      data-walkthrough="stats-footer"
+      className="w-full mt-6 mb-2 bg-white rounded-3xl p-4 shadow-[0_4px_12px_rgba(0,0,0,0.02)] border border-[#F0EDFF] flex items-center justify-between"
+    >
       <div
         className="flex-1 flex flex-col items-center border-r border-[#F0EDFF]/70 cursor-pointer"
         onClick={() => onOpenStatsDetail("openCount")}
