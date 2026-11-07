@@ -72,7 +72,7 @@ export default function AirMetricsPanel({
               AQI
             </span>
             <span className="text-[7px] text-slate-400 font-bold tracking-tight text-center">
-              Indeks
+              Indeks Kualitas Udara
             </span>
           </div>
 
@@ -96,7 +96,7 @@ export default function AirMetricsPanel({
               PM 2.5
             </span>
             <span className="text-[7px] text-slate-400 font-bold tracking-tight text-center">
-              µg/m³
+              Debu Halus (µg/m³)
             </span>
           </div>
 
@@ -120,7 +120,7 @@ export default function AirMetricsPanel({
               CO₂
             </span>
             <span className="text-[7px] text-slate-400 font-bold tracking-tight text-center">
-              ppm
+              Karbon Dioksisa (ppm)
             </span>
           </div>
 
@@ -144,7 +144,7 @@ export default function AirMetricsPanel({
               CO
             </span>
             <span className="text-[7px] text-slate-400 font-bold tracking-tight text-center">
-              ppm
+              Karbon Monoksida (ppm)
             </span>
           </div>
 
@@ -168,7 +168,7 @@ export default function AirMetricsPanel({
               O₂
             </span>
             <span className="text-[7px] text-slate-400 font-bold tracking-tight text-center">
-              Kadar %
+              Oksigen
             </span>
           </div>
         </div>

@@ -135,7 +135,7 @@ export default function AirHUD({
 
         <div className="p-1 bg-slate-50 rounded border border-slate-100 flex flex-col justify-center items-center min-h-10.5">
           <span className="block text-[8px] text-slate-400 uppercase font-bold leading-none mb-0.5">
-            Status Toksisitas
+            Tingkat Toksisitas
           </span>
           <div className="leading-[1.15] text-center w-full">
             <span ref={txtToksikRef} className="text-[10px] font-bold text-emerald-600">

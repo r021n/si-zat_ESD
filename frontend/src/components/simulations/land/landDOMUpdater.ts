@@ -109,13 +109,13 @@ export function updateLandDOMMeters(
 
   if (refs.txtPanenRef.current) {
     if (state.yield > 75) {
-      refs.txtPanenRef.current.innerText = "Sangat Banyak";
+      refs.txtPanenRef.current.innerText = "Ideal";
       refs.txtPanenRef.current.className = "text-[10px] font-bold text-emerald-600";
     } else if (state.yield > 35) {
-      refs.txtPanenRef.current.innerText = "Sedikit";
+      refs.txtPanenRef.current.innerText = "Menurun";
       refs.txtPanenRef.current.className = "text-[10px] font-bold text-amber-500";
     } else if (state.yield > 2) {
-      refs.txtPanenRef.current.innerText = "Hampir Gagal";
+      refs.txtPanenRef.current.innerText = "Sangat Sedikit";
       refs.txtPanenRef.current.className = "text-[10px] font-bold text-rose-400";
     } else {
       refs.txtPanenRef.current.innerText = "Gagal Panen";
@@ -133,7 +133,7 @@ export function updateLandDOMMeters(
       refs.tanahStatusBadgeRef.current.className =
         "px-2 py-0.5 rounded-full text-[9px] font-bold border flex items-center gap-1 bg-amber-100 text-amber-700 border-amber-200";
     } else {
-      refs.tanahStatusBadgeRef.current.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span> Krisis Rusak`;
+      refs.tanahStatusBadgeRef.current.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span> Kritis`;
       refs.tanahStatusBadgeRef.current.className =
         "px-2 py-0.5 rounded-full text-[9px] font-bold border flex items-center gap-1 bg-red-100 text-red-700 border-red-200";
     }

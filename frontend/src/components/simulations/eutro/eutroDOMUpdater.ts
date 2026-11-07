@@ -112,11 +112,11 @@ export function updateEutroDOMMeters(
 
   if (refs.airStatusBadgeRef.current) {
     if (state.algae < 15 && state.DO > 6.5) {
-      refs.airStatusBadgeRef.current.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span> Oligotrofik (Sangat Sehat)`;
+      refs.airStatusBadgeRef.current.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span> Oligotrofik (Miskin Nutrien)`;
       refs.airStatusBadgeRef.current.className =
         "px-2.5 py-0.5 rounded-full text-[9px] font-bold border flex items-center gap-1 bg-blue-50 text-blue-700 border-blue-200";
     } else if (state.algae < 50 && state.DO > 4.5) {
-      refs.airStatusBadgeRef.current.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-yellow-500 animate-pulse"></span> Mesotrofik (Sedang)`;
+      refs.airStatusBadgeRef.current.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-yellow-500 animate-pulse"></span> Mesotrofik (Nutrien Sedang)`;
       refs.airStatusBadgeRef.current.className =
         "px-2.5 py-0.5 rounded-full text-[9px] font-bold border flex items-center gap-1 bg-yellow-50 text-yellow-700 border-yellow-200";
     } else if (state.DO > 2.5) {
@@ -124,7 +124,7 @@ export function updateEutroDOMMeters(
       refs.airStatusBadgeRef.current.className =
         "px-2.5 py-0.5 rounded-full text-[9px] font-bold border flex items-center gap-1 bg-orange-50 text-orange-700 border-orange-200";
     } else {
-      refs.airStatusBadgeRef.current.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-red-600 animate-pulse"></span> Hipertrofik (Kritis/Anoksia)`;
+      refs.airStatusBadgeRef.current.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-red-600 animate-pulse"></span> Hipertrofik (Nutrien Sangat Tinggi)`;
       refs.airStatusBadgeRef.current.className =
         "px-2.5 py-0.5 rounded-full text-[9px] font-bold border flex items-center gap-1 bg-red-100 text-red-700 border-red-300";
     }

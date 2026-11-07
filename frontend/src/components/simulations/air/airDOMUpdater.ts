@@ -104,28 +104,46 @@ export function updateAirDOMMeters(
   }
 
   if (refs.txtPerilakuRef.current) {
-    if (coughingWarga === 0) {
-      refs.txtPerilakuRef.current.innerText = "Normal Sehat";
-      refs.txtPerilakuRef.current.className = "text-[10px] font-bold text-emerald-600";
-    } else if (state.AQI > 250) {
-      refs.txtPerilakuRef.current.innerText = "Banyak Batuk!";
-      refs.txtPerilakuRef.current.className = "text-[10px] font-bold text-red-600 animate-bounce";
+    if (state.AQI >= 150) {
+      if (coughingWarga > 0) {
+        refs.txtPerilakuRef.current.innerText = "Banyak Batuk!";
+        refs.txtPerilakuRef.current.className = "text-[10px] font-bold text-red-600 animate-bounce";
+      } else {
+        refs.txtPerilakuRef.current.innerText = "Berisiko Tinggi";
+        refs.txtPerilakuRef.current.className = "text-[10px] font-bold text-red-600 animate-pulse";
+      }
+    } else if (state.AQI >= 50) {
+      if (coughingWarga > 0) {
+        refs.txtPerilakuRef.current.innerText = "Batuk Ringan";
+        refs.txtPerilakuRef.current.className = "text-[10px] font-bold text-amber-500";
+      } else {
+        refs.txtPerilakuRef.current.innerText = "Mulai Rentan";
+        refs.txtPerilakuRef.current.className = "text-[10px] font-bold text-amber-500";
+      }
     } else {
-      refs.txtPerilakuRef.current.innerText = "Batuk Ringan";
-      refs.txtPerilakuRef.current.className = "text-[10px] font-bold text-amber-500";
+      if (coughingWarga > 0) {
+        refs.txtPerilakuRef.current.innerText = "Batuk Ringan";
+        refs.txtPerilakuRef.current.className = "text-[10px] font-bold text-amber-500";
+      } else {
+        refs.txtPerilakuRef.current.innerText = "Normal Sehat";
+        refs.txtPerilakuRef.current.className = "text-[10px] font-bold text-emerald-600";
+      }
     }
   }
 
   if (refs.txtToksikRef.current) {
-    if (state.AQI < 100) {
+    if (state.AQI < 50) {
       refs.txtToksikRef.current.innerText = "Aman";
       refs.txtToksikRef.current.className = "text-[10px] font-bold text-emerald-600";
-    } else if (state.AQI < 200) {
-      refs.txtToksikRef.current.innerText = "Waspada Masker";
+    } else if (state.AQI < 150) {
+      refs.txtToksikRef.current.innerText = "Waspada";
       refs.txtToksikRef.current.className = "text-[10px] font-bold text-amber-500 font-extrabold";
+    } else if (state.AQI < 250) {
+      refs.txtToksikRef.current.innerText = "Berbahaya";
+      refs.txtToksikRef.current.className = "text-[10px] font-bold text-rose-600 font-extrabold";
     } else {
-      refs.txtToksikRef.current.innerText = "Evakuasi Medis!";
-      refs.txtToksikRef.current.className = "text-[10px] font-bold text-red-500 font-black animate-pulse";
+      refs.txtToksikRef.current.innerText = "Sangat Berbahaya";
+      refs.txtToksikRef.current.className = "text-[10px] font-bold text-red-600 font-black animate-pulse";
     }
   }
 

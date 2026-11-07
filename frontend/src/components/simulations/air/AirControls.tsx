@@ -80,7 +80,7 @@ export default function AirControls({
         <div className="bg-slate-50 p-2 rounded-lg border border-slate-100 space-y-1">
           <div className="flex justify-between items-center text-[10px]">
             <span className="font-bold text-slate-500 flex items-center gap-1">
-              <FaSmog className="text-slate-600" /> Kepekatan Emisi
+              <FaSmog className="text-slate-600" /> Beban Emisi
             </span>
             <span className="font-mono font-bold text-slate-700">
               {slideAsap === 1 ? "Sedikit" : slideAsap === 2 ? "Sedang" : "Pekat"}

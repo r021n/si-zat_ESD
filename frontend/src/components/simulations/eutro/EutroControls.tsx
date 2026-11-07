@@ -34,7 +34,7 @@ export default function EutroControls({
         <div className="bg-slate-50 p-2 rounded-lg border border-slate-100 space-y-1">
           <div className="flex justify-between items-center text-[10px]">
             <span className="font-bold text-slate-600 flex items-center gap-1">
-              <FaWheatAwn className="text-emerald-600" /> Dosis Pupuk (N & P)
+              <FaWheatAwn className="text-emerald-600" /> Dosis Pupuk (Nitrogen & Fosfor)
             </span>
             <span className="font-mono font-bold text-emerald-700">
               {inputPupuk === 1 ? "Rendah" : inputPupuk === 2 ? "Sedang" : "Tinggi (Excess)"}
@@ -55,7 +55,7 @@ export default function EutroControls({
         <div className="bg-slate-50 p-2 rounded-lg border border-slate-100 space-y-1">
           <div className="flex justify-between items-center text-[10px]">
             <span className="font-bold text-sky-600 flex items-center gap-1">
-              <FaCloudRain /> Curah Hujan (Limpasan)
+              <FaCloudRain /> Curah Hujan (Aliran Permukaan)
             </span>
             <span className="font-mono font-bold text-sky-600">
               {inputHujan === 1 ? "Kering" : inputHujan === 2 ? "Gerimis" : "Lebat (Banjir)"}

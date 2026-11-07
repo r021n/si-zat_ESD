@@ -72,7 +72,7 @@ export default function LandMetricsPanel({
               pH Tanah
             </span>
             <span className="text-[7px] text-slate-400 font-bold tracking-tight text-center">
-              Netral (7)
+              pH Netral : 7
             </span>
           </div>
 
@@ -96,7 +96,7 @@ export default function LandMetricsPanel({
               Kesuburan Tanah
             </span>
             <span className="text-[7px] text-slate-400 font-bold tracking-tight text-center">
-              Subur
+              Unsur Hara
             </span>
           </div>
 
@@ -120,7 +120,7 @@ export default function LandMetricsPanel({
               Kondisi Akar
             </span>
             <span className="text-[7px] text-slate-400 font-bold tracking-tight text-center">
-              Akar
+              Daya Serap
             </span>
           </div>
 
@@ -144,7 +144,7 @@ export default function LandMetricsPanel({
               Tingkat Racun
             </span>
             <span className="text-[7px] text-slate-400 font-bold tracking-tight text-center">
-              Racun
+              Zat Toksik
             </span>
           </div>
 
@@ -168,7 +168,7 @@ export default function LandMetricsPanel({
               Hasil Panen
             </span>
             <span className="text-[7px] text-slate-400 font-bold tracking-tight text-center">
-              Panen
+              Hasil Tanaman
             </span>
           </div>
         </div>

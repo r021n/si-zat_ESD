@@ -53,7 +53,7 @@ export default function LandControls({
                   : "text-slate-600 hover:bg-white/50"
               }`}
             >
-              <FaTrashCan className="text-[9px]" /> Non-Organik
+              <FaTrashCan className="text-[9px]" /> Anorganik
             </button>
           </div>
         </div>
@@ -87,7 +87,7 @@ export default function LandControls({
           <div className="space-y-0.5">
             <div className="flex justify-between text-[10px] text-slate-400">
               <span>Jumlah Sampah</span>
-              <span className="font-mono font-bold">{jumlahSampah}%</span>
+              <span className="font-mono font-bold">{jumlahSampah} kg/hari</span>
             </div>
             <input
               type="range"

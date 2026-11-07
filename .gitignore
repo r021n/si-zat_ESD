@@ -121,6 +121,7 @@ Desktop.ini
 .LSOverride
 
 # IDEs
+.agents/
 .vscode/
 !.vscode/extensions.json
 !.vscode/launch.json

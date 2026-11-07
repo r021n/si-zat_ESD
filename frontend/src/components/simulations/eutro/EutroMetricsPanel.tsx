@@ -68,7 +68,7 @@ export default function EutroMetricsPanel({
               Nutrien N&P
             </span>
             <span className="text-[7px] text-slate-400 font-bold tracking-tight text-center">
-              Penyubur
+              Kadar Nitrogen & Fosfor
             </span>
           </div>
 
@@ -92,7 +92,7 @@ export default function EutroMetricsPanel({
               Populasi Alga
             </span>
             <span className="text-[7px] text-slate-400 font-bold tracking-tight text-center">
-              Densitas
+              Kepadatan Alga
             </span>
           </div>
 
@@ -116,7 +116,7 @@ export default function EutroMetricsPanel({
               Oksigen (DO)
             </span>
             <span className="text-[7px] text-slate-400 font-bold tracking-tight text-center">
-              Terlarut
+              Oksigen Terlarut
             </span>
           </div>
 
@@ -140,7 +140,7 @@ export default function EutroMetricsPanel({
               Kadar BOD
             </span>
             <span className="text-[7px] text-slate-400 font-bold tracking-tight text-center">
-              Beban Organik
+              Kebutuhan Oksigen Penguraian
             </span>
           </div>
         </div>
