@@ -11,6 +11,11 @@ describe("appInfo configuration", () => {
       assert.ok(APP_INFO.version.startsWith("v"));
     });
 
+    test("uses the canonical brand expansion", () => {
+      assert.strictEqual(APP_INFO.tagline, "Simulator Zat berbasis ESD");
+      assert.ok(APP_INFO.researchTitle.includes("(Simulator Zat berbasis ESD)"));
+    });
+
     test("contains research title and developers", () => {
       assert.ok(APP_INFO.researchTitle.length > 0);
       assert.ok(Array.isArray(APP_INFO.developers));

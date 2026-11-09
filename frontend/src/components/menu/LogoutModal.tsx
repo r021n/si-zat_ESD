@@ -1,3 +1,5 @@
+import { APP_INFO } from "../../config/appInfo";
+
 interface LogoutModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -19,7 +21,7 @@ export default function LogoutModal({
             Keluar Sesi
           </h3>
           <p className="text-xs text-[#9C98A6] font-medium mt-2 leading-relaxed">
-            Apakah Anda yakin ingin keluar dari aplikasi SiZat-ESD?
+            Apakah Anda yakin ingin keluar dari aplikasi {APP_INFO.name} ({APP_INFO.tagline})?
           </p>
         </div>
         <div className="flex gap-2.5 mt-2">

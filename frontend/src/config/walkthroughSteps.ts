@@ -1,3 +1,5 @@
+import { APP_INFO } from './appInfo.ts';
+
 export type WalkthroughStepId =
   | 'promo-card'
   | 'menu-enroll'
@@ -63,7 +65,7 @@ export function getWalkthroughSteps(isAdmin: boolean, isEnrolled = false): Walkt
     targetSelector: '[data-walkthrough="promo-card"]',
     title: isAdmin ? 'Profil & Hak Akses' : 'Profil & Status Siswa',
     description: isAdmin
-      ? 'Menampilkan identitas dan peran Anda sebagai Administrator / Guru di portal SiZat-ESD.'
+      ? `Menampilkan identitas dan peran Anda sebagai Administrator / Guru di portal ${APP_INFO.name} (${APP_INFO.tagline}).`
       : 'Menampilkan identitas, kelas, dan status aktivasi keanggotaan Anda di portal belajar.',
     tip: isAdmin ? 'Hak akses penuh ke seluruh modul' : 'Pastikan identitas kelas sudah sesuai',
     preferredPosition: 'bottom',
@@ -150,7 +152,7 @@ export function getWalkthroughSteps(isAdmin: boolean, isEnrolled = false): Walkt
       targetSelector: '[data-walkthrough="menu-profil-pengembang"]',
       title: 'Profil Pengembang',
       description:
-        'Informasi pengembang media pembelajaran interaktif SiZat-ESD dari Universitas Sebelas Maret (UNS).',
+        `Informasi pengembang media pembelajaran interaktif ${APP_INFO.name} (${APP_INFO.tagline}) dari Universitas Sebelas Maret (UNS).`,
       tip: 'Kenali tim pengembang di balik media belajar ini',
       preferredPosition: 'top',
     }

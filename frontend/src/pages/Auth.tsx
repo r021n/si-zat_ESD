@@ -8,6 +8,7 @@ import { Capacitor } from "@capacitor/core";
 import { FcGoogle } from "react-icons/fc";
 import GoogleClassModal from "../components/auth/GoogleClassModal";
 import { useGoogleAuth } from "../components/auth/useGoogleAuth";
+import { APP_INFO } from "../config/appInfo";
 
 export default function Auth() {
   const [mode, setMode] = useState<"login" | "register">("login");
@@ -53,8 +54,11 @@ export default function Auth() {
                 Media Pembelajaran
               </p>
               <h1 className="text-2xl font-black text-white leading-tight mt-0.5 tracking-wide">
-                SiZat-ESD
+                {APP_INFO.name}
               </h1>
+              <p className="text-[10px] font-semibold tracking-wide text-white/55 mt-1">
+                {APP_INFO.tagline}
+              </p>
             </div>
             {/* Logo UNS Card */}
             <div className="h-10 px-3 bg-white rounded-xl flex items-center justify-center shadow-sm border border-[#F0EDFF]">

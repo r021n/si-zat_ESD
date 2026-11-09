@@ -1,4 +1,5 @@
 import { LuGraduationCap } from "react-icons/lu";
+import { APP_INFO } from "../../config/appInfo";
 
 interface MainMenuPromoCardProps {
   email: string;
@@ -23,7 +24,10 @@ export default function MainMenuPromoCard({
 
       <div>
         <p className="text-[10px] text-purple-200 uppercase tracking-widest font-extrabold">
-          SiZat-ESD Portal
+          {APP_INFO.name} Portal
+        </p>
+        <p className="text-[9px] text-purple-200/90 font-semibold tracking-wide mt-0.5">
+          {APP_INFO.tagline}
         </p>
         <h2 className="text-lg font-black text-white leading-tight mt-1 truncate">
           Media Belajar Mandiri

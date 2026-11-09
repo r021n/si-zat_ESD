@@ -6,6 +6,7 @@ import { FiArrowLeft } from "react-icons/fi";
 import { useAppBack } from "../hooks/useAppBack";
 import pengembangImg from "../assets/pengembang.jpeg";
 import unsLogo from "../assets/uns_logo.webp";
+import { APP_INFO } from "../config/appInfo";
 
 export default function ProfilPengembang() {
   const navigate = useNavigate();
@@ -131,15 +132,20 @@ export default function ProfilPengembang() {
               <div className="w-8 h-8 rounded-lg bg-[#FFF4EB] text-[#FF9D42] flex items-center justify-center">
                 <LuAward className="w-4 h-4" />
               </div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-[#9C98A6]">
-                Tentang SiZat-ESD
-              </p>
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-[#9C98A6]">
+                  Tentang {APP_INFO.name}
+                </p>
+                <p className="text-[9px] font-bold text-[#9C98A6] mt-0.5">
+                  {APP_INFO.tagline}
+                </p>
+              </div>
             </div>
 
             <p className="text-xs text-[#555555] font-medium leading-relaxed">
-              SiZat-ESD merupakan media pembelajaran interaktif berbasis web
-              yang dikembangkan untuk mendukung pembelajaran mandiri mengenai
-              konsep pencemaran lingkungan.
+              Media pembelajaran interaktif berbasis web ini dikembangkan untuk
+              mendukung pembelajaran mandiri mengenai konsep pencemaran
+              lingkungan.
             </p>
           </div>
         </div>

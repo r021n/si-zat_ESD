@@ -2,7 +2,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.sizat.esd',
-  appName: 'SiZat-ESD',
+  appName: 'SiZat-ESD — Simulator Zat berbasis ESD',
   webDir: 'dist',
   server: {
     androidScheme: 'https'

@@ -12,6 +12,7 @@ import LogoutModal from "../components/menu/LogoutModal";
 import StatsDetailModal from "../components/menu/StatsDetailModal";
 import EnrollModal from "../components/menu/EnrollModal";
 import WalkthroughSpotlight from "../components/menu/WalkthroughSpotlight";
+import { APP_INFO } from "../config/appInfo";
 
 interface MainMenuProps {
   onNavigate?: (menu: string) => void;
@@ -121,7 +122,7 @@ export default function MainMenu({ onNavigate }: MainMenuProps) {
       setStatsDetailModal({
         isOpen: true,
         title: "Detail Kunjungan",
-        message: `Aplikasi SiZat-ESD ini telah dibuka sebanyak ${
+        message: `Aplikasi ${APP_INFO.name} (${APP_INFO.tagline}) telah dibuka sebanyak ${
           user.openCount ?? 0
         } kali oleh akun Anda.`,
       });

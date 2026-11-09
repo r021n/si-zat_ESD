@@ -27,7 +27,7 @@ export default function SplashScreen({
 
   return (
     <section
-      aria-label="Layar pembuka SiZat-ESD"
+      aria-label={`Layar pembuka ${APP_INFO.name}, ${APP_INFO.tagline}`}
       onClick={canStart ? handleStart : undefined}
       className={`fixed inset-0 z-50 overflow-y-auto bg-brand-bg transition-opacity ease-out motion-reduce:transition-none ${
         isFading ? "pointer-events-none opacity-0" : "opacity-100"

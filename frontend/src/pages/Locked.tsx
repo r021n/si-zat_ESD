@@ -4,6 +4,7 @@ import { useAuthStore } from "../store/authStore";
 import { getAccessStatusApi } from "../api/api";
 import { LuLock, LuRefreshCw, LuLogOut } from "react-icons/lu";
 import { isAdmin } from "../utils/auth";
+import { APP_INFO } from "../config/appInfo";
 
 export default function Locked() {
   const navigate = useNavigate();
@@ -108,7 +109,7 @@ export default function Locked() {
         {/* Footer */}
         <div>
           <p className="text-[10px] text-[#9C98A6] font-semibold tracking-wide uppercase">
-            Sistem Informasi Zat Interaktif (SiZat-ESD)
+            {APP_INFO.name} · {APP_INFO.tagline}
           </p>
         </div>
       </div>

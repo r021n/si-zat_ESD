@@ -5,6 +5,7 @@ import { verifyEnrollCodeApi } from "../api/api";
 import { LuKeyRound, LuLogOut, LuCircleCheck } from "react-icons/lu";
 import { isAdmin } from "../utils/auth";
 import { formatDateIndo } from "../utils/date";
+import { APP_INFO } from "../config/appInfo";
 
 export default function EnrollPage() {
   const navigate = useNavigate();
@@ -189,7 +190,7 @@ export default function EnrollPage() {
 
         <div>
           <p className="text-[10px] text-[#9C98A6] font-semibold tracking-wide uppercase">
-            Sistem Informasi Zat Interaktif (SiZat-ESD)
+            {APP_INFO.name} · {APP_INFO.tagline}
           </p>
         </div>
       </div>
