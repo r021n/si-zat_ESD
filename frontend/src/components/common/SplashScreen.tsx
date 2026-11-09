@@ -25,7 +25,15 @@ export default function SplashScreen({
   return (
     <aside
       aria-label="Layar pembuka SiZat-ESD"
+      role={!isInitializing && onSkip ? "button" : undefined}
+      tabIndex={!isInitializing && onSkip ? 0 : -1}
       onClick={!isInitializing && onSkip ? onSkip : undefined}
+      onKeyDown={(e) => {
+        if (!isInitializing && onSkip && (e.key === "Enter" || e.key === " ")) {
+          e.preventDefault();
+          onSkip();
+        }
+      }}
       className={`fixed inset-0 z-50 flex justify-center items-center select-none overflow-hidden bg-[#FAF9FF] transition-opacity duration-300 ease-out ${
         isFading ? "opacity-0 pointer-events-none" : "opacity-100"
       } ${!isInitializing && onSkip ? "cursor-pointer" : ""}`}

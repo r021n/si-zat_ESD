@@ -12,17 +12,23 @@ class SplashScreenStateMachine {
   private startTime: number;
   private minDuration: number;
   private fadeDuration: number;
+  private autoDismiss: boolean;
   private timeoutId: ReturnType<typeof setTimeout> | null = null;
   private fadeTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
-  constructor(minDuration = APP_INFO.minSplashDurationMs, fadeDuration = APP_INFO.fadeDurationMs) {
+  constructor(
+    minDuration = APP_INFO.minSplashDurationMs,
+    fadeDuration = APP_INFO.fadeDurationMs,
+    autoDismiss = false,
+  ) {
     this.startTime = Date.now();
     this.minDuration = minDuration;
     this.fadeDuration = fadeDuration;
+    this.autoDismiss = autoDismiss;
   }
 
   setReady(currentTime: number, onComplete?: () => void): void {
-    if (!this.isVisible || this.isFading) return;
+    if (!this.autoDismiss || !this.isVisible || this.isFading) return;
 
     const remaining = calculateRemainingSplashTime(this.startTime, currentTime, this.minDuration);
     this.timeoutId = setTimeout(() => {
@@ -87,8 +93,21 @@ describe("SplashScreen State Machine Logic", () => {
     });
   });
 
-  test("transitions automatically when setReady is called", (t, done) => {
-    const sm = new SplashScreenStateMachine(30, 20);
+  test("does not automatically transition when autoDismiss is false (default)", (t, done) => {
+    const sm = new SplashScreenStateMachine(30, 20, false);
+    sm.setReady(Date.now(), () => {
+      assert.fail("Should not automatically transition when autoDismiss is false");
+    });
+    setTimeout(() => {
+      assert.strictEqual(sm.isVisible, true);
+      assert.strictEqual(sm.isFading, false);
+      sm.cleanup();
+      done();
+    }, 60);
+  });
+
+  test("transitions automatically when autoDismiss is true and setReady is called", (t, done) => {
+    const sm = new SplashScreenStateMachine(30, 20, true);
     sm.setReady(Date.now(), () => {
       assert.strictEqual(sm.isVisible, false);
       assert.strictEqual(sm.isFading, false);

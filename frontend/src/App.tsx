@@ -54,7 +54,10 @@ function AppListeners() {
 
 function AppContent() {
   const { checkAuth, initialized } = useAuthStore();
-  const { isVisible, isFading, skip } = useSplashScreen({ isReady: initialized });
+  const { isVisible, isFading, skip } = useSplashScreen({
+    isReady: initialized,
+    autoDismiss: false,
+  });
 
   useEffect(() => {
     checkAuth();

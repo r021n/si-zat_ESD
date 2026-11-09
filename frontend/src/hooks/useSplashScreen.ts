@@ -7,6 +7,7 @@ export interface UseSplashScreenOptions {
   isReady: boolean;
   minDurationMs?: number;
   fadeDurationMs?: number;
+  autoDismiss?: boolean;
 }
 
 export interface UseSplashScreenResult {
@@ -19,6 +20,7 @@ export function useSplashScreen({
   isReady,
   minDurationMs = APP_INFO.minSplashDurationMs,
   fadeDurationMs = APP_INFO.fadeDurationMs,
+  autoDismiss = false,
 }: UseSplashScreenOptions): UseSplashScreenResult {
   const [isVisible, setIsVisible] = useState(true);
   const [isFading, setIsFading] = useState(false);
@@ -44,9 +46,9 @@ export function useSplashScreen({
     }, fadeDurationMs);
   }, [fadeDurationMs]);
 
-  // When readiness condition is satisfied, wait for remaining duration then fade out
+  // When autoDismiss is enabled and readiness condition is satisfied, wait for remaining duration then fade out
   useEffect(() => {
-    if (!isReady || !isVisible || isFading) return;
+    if (!autoDismiss || !isReady || !isVisible || isFading) return;
 
     const remainingTime = calculateRemainingSplashTime(
       startTimeRef.current,
@@ -63,7 +65,7 @@ export function useSplashScreen({
         clearTimeout(timerRef.current);
       }
     };
-  }, [isReady, isVisible, isFading, minDurationMs, triggerExit]);
+  }, [autoDismiss, isReady, isVisible, isFading, minDurationMs, triggerExit]);
 
   // Clean up all timers on unmount
   useEffect(() => {
