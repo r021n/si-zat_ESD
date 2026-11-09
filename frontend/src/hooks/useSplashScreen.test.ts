@@ -1,6 +1,6 @@
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
-import { calculateRemainingSplashTime, APP_INFO } from "../config/appInfo.ts";
+import { APP_INFO } from "../config/appInfo.ts";
 
 /**
  * Pure simulation of useSplashScreen state machine logic for unit testing
@@ -9,65 +9,61 @@ import { calculateRemainingSplashTime, APP_INFO } from "../config/appInfo.ts";
 class SplashScreenStateMachine {
   isVisible = true;
   isFading = false;
-  private startTime: number;
-  private minDuration: number;
+  isStalled = false;
   private fadeDuration: number;
-  private autoDismiss: boolean;
-  private timeoutId: ReturnType<typeof setTimeout> | null = null;
+  private stallTimeout: number;
   private fadeTimeoutId: ReturnType<typeof setTimeout> | null = null;
+  private stallTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
   constructor(
-    minDuration = APP_INFO.minSplashDurationMs,
     fadeDuration = APP_INFO.fadeDurationMs,
-    autoDismiss = false,
+    stallTimeout = 8000,
   ) {
-    this.startTime = Date.now();
-    this.minDuration = minDuration;
     this.fadeDuration = fadeDuration;
-    this.autoDismiss = autoDismiss;
+    this.stallTimeout = stallTimeout;
   }
 
-  setReady(currentTime: number, onComplete?: () => void): void {
-    if (!this.autoDismiss || !this.isVisible || this.isFading) return;
-
-    const remaining = calculateRemainingSplashTime(this.startTime, currentTime, this.minDuration);
-    this.timeoutId = setTimeout(() => {
-      this.triggerExit(onComplete);
-    }, remaining);
+  startStallTimer(): void {
+    this.stallTimeoutId = setTimeout(() => {
+      this.isStalled = true;
+    }, this.stallTimeout);
   }
 
-  triggerExit(onComplete?: () => void): void {
+  markReady(): void {
+    if (this.stallTimeoutId) clearTimeout(this.stallTimeoutId);
+  }
+
+  triggerExit(): void {
     this.isFading = true;
     this.fadeTimeoutId = setTimeout(() => {
       this.isVisible = false;
       this.isFading = false;
-      if (onComplete) onComplete();
     }, this.fadeDuration);
   }
 
-  skip(isReady: boolean, onComplete?: () => void): boolean {
+  skip(isReady: boolean): boolean {
     if (!this.isVisible || this.isFading || !isReady) return false;
-    if (this.timeoutId) clearTimeout(this.timeoutId);
-    this.triggerExit(onComplete);
+    this.triggerExit();
     return true;
   }
 
   cleanup(): void {
-    if (this.timeoutId) clearTimeout(this.timeoutId);
     if (this.fadeTimeoutId) clearTimeout(this.fadeTimeoutId);
+    if (this.stallTimeoutId) clearTimeout(this.stallTimeoutId);
   }
 }
 
 describe("SplashScreen State Machine Logic", () => {
-  test("initializes with isVisible true and isFading false", () => {
-    const sm = new SplashScreenStateMachine(2000, 300);
+  test("initializes with isVisible true, isFading false, and isStalled false", () => {
+    const sm = new SplashScreenStateMachine(2000, 30);
     assert.strictEqual(sm.isVisible, true);
     assert.strictEqual(sm.isFading, false);
+    assert.strictEqual(sm.isStalled, false);
     sm.cleanup();
   });
 
   test("does not allow skip before app is ready", () => {
-    const sm = new SplashScreenStateMachine(2000, 300);
+    const sm = new SplashScreenStateMachine(2000, 30);
     const skipped = sm.skip(false);
     assert.strictEqual(skipped, false);
     assert.strictEqual(sm.isVisible, true);
@@ -76,7 +72,7 @@ describe("SplashScreen State Machine Logic", () => {
   });
 
   test("allows skip when app is ready and immediately starts fading", () => {
-    const sm = new SplashScreenStateMachine(2000, 300);
+    const sm = new SplashScreenStateMachine(2000, 30);
     const skipped = sm.skip(true);
     assert.strictEqual(skipped, true);
     assert.strictEqual(sm.isFading, true);
@@ -85,33 +81,47 @@ describe("SplashScreen State Machine Logic", () => {
   });
 
   test("completes fade out and hides after fadeDuration", (t, done) => {
-    const sm = new SplashScreenStateMachine(100, 50);
-    sm.skip(true, () => {
+    const sm = new SplashScreenStateMachine(50, 30);
+    sm.skip(true);
+    setTimeout(() => {
       assert.strictEqual(sm.isVisible, false);
       assert.strictEqual(sm.isFading, false);
+      sm.cleanup();
       done();
-    });
+    }, 80);
   });
 
-  test("does not automatically transition when autoDismiss is false (default)", (t, done) => {
-    const sm = new SplashScreenStateMachine(30, 20, false);
-    sm.setReady(Date.now(), () => {
-      assert.fail("Should not automatically transition when autoDismiss is false");
-    });
+  test("does not dismiss automatically when the app is ready", (t, done) => {
+    const sm = new SplashScreenStateMachine(20, 30);
+    sm.startStallTimer();
+    sm.markReady();
     setTimeout(() => {
       assert.strictEqual(sm.isVisible, true);
       assert.strictEqual(sm.isFading, false);
+      assert.strictEqual(sm.isStalled, false);
       sm.cleanup();
       done();
     }, 60);
   });
 
-  test("transitions automatically when autoDismiss is true and setReady is called", (t, done) => {
-    const sm = new SplashScreenStateMachine(30, 20, true);
-    sm.setReady(Date.now(), () => {
-      assert.strictEqual(sm.isVisible, false);
-      assert.strictEqual(sm.isFading, false);
+  test("marks the screen as stalled when initialization exceeds the timeout", (t, done) => {
+    const sm = new SplashScreenStateMachine(20, 30);
+    sm.startStallTimer();
+    setTimeout(() => {
+      assert.strictEqual(sm.isStalled, true);
+      assert.strictEqual(sm.isVisible, true);
+      sm.cleanup();
       done();
-    });
+    }, 60);
+  });
+
+  test("cleanup cancels a pending fade timer", (t, done) => {
+    const sm = new SplashScreenStateMachine(20, 30);
+    sm.skip(true);
+    sm.cleanup();
+    setTimeout(() => {
+      assert.strictEqual(sm.isVisible, true);
+      done();
+    }, 50);
   });
 });

@@ -54,9 +54,8 @@ function AppListeners() {
 
 function AppContent() {
   const { checkAuth, initialized } = useAuthStore();
-  const { isVisible, isFading, skip } = useSplashScreen({
+  const { isVisible, isFading, isStalled, skip } = useSplashScreen({
     isReady: initialized,
-    autoDismiss: false,
   });
 
   useEffect(() => {
@@ -119,7 +118,9 @@ function AppContent() {
         <SplashScreen
           isFading={isFading}
           isInitializing={!initialized}
+          isStalled={isStalled}
           onSkip={initialized ? skip : undefined}
+          onRetry={checkAuth}
         />
       )}
     </>

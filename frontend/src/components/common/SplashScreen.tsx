@@ -1,137 +1,159 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import unsLogo from "../../assets/uns_logo.webp";
 import { APP_INFO } from "../../config/appInfo";
+
+const [WORDMARK_BASE, WORDMARK_ACCENT] = APP_INFO.name.split("-");
 
 interface SplashScreenProps {
   isFading?: boolean;
   isInitializing?: boolean;
+  isStalled?: boolean;
   onSkip?: () => void;
+  onRetry?: () => void;
 }
 
 export default function SplashScreen({
   isFading = false,
   isInitializing = false,
+  isStalled = false,
   onSkip,
+  onRetry,
 }: SplashScreenProps): React.JSX.Element {
-  const [progress, setProgress] = useState(15);
+  const canStart = !isInitializing && Boolean(onSkip);
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setProgress(100);
-    }, 100);
-    return () => clearTimeout(timer);
-  }, []);
+  const handleStart = () => {
+    if (canStart) onSkip?.();
+  };
 
   return (
-    <aside
+    <section
       aria-label="Layar pembuka SiZat-ESD"
-      role={!isInitializing && onSkip ? "button" : undefined}
-      tabIndex={!isInitializing && onSkip ? 0 : -1}
-      onClick={!isInitializing && onSkip ? onSkip : undefined}
-      onKeyDown={(e) => {
-        if (!isInitializing && onSkip && (e.key === "Enter" || e.key === " ")) {
-          e.preventDefault();
-          onSkip();
-        }
-      }}
-      className={`fixed inset-0 z-50 flex justify-center items-center select-none overflow-hidden bg-[#FAF9FF] transition-opacity duration-300 ease-out ${
-        isFading ? "opacity-0 pointer-events-none" : "opacity-100"
-      } ${!isInitializing && onSkip ? "cursor-pointer" : ""}`}
+      onClick={canStart ? handleStart : undefined}
+      className={`fixed inset-0 z-50 overflow-y-auto bg-brand-bg transition-opacity ease-out motion-reduce:transition-none ${
+        isFading ? "pointer-events-none opacity-0" : "opacity-100"
+      } ${canStart ? "cursor-pointer" : ""}`}
+      style={{ transitionDuration: `${APP_INFO.fadeDurationMs}ms` }}
     >
-      <div className="w-full max-w-107.5 min-h-screen h-full flex flex-col justify-between items-center px-6 py-10 text-center relative z-10">
-        {/* Top: Academic Seal & Institution Attribution */}
-        <header className="flex flex-col items-center gap-2 pt-2">
-          <img
-            src={unsLogo}
-            alt="Logo Universitas Sebelas Maret"
-            className="h-12 w-auto object-contain"
-          />
-          <div className="leading-tight">
-            <p className="text-xs font-bold text-[#1F2937]">
-              {APP_INFO.institution}
-            </p>
-            <p className="text-[11px] font-medium text-[#6B7280] mt-0.5">
-              Program Pascasarjana • {APP_INFO.faculty}
-            </p>
-          </div>
-        </header>
-
-        {/* Center: Educational Presentation Card */}
-        <main className="w-full flex flex-col items-center my-auto py-4">
-          <div className="w-full bg-white rounded-3xl p-6 sm:p-7 shadow-[0_8px_30px_rgba(140,102,255,0.06)] border border-[#ECE8FF] text-center">
-            {/* Context Badge */}
-            <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold text-[#6039DF] bg-[#F5F3FF]">
-              Media Pembelajaran Interaktif IPA
-            </span>
-
-            {/* App Wordmark */}
-            <h1 className="text-2xl sm:text-3xl font-black text-[#1F2937] tracking-normal mt-3">
-              {APP_INFO.name}
-            </h1>
-
-            {/* Tagline & ESD Subtitle */}
-            <p className="text-sm font-semibold text-[#4B5563] mt-1">
-              {APP_INFO.tagline}
-            </p>
-            <p className="text-xs font-medium text-[#6B7280] mt-0.5">
-              {APP_INFO.badge}
-            </p>
-
-            {/* Subtle Hairline Divider */}
-            <div className="h-px bg-[#F3F0FF] my-4" aria-hidden="true" />
-
-            {/* Concise Mission / Description */}
-            <p className="text-xs sm:text-[13px] text-[#4B5563] leading-relaxed font-normal text-balance">
-              {APP_INFO.description}
-            </p>
-
-            {/* Curricular Focus Pillars (Clean Semantic Chips) */}
-            <div
-              className="mt-5 flex flex-wrap justify-center gap-1.5 sm:gap-2"
-              aria-label="Cakupan Materi Pembelajaran"
-            >
-              <span className="px-2.5 py-1 rounded-lg text-xs font-medium bg-[#EFF6FF] text-[#1D4ED8]">
-                Pencemaran Air
-              </span>
-              <span className="px-2.5 py-1 rounded-lg text-xs font-medium bg-[#F0FDF4] text-[#15803D]">
-                Pencemaran Udara
-              </span>
-              <span className="px-2.5 py-1 rounded-lg text-xs font-medium bg-[#FEFCE8] text-[#854D0E]">
-                Pencemaran Tanah
-              </span>
-              <span className="px-2.5 py-1 rounded-lg text-xs font-medium bg-[#F5F3FF] text-[#6D28D9]">
-                Berpikir Sistem
-              </span>
+      <div className="mx-auto flex min-h-dvh w-full max-w-[430px] flex-col bg-brand-bg px-6 pt-[calc(1.5rem+env(safe-area-inset-top))] pb-[calc(1.5rem+env(safe-area-inset-bottom))] md:border-x md:border-brand-line">
+        {/* Institution attribution */}
+        <header className="flex items-start justify-between gap-4">
+          <div className="flex min-w-0 items-center gap-3">
+            <img
+              src={unsLogo}
+              alt="Logo Universitas Sebelas Maret"
+              className="h-9 w-auto shrink-0 object-contain"
+            />
+            <div className="min-w-0">
+              <p className="text-xs font-bold uppercase leading-tight tracking-[0.1em] text-brand-dark">
+                {APP_INFO.institution}
+              </p>
+              <p className="mt-1 text-xs font-medium leading-tight text-brand-secondary">
+                {APP_INFO.faculty}
+              </p>
             </div>
           </div>
-        </main>
+          <span className="shrink-0 pt-0.5 text-xs font-semibold text-brand-secondary">
+            {APP_INFO.version}
+          </span>
+        </header>
 
-        {/* Bottom: Solid Brand Loading Progress & Version */}
-        <footer className="w-full flex flex-col items-center pb-2">
-          {/* Progress bar in solid brand purple */}
-          <div className="w-44 h-1.5 bg-[#EDE9FE] rounded-full overflow-hidden mb-2.5">
+        <main className="flex flex-1 flex-col">
+          {/* Cover title */}
+          <div className="pt-11">
+            <h1 className="text-[clamp(2.5rem,12vw,3.25rem)] font-black leading-none tracking-[-0.045em] text-brand-dark">
+              {WORDMARK_BASE}
+              {WORDMARK_ACCENT && (
+                <>
+                  -
+                  <span className="text-brand-primary-strong">
+                    {WORDMARK_ACCENT}
+                  </span>
+                </>
+              )}
+            </h1>
+            <p className="mt-3 text-[15px] font-semibold text-brand-dark">
+              {APP_INFO.tagline}
+            </p>
             <div
-              className="h-full bg-[#8C66FF] rounded-full transition-all duration-[2100ms] ease-out"
-              style={{ width: `${progress}%` }}
+              className="mt-6 h-1 w-14 bg-brand-primary-strong"
               aria-hidden="true"
             />
           </div>
 
-          {isInitializing ? (
-            <p className="text-xs text-[#6B7280] font-medium">
-              Menyiapkan materi pembelajaran...
+          {/* Research title */}
+          <section className="mt-10 -mx-6 bg-brand-dark px-6 py-6">
+            <h2 className="text-xs font-bold uppercase tracking-[0.18em] text-brand-primary-soft">
+              Judul Penelitian
+            </h2>
+            <p className="mt-3 text-[14px] leading-[1.7] text-white/90 text-pretty">
+              {APP_INFO.researchTitle}
             </p>
-          ) : (
-            <p className="text-xs text-[#6039DF] font-semibold">
-              Ketuk layar untuk mulai →
-            </p>
-          )}
+          </section>
 
-          <p className="text-[11px] text-[#9CA3AF] mt-2 font-normal">
-            v{APP_INFO.version} • Pendidikan untuk Pembangunan Berkelanjutan
-          </p>
+          {/* Developers */}
+          <section className="mt-8">
+            <h2 className="text-xs font-bold uppercase tracking-[0.18em] text-brand-secondary">
+              Pengembang
+            </h2>
+            <ul className="mt-1 divide-y divide-brand-line border-b border-brand-line">
+              {APP_INFO.developers.map((developer) => (
+                <li
+                  key={developer}
+                  className="py-3 text-sm leading-relaxed text-brand-dark"
+                >
+                  {developer}
+                </li>
+              ))}
+            </ul>
+          </section>
+        </main>
+
+        {/* Readiness and entry action */}
+        <footer className="flex justify-center pt-10 pb-1">
+          {isInitializing ? (
+            <>
+              <div className="flex min-h-14 w-full items-center gap-3 rounded-xl border border-brand-line bg-white px-5 py-4">
+                <span
+                  className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-brand-primary-strong border-t-transparent motion-reduce:animate-none"
+                  aria-hidden="true"
+                />
+                <p
+                  role="status"
+                  aria-live="polite"
+                  className="text-sm font-medium text-brand-secondary"
+                >
+                  {isStalled
+                    ? "Masih menyiapkan sesi. Periksa koneksi Anda."
+                    : "Menyiapkan sesi..."}
+                </p>
+              </div>
+              {isStalled && onRetry && (
+                <button
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onRetry();
+                  }}
+                  className="mt-3 w-full rounded-xl px-5 py-3 text-sm font-semibold text-brand-primary-strong transition-colors hover:bg-brand-light focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary-strong"
+                >
+                  Coba lagi
+                </button>
+              )}
+            </>
+          ) : (
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                handleStart();
+              }}
+              className="animate-pulse rounded-md px-2 py-1 text-[15px] font-semibold text-brand-primary-strong motion-reduce:animate-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary-strong"
+            >
+              Ketuk layar untuk mulai
+            </button>
+          )}
         </footer>
       </div>
-    </aside>
+    </section>
   );
 }
